@@ -1681,6 +1681,9 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
       c.branches.every(function (b) { return isObj(b) && isStr(b.k) && isStr(b.show) && isStr(b.blank); });
     return false;
   }
+  // R6（4agent 2026-10-11 定案）D3 規格：匯入題（extra）與內建題同 id ⇒ 以內建題為準、匯入那張被遮蔽，存檔照常讀寫不卡住；
+  // extra 自身重複才算 schema 錯（checkState「extra duplicate」）。理由：她不該因舊匯入資料而整個 app 停擺；
+  // 匯入入口已藏起來（scope-cut），新衝突只會來自舊資料。測試：tests/core.test.js「D3 題卡 id」。
   function allCards(state, bank) {
     var seen = {};
     bank.cards.forEach(function (c) { seen[c.id] = 1; });
