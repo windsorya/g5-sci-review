@@ -1,0 +1,547 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="自然複習"></head><body><title>五上自然複習</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Huninn&display=swap">
+<style>
+/* Layout: one column notebook — countdown on top, the practice card in the middle, parent tools folded below */
+:root{
+  --paper:#f3f6f1; --card:#ffffff; --ink:#1f2a24; --muted:#5d6b62; --line:#d5ddd6;
+  --leaf:#2f7d4f; --leaf-soft:#e2efe6; --sun:#a86d10; --sun-soft:#f8ecd6; --water:#2a6f97; --water-soft:#e1edf4;
+  --good:#2f7d4f; --bad:#b4442f; --bad-soft:#f6e3de; --on-leaf:#ffffff;
+  --f-display:"Huninn","Noto Sans TC","PingFang TC","Heiti TC",sans-serif;
+  --f-body:"Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#141a16; --card:#1c2420; --ink:#e7eee9; --muted:#9aa89f; --line:#2f3a34;
+  --leaf:#6cc08e; --leaf-soft:#1f3328; --sun:#e6b25a; --sun-soft:#3a2f1b; --water:#7ab6dc; --water-soft:#1b2d38;
+  --good:#6cc08e; --bad:#ec8a74; --bad-soft:#3a221d; --on-leaf:#10160f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#141a16; --card:#1c2420; --ink:#e7eee9; --muted:#9aa89f; --line:#2f3a34;
+  --leaf:#6cc08e; --leaf-soft:#1f3328; --sun:#e6b25a; --sun-soft:#3a2f1b; --water:#7ab6dc; --water-soft:#1b2d38;
+  --good:#6cc08e; --bad:#ec8a74; --bad-soft:#3a221d; --on-leaf:#10160f; color-scheme:dark}
+[hidden]{display:none!important}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--f-body);font-size:17px;line-height:1.6;margin:0}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:18px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;margin:0}
+h1{font-size:30px;letter-spacing:.02em}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.top{display:grid;gap:10px}
+.countdown{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline}
+.countdown b{font-family:var(--f-display);font-size:44px;font-weight:400;color:var(--sun);font-variant-numeric:tabular-nums;line-height:1}
+.phase{background:var(--sun-soft);border-radius:var(--r);padding:12px 14px}
+.warn{background:var(--bad-soft);border-radius:var(--r);padding:10px 14px}
+.units{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:14px;background:var(--card)}
+.chip.u1{border-color:var(--sun);color:var(--sun)}
+.chip.u2{border-color:var(--leaf);color:var(--leaf)}
+.chip.u3{border-color:var(--water);color:var(--water)}
+.chip.off{opacity:.6}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:14px;min-width:0}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--leaf);width:0;transition:width .3s}
+.qhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.q{font-size:22px;line-height:1.5;font-weight:500}
+.hint{background:var(--water-soft);border-radius:10px;padding:8px 12px;font-size:16px}
+.opts{display:grid;gap:10px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{cursor:default;opacity:.75}
+.opt{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;font-size:19px;min-height:52px}
+.opt:hover:not(:disabled){border-color:var(--leaf)}
+.opt.right{border-color:var(--good);background:var(--leaf-soft);opacity:1}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft);opacity:1}
+.btn{background:var(--leaf);color:var(--on-leaf);border:0;border-radius:12px;padding:12px 18px;font-size:18px;min-height:50px}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn.warnbtn{background:var(--bad);color:var(--on-leaf)}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.feedback{border-radius:12px;padding:12px 14px;display:grid;gap:6px}
+.feedback.ok{background:var(--leaf-soft)}
+.feedback.no{background:var(--bad-soft)}
+.src{font-size:13px;color:var(--muted)}
+.errq{display:grid;gap:8px}
+.map{display:grid;gap:10px}
+.map .center{justify-self:center;font-family:var(--f-display);font-size:22px;padding:8px 18px;border-radius:999px;background:var(--leaf-soft);color:var(--leaf)}
+.branches{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.branch{border:2px dashed var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:4px;min-width:0}
+.branch .k{font-weight:700}
+.blank{border:0;background:var(--sun-soft);border-radius:8px;padding:8px 10px;text-align:left;font-size:17px;min-height:44px}
+.blank.shown{background:var(--leaf-soft)}
+figure{margin:0}
+svg text{font-family:var(--f-body)}
+details{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px}
+details>summary{cursor:pointer;font-family:var(--f-display);font-size:20px}
+details[open]>summary{margin-bottom:12px}
+details details{border:0;padding:4px 0;background:transparent}
+details details>summary{font-family:var(--f-body);font-size:14px}
+.exit ol{padding-left:22px;margin:0;display:grid;gap:14px}
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl td,.tbl th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+.tblwrap{overflow-x:auto}
+textarea{width:100%;min-height:120px;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--paper);color:var(--ink);box-sizing:border-box}
+.toggle{display:flex;align-items:center;gap:10px}
+.toggle input{width:22px;height:22px;flex:none}
+.done{text-align:center;display:grid;gap:10px;justify-items:center}
+.done b{font-family:var(--f-display);font-size:34px;font-weight:400;color:var(--leaf)}
+.links a{color:var(--water)}
+:focus-visible{outline:3px solid var(--water);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="countdown"><h1>五上自然複習</h1><span class="muted">第一次定期評量 11/5（四）～11/6（五）</span></div>
+    <div class="countdown"><b id="days">–</b><span>天後考試</span><span class="muted small" id="today"></span></div>
+    <div class="phase" id="phase"></div>
+    <div class="warn small" id="storeWarn" hidden>這台裝置存不了作答紀錄（可能是無痕模式或關閉了網站資料）。請改用一般瀏覽模式開啟，否則關掉頁面紀錄就會不見。</div>
+    <div class="units" id="units"></div>
+  </header>
+
+  <section class="panel" id="practice" aria-live="polite"></section>
+
+  <details id="exitBox">
+    <summary>出口題（爸媽唸給她聽）</summary>
+    <div class="exit" id="exitList"></div>
+  </details>
+
+  <details id="parentBox">
+    <summary>家長摘要</summary>
+    <div id="summary"></div>
+  </details>
+
+  <details id="moreBox">
+    <summary>其他練習資源</summary>
+    <div class="links small" style="display:grid;gap:8px">
+      <div><a href="https://www.pagamo.org/course/TMGQOQS7" target="_blank" rel="noopener">PaGamO 國小天地</a>：免費，選「適南國小（南一版）」，有三到六年級自然題。當作做完今天的卡之後的加碼練習。</div>
+      <div><a href="https://www.studyark.org/" target="_blank" rel="noopener">學習方舟</a>：可篩選「五年級／上學期／自然／期中考／南一／有答案」的各校考古卷（免費註冊後下載），適合 11/3–11/4 的紙筆模擬。</div>
+    </div>
+  </details>
+
+  <details id="setBox">
+    <summary>設定與題庫</summary>
+    <div style="display:grid;gap:14px">
+      <label class="toggle" for="u3"><input type="checkbox" id="u3"> 老師已經教完「水溶液 1. 溶解現象」（打勾後才出這單元的題）</label>
+      <p class="small muted">題庫來源：目前是<strong>示範題</strong>，依學校公布的五年級課程計畫進度（南一版第 1–10 週）出的，還沒有逐題對過課本頁碼。拿到課本、習作或考古卷後，換成她自己的題目。</p>
+      <div style="display:grid;gap:8px">
+        <label for="importBox" class="small">加入新題卡（貼上 JSON）</label>
+        <textarea id="importBox" placeholder='[{"id":"x1","concept":"1-1","type":"choice","q":"…","opts":["…","…"],"a":0,"why":"…","page":"課本 p.12"}]'></textarea>
+        <div class="row"><button class="btn ghost" id="importBtn" type="button">加入</button><span class="small muted" id="importMsg"></span></div>
+      </div>
+      <div class="row" id="resetRow"></div>
+      <p class="small muted" id="syncMsg"></p>
+    </div>
+  </details>
+</div>
+
+<script>
+(function(){
+"use strict";
+var EXAM = "2026-11-05";
+var UNITS = {
+  "1": {name:"一、太陽與光", cls:"u1"},
+  "2": {name:"二、植物世界", cls:"u2"},
+  "3": {name:"三、水溶液", cls:"u3"}
+};
+var CONCEPTS = {
+  "1-1": {unit:"1", title:"太陽在天空中的位置變化",
+          exit:"下午三點，太陽在西邊的天空。地上竿子的影子會朝哪個方向？為什麼？",
+          exitAns:"朝東邊。影子出現在物體背對太陽的那一邊。"},
+  "1-2": {unit:"1", title:"認識光的現象與特性",
+          exit:"把一枝鉛筆斜斜放進裝水的透明杯子，畫出你看到的樣子，並寫出這是哪一種光的現象。",
+          exitAns:"鉛筆在水面的地方看起來像折斷、彎掉；這是光的折射。"},
+  "2-1": {unit:"2", title:"植物根莖葉的功能",
+          exit:"如果把一株植物的根全部剪掉再種回土裡，可能會發生什麼事？用根的功能說明。",
+          exitAns:"可能會萎凋、站不穩（有些植物之後可能重新長根）；因為根負責吸收水分、也負責固定植物。"},
+  "2-2": {unit:"2", title:"植物的繁殖",
+          exit:"舉出一種「不用種子」也能長出新植株的植物，並說出它是用哪個部位繁殖。",
+          exitAns:"例如落地生根（用葉）、馬鈴薯（用莖）。植物和部位都要說對。"},
+  "2-3": {unit:"2", title:"植物與人類生活",
+          exit:"說出早餐裡兩樣來自植物的食物，各是植物的哪個部位。",
+          exitAns:"依她的回答判斷，例如生菜（葉）、紅蘿蔔（根）。部位說對才算過。"},
+  "3-1": {unit:"3", title:"溶解現象",
+          exit:"同學說：「糖放進水裡攪一攪就消失了。」你同意嗎？說出一個可以證明的方法。",
+          exitAns:"不同意，糖溶解在水裡還在。證明：把杯子、水和糖一起秤，溶解後（沒有灑出來）再秤，重量一樣。"}
+};
+var SAMPLE = "示範題・未對課本頁";
+var BASE_CARDS = [
+  {id:"s1",concept:"1-1",type:"choice",q:"一天之中，太陽從哪個方向升起、往哪個方向落下？",opts:["東邊升起、西邊落下","西邊升起、東邊落下","南邊升起、北邊落下","北邊升起、南邊落下"],a:0,why:"太陽每天看起來都是東升西落。"},
+  {id:"s2",concept:"1-1",type:"choice",q:"一天之中，大約什麼時候太陽在天空中最高？",opts:["清晨","中午前後","傍晚","半夜"],a:1,why:"中午前後太陽最高，這時影子也最短。"},
+  {id:"s3",concept:"1-1",type:"figure",fig:"morning",q:"早上太陽在東邊（看圖），竿子的影子會在哪一邊？",opts:["東邊","西邊","沒有影子","竿子正下方"],a:1,why:"影子在物體背對太陽的那一邊。太陽在東，影子就在西。"},
+  {id:"s4",concept:"1-1",type:"recall",q:"太陽在天空中愈高，竿子的影子會愈＿＿？",hint:"想一想中午的影子",ans:"愈短",why:"太陽高度愈高，影子愈短；所以中午前後影子最短。"},
+  {id:"s5",concept:"1-1",type:"choice",q:"要說清楚太陽在天空中的位置，除了「方位」，還要說出什麼？",opts:["高度角","溫度","亮度","太陽的大小"],a:0,why:"太陽的位置用方位和高度角來描述。"},
+  {id:"s6",concept:"1-2",type:"choice",q:"光在空氣中是怎麼前進的？",opts:["直線前進","彎彎曲曲地前進","會自己繞過物體","只會往上走"],a:0,why:"光直線前進，被物體擋住的地方就形成影子。"},
+  {id:"s7",concept:"1-2",type:"choice",q:"把筷子斜斜插進裝水的杯子，看起來像在水面折斷了。這是光的什麼現象？",opts:["反射","折射","直線前進","溶解"],a:1,why:"光斜斜通過水和空氣的交界時，前進方向會改變，這叫折射。"},
+  {id:"s8",concept:"1-2",type:"choice",q:"照鏡子能看到自己，是光的什麼現象？",opts:["折射","反射","溶解","蒸散"],a:1,why:"光碰到鏡子會被反彈回來，這叫反射。"},
+  {id:"s9",concept:"1-2",type:"recall",q:"陽光通過三稜鏡，會分成好幾種顏色的光。這告訴我們陽光是由什麼組成的？",hint:"答案有「多種」兩個字",ans:"多種顏色的光（色光）組成",why:"白色的陽光其實混合了多種色光；彩虹也是同樣的道理。"},
+  {id:"s10",concept:"2-1",type:"map",center:"植物",q:"把概念圖空格補起來：先在心裡說出答案，再點開對答案。",branches:[{k:"根",show:"固定植物",blank:"吸收水分"},{k:"莖",show:"支持植物",blank:"運輸水分和養分"},{k:"葉",show:"散失水分（蒸散）",blank:"製造養分"}],why:"根、莖、葉各有工作，合起來植物才能活下去。"},
+  {id:"s11",concept:"2-1",type:"choice",q:"把一段帶葉子的植物枝條插在紅色的水裡，過一段時間枝條的莖變紅了。這個實驗說明莖可以做什麼？",opts:["製造養分","運輸水分","吸收陽光","長出種子"],a:1,why:"紅色的水被莖往上運送，所以莖會變紅。"},
+  {id:"s12",concept:"2-1",type:"choice",q:"根的主要工作是什麼？",opts:["製造養分","吸收水分、固定植物","開花結果","散發香味"],a:1,why:"根在土裡吸收水分，也把植物抓牢。養分是葉子製造的。"},
+  {id:"s13",concept:"2-2",type:"choice",q:"落地生根不用種子也能長出新的小植物，它是用哪個部位？",opts:["根","葉","花","果實"],a:1,why:"落地生根的葉子邊緣會長出小芽，用葉繁殖。"},
+  {id:"s14",concept:"2-2",type:"choice",q:"放久的馬鈴薯會發芽，種下去能長出新植株。馬鈴薯是植物的哪個部位？",opts:["根","莖","葉","種子"],a:1,why:"馬鈴薯是長在土裡的莖，所以是用莖繁殖。"},
+  {id:"s15",concept:"2-2",type:"recall",q:"大部分會開花的植物，最常用什麼來繁殖？",hint:"通常藏在果實裡，種下去能長成新植物",ans:"種子",why:"開花植物結果實，果實裡的種子可以長成新植物。"},
+  {id:"s16",concept:"2-3",type:"choice",q:"木頭桌椅的木材，來自樹的哪個部位？",opts:["根","莖","葉","花"],a:1,why:"木材是樹幹，也就是樹的莖。"},
+  {id:"s17",concept:"2-3",type:"choice",q:"我們吃的高麗菜，主要是植物的哪個部位？",opts:["根","莖","葉","果實"],a:2,why:"高麗菜一層一層的是葉子。"},
+  {id:"s18",concept:"2-3",type:"choice",q:"我們吃的蘿蔔，主要是植物的哪個部位？",opts:["根","莖","葉","花"],a:0,why:"蘿蔔長在土裡、是根。"},
+  {id:"s19",concept:"3-1",type:"choice",q:"糖放進水裡攪一攪就看不見了，糖跑去哪裡？",opts:["消失了","溶解在水裡，還在水中","變成空氣跑掉","全部沉到杯底"],a:1,why:"糖溶解了、還在水中。可以用溶解前後秤重量來證明（實驗用的溶液不可以嚐）。"},
+  {id:"s20",concept:"3-1",type:"choice",q:"想讓方糖在水裡溶解得快一點，可以怎麼做？",opts:["一直攪拌","把杯子放進冰箱","蓋上蓋子","什麼都不做"],a:0,why:"攪拌可以讓溶解變快；把方糖弄碎也有幫助。"},
+  {id:"s21",concept:"3-1",type:"choice",q:"在同樣溫度、同樣多的水裡，可以一直加鹽、無限溶解下去嗎？",opts:["可以，加多少都會溶解","不行，能溶解的量有限度","只有熱水才不行","只有冷水才可以"],a:1,why:"同樣多的水、同樣溫度下，能溶解的量有上限，加太多就會沉在杯底。"},
+  {id:"s22",concept:"3-1",type:"recall",q:"用同一個杯子，把水和糖一起秤重；再把糖溶進水裡（沒有灑出來）秤一次。兩次的重量比起來會怎樣？",hint:"糖沒有消失",ans:"一樣重",why:"糖溶解後還在水中，所以總重量不變。"}
+];
+
+var ERRS = {concept:"概念不懂", reading:"看錯題目", careless:"粗心"};
+var LS_KEY = "g5sci.v1";
+var NEW_PER_DAY = 5;
+var GAP = {1:1, 2:2, 3:4};
+
+/* ---------- dates ---------- */
+function dayKey(d){var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dd=String(d.getDate()).padStart(2,"0");return y+"-"+m+"-"+dd;}
+function parseDay(k){var p=k.split("-").map(Number);return new Date(p[0],p[1]-1,p[2]);}
+function addDays(k,n){var d=parseDay(k);d.setDate(d.getDate()+n);return dayKey(d);}
+function diffDays(a,b){return Math.round((parseDay(b)-parseDay(a))/86400000);}
+var TODAY = dayKey(new Date());
+
+function phaseOf(k){
+  if(k<"2026-10-14") return {key:"diag",text:"診斷：先把已教過的題目各做一遍，看看哪幾個概念不熟。答錯沒關係，這一輪是用來找弱點的。"};
+  if(k<"2026-10-26") return {key:"learn",text:"學新卡＋複習：每天 10–15 分鐘，先做到期的複習卡，再學最多 5 張新卡。連續答對 3 次的卡就畢業。"};
+  if(k<"2026-11-03") return {key:"mix",text:"三個單元交錯出題：題目混在一起出，練習分辨「這題在考哪個概念」。"};
+  if(k<EXAM) return {key:"final",text:"考前兩天：用紙筆做全範圍模擬（可用學習方舟的南一考古卷），錯的題目再回到這裡練。"};
+  return {key:"exam",text:"考試週。考完把考卷錯題拍下來，下一次複習用得上。"};
+}
+
+/* ---------- validation ---------- */
+function isStr(x){return typeof x==="string"&&x.trim().length>0;}
+function validCard(c){
+  if(!c||typeof c!=="object") return false;
+  if(!isStr(c.id)||!isStr(c.q)||!CONCEPTS.hasOwnProperty(c.concept)) return false;
+  if(c.type==="choice"||c.type==="figure"){
+    return Array.isArray(c.opts)&&c.opts.length>=2&&c.opts.every(isStr)&&Number.isInteger(c.a)&&c.a>=0&&c.a<c.opts.length;
+  }
+  if(c.type==="recall") return isStr(c.ans);
+  if(c.type==="map") return isStr(c.center)&&Array.isArray(c.branches)&&c.branches.length>0&&c.branches.every(function(b){return b&&isStr(b.k)&&isStr(b.show)&&isStr(b.blank);});
+  return false;
+}
+function isObj(x){return x&&typeof x==="object"&&!Array.isArray(x);}
+function normalize(o){
+  var s=blank();
+  if(!isObj(o)||o.v!==1) return s;
+  if(isObj(o.cards)) Object.keys(o.cards).forEach(function(k){var c=o.cards[k];if(isObj(c))s.cards[k]={box:+c.box||0,streak:+c.streak||0,due:typeof c.due==="string"?c.due:null,seen:+c.seen||0,right:+c.right||0,wrong:+c.wrong||0,retired:!!c.retired};});
+  if(isObj(o.concepts)) Object.keys(o.concepts).forEach(function(k){if(isObj(o.concepts[k]))s.concepts[k]=o.concepts[k];});
+  if(isObj(o.days)) Object.keys(o.days).forEach(function(k){var d=o.days[k];if(isObj(d))s.days[k]={n:+d.n||0,right:+d.right||0,errs:isObj(d.errs)?d.errs:{},concepts:Array.isArray(d.concepts)?d.concepts.filter(isStr):[],newIds:Array.isArray(d.newIds)?d.newIds.filter(isStr):[]};});
+  s.unit3=!!o.unit3;
+  s.extra=Array.isArray(o.extra)?o.extra.filter(validCard):[];
+  s.updatedAt=+o.updatedAt||0;
+  return s;
+}
+
+/* ---------- state ---------- */
+function blank(){return {v:1,cards:{},concepts:{},days:{},unit3:false,extra:[],updatedAt:0};}
+var S = blank();
+function loadLocal(){try{var t=localStorage.getItem(LS_KEY);if(t)S=normalize(JSON.parse(t));}catch(e){S=blank();}}
+var db=null, dbBusy=false, dbPending=false, saveTimer=null, dbRetries=0;
+function saveLocal(){
+  var ok=true;
+  try{localStorage.setItem(LS_KEY,JSON.stringify(S));}catch(e){ok=false;}
+  $("#storeWarn").hidden = ok || !!db;
+}
+function save(){
+  S.updatedAt = Date.now();
+  saveLocal();
+  if(!db) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushDb, 1200);
+}
+function flushDb(){
+  if(!db) return;
+  if(dbBusy){dbPending=true;return;}
+  dbBusy=true;
+  db.doc("progress/main").set(JSON.parse(JSON.stringify(S))).then(function(){
+    dbRetries=0; setSync("作答紀錄已同步到雲端，換裝置也接得上。");
+  },function(e){
+    var code=e&&e.code;
+    if((code==="unavailable"||code==="resource_exhausted")&&dbRetries<3){dbRetries++;setTimeout(flushDb,1500+Math.random()*1500);}
+    else if(code==="invalid_argument"){db=null;setSync("這個帳號只能看紀錄，作答只存在這台裝置。");saveLocal();}
+    else setSync("雲端紀錄暫時存不進去，作答先存在這台裝置；下一次作答會再試。");
+  }).then(function(){
+    dbBusy=false;
+    if(dbPending){dbPending=false;flushDb();}
+  });
+}
+function setSync(t){var el=$("#syncMsg");if(el)el.textContent=t;}
+
+function allCards(){return BASE_CARDS.concat(S.extra);}
+function unitOk(c){return CONCEPTS[c.concept].unit!=="3"||S.unit3;}
+function cs(id){return S.cards[id]||(S.cards[id]={box:0,streak:0,due:null,seen:0,right:0,wrong:0,retired:false});}
+function dayRec(){return S.days[TODAY]||(S.days[TODAY]={n:0,right:0,errs:{},concepts:[],newIds:[]});}
+
+/* ---------- session queue ---------- */
+var queue=[], qi=0, sessionDone=0, sessionRight=0, redo={}, tries={};
+function buildQueue(){
+  var ph=phaseOf(TODAY).key;
+  var cards=allCards().filter(unitOk);
+  var pending=cards.filter(function(c){var s=S.cards[c.id];return s&&s.seen&&!s.retired&&s.due&&s.due<=TODAY;}).map(function(c){return c.id;});
+  var unseen=cards.filter(function(c){return !(S.cards[c.id]&&S.cards[c.id].seen);}).map(function(c){return c.id;});
+  var quota = ph==="diag" ? unseen.length : Math.max(0, NEW_PER_DAY - (S.days[TODAY]?S.days[TODAY].newIds.length:0));
+  queue = pending.concat(unseen.slice(0,quota));
+  if(ph==="mix"||ph==="final") queue.sort(function(){return Math.random()-.5;});
+  qi=0; tries={};
+}
+
+/* ---------- rendering ---------- */
+function $(s){return document.querySelector(s);}
+function esc(t){return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function header(){
+  $("#days").textContent=Math.max(0,diffDays(TODAY,EXAM));
+  var d=parseDay(TODAY);
+  $("#today").textContent="今天 "+(d.getMonth()+1)+"/"+d.getDate()+"（"+"日一二三四五六".charAt(d.getDay())+"）";
+  $("#phase").textContent=phaseOf(TODAY).text;
+  $("#units").innerHTML=Object.keys(UNITS).map(function(u){
+    var off=u==="3"&&!S.unit3;
+    return '<span class="chip '+UNITS[u].cls+(off?" off":"")+'">'+esc(UNITS[u].name)+(off?"（老師教完再開）":"")+"</span>";
+  }).join("");
+  $("#u3").checked=!!S.unit3;
+}
+function cardById(id){var a=allCards();for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i];return null;}
+function srcLine(c){return '<div class="src">'+esc(c.page?("出處："+c.page):SAMPLE)+"</div>";}
+
+var locked=false;
+function renderPractice(){
+  var el=$("#practice");
+  locked=false;
+  if(qi>=queue.length){
+    var redoIds=Object.keys(redo);
+    if(!sessionDone){
+      el.innerHTML='<div class="done"><b>今天沒有要練的卡</b><p class="muted">到期的複習都做完了。可以請爸媽唸下面的出口題，或到「其他練習資源」玩 PaGamO。</p></div>';
+    }else{
+      var left=allCards().filter(unitOk).filter(function(c){return !(S.cards[c.id]&&S.cards[c.id].retired);}).length;
+      el.innerHTML='<div class="done"><b>今天完成了</b><p>這一輪作答 '+sessionDone+' 次，答對 '+sessionRight+' 次。</p><p class="muted small">還沒畢業的卡：'+left+' 張。出口題在下面。</p>'+(redoIds.length?'<button class="btn ghost" id="again" type="button">再練一輪（只出這輪答錯的 '+redoIds.length+' 張）</button>':"")+'</div>';
+      if(redoIds.length) $("#again").onclick=function(){queue=redoIds;redo={};tries={};qi=0;sessionDone=0;sessionRight=0;renderPractice();};
+    }
+    renderExit();renderSummary();return;
+  }
+  var c=cardById(queue[qi]); if(!c||!unitOk(c)){qi++;return renderPractice();}
+  var con=CONCEPTS[c.concept];
+  var pct=Math.round(qi/queue.length*100);
+  var h='<div class="qhead"><span>'+esc(UNITS[con.unit].name)+"・"+esc(con.title)+'</span><span>'+(qi+1)+" / "+queue.length+'</span></div><div class="bar"><i style="width:'+pct+'%"></i></div>';
+  if(c.type==="figure") h+=figure(c.fig);
+  if(c.type==="map"){
+    h+='<div class="q">'+esc(c.q)+'</div><div class="map"><div class="center">'+esc(c.center)+'</div><div class="branches">'+
+      c.branches.map(function(b,i){return '<div class="branch"><span class="k">'+esc(b.k)+'</span><span>'+esc(b.show)+'</span><button class="blank" type="button" data-i="'+i+'">？ 點我看答案</button></div>';}).join("")+
+      '</div></div><div id="ansBox"><div class="row" id="grade" hidden><button class="btn" type="button" data-g="1">我全部想出來了</button><button class="btn ghost" type="button" data-g="0">有想不出來的</button></div></div>';
+    el.innerHTML=h;
+    var shown=0;
+    el.querySelectorAll(".blank").forEach(function(b){b.onclick=function(){if(b.classList.contains("shown"))return;b.classList.add("shown");b.textContent=c.branches[+b.dataset.i].blank;shown++;if(shown===c.branches.length)$("#grade").hidden=false;};});
+    el.querySelectorAll("#grade button").forEach(function(b){b.onclick=function(){disableAll("#grade button");answered(c,b.dataset.g==="1");};});
+    return;
+  }
+  if(c.type==="recall"){
+    h+='<div class="q">'+esc(c.q)+'</div>'+(c.hint?'<div class="hint">提示：'+esc(c.hint)+'</div>':"")+
+      '<p class="muted small">先在心裡（或說出來）回答，再看答案。</p><div class="row" id="revealRow"><button class="btn" id="reveal" type="button">想好了，看答案</button></div><div id="ansBox"></div>';
+    el.innerHTML=h;
+    $("#reveal").onclick=function(){
+      $("#revealRow").hidden=true;
+      $("#ansBox").innerHTML='<div class="feedback ok"><strong>答案：'+esc(c.ans)+'</strong><span>'+esc(c.why||"")+'</span>'+srcLine(c)+'</div><div class="row" id="selfGrade" style="margin-top:10px"><button class="btn" type="button" data-g="1">我答對了</button><button class="btn ghost" type="button" data-g="0">我答錯了</button></div>';
+      $("#selfGrade").querySelectorAll("button").forEach(function(b){b.onclick=function(){disableAll("#selfGrade button");answered(c,b.dataset.g==="1");};});
+    };
+    return;
+  }
+  h+='<div class="q">'+esc(c.q)+'</div><div class="opts">'+c.opts.map(function(o,i){return '<button class="opt" type="button" data-i="'+i+'">'+esc(o)+"</button>";}).join("")+'</div><div id="ansBox"></div>';
+  el.innerHTML=h;
+  el.querySelectorAll(".opt").forEach(function(b){b.onclick=function(){
+    if(locked) return;
+    var i=+b.dataset.i, ok=i===c.a;
+    el.querySelectorAll(".opt").forEach(function(x){x.disabled=true;if(+x.dataset.i===c.a)x.classList.add("right");});
+    if(!ok)b.classList.add("wrong");
+    $("#ansBox").innerHTML='<div class="feedback '+(ok?"ok":"no")+'"><strong>'+(ok?"答對了":"正確答案是「"+esc(c.opts[c.a])+"」")+'</strong><span>'+esc(c.why||"")+'</span>'+srcLine(c)+'</div>';
+    answered(c,ok);
+  };});
+}
+function disableAll(sel){document.querySelectorAll(sel).forEach(function(x){x.disabled=true;});}
+
+function answered(c,ok){
+  if(locked) return;           // 每次出題只收一次作答
+  locked=true;
+  var s=cs(c.id), day=dayRec();
+  if(!s.seen && day.newIds.indexOf(c.id)<0) day.newIds.push(c.id);
+  s.seen++; sessionDone++; day.n++;
+  if(day.concepts.indexOf(c.concept)<0) day.concepts.push(c.concept);
+  if(ok){
+    s.right++; s.streak++; day.right++; sessionRight++;
+    s.box=Math.min(3,(s.box||0)+1);
+    s.retired = s.streak>=3;
+    s.due = addDays(TODAY,GAP[s.box]||1);
+    delete redo[c.id];
+    save(); refreshSide(); nextBtn();
+  }else{
+    s.wrong++; s.streak=0; s.box=1; s.retired=false; s.due=addDays(TODAY,1);
+    redo[c.id]=1;
+    tries[c.id]=(tries[c.id]||0)+1;
+    if(tries[c.id]<=1) queue.push(c.id);   // 同一輪最多再出一次，避免一直卡在同一題
+    save(); refreshSide(); askErr(c,day);
+  }
+}
+function askErr(c,day){
+  var box=document.createElement("div");
+  box.className="errq"; box.id="errq";
+  box.innerHTML='<p class="small"><strong>這題錯在哪裡？</strong>（請爸媽陪她選，不確定可以先跳過）</p><div class="row">'+Object.keys(ERRS).map(function(k){return '<button class="btn ghost" type="button" data-k="'+k+'">'+ERRS[k]+"</button>";}).join("")+'<button class="btn ghost" type="button" data-k="">先跳過</button></div>';
+  $("#ansBox").appendChild(box);
+  box.querySelectorAll("button").forEach(function(b){b.onclick=function(){
+    disableAll("#errq button");
+    var k=b.dataset.k;
+    if(k){
+      day.errs[k]=(day.errs[k]||0)+1;
+      var cc=S.concepts[c.concept]||(S.concepts[c.concept]={});
+      cc[k]=(cc[k]||0)+1;
+      save(); refreshSide();
+    }
+    box.remove(); nextBtn();
+  };});
+}
+function nextBtn(){
+  var row=document.createElement("div");
+  row.className="row";
+  row.innerHTML='<button class="btn" id="next" type="button">下一題</button>';
+  $("#ansBox").appendChild(row);
+  $("#next").onclick=function(){qi++;renderPractice();};
+  $("#next").focus();
+}
+function refreshSide(){renderExit();renderSummary();}
+
+function figure(kind){
+  if(kind!=="morning") return "";
+  return '<figure><svg viewBox="0 0 360 170" width="100%" role="img" aria-label="早上太陽在東邊，地上有一根竿子">'+
+    '<rect x="0" y="0" width="360" height="170" fill="var(--water-soft)"/>'+
+    '<line x1="10" y1="130" x2="350" y2="130" stroke="var(--muted)" stroke-width="2"/>'+
+    '<circle cx="300" cy="50" r="20" fill="var(--sun)"/>'+
+    '<line x1="180" y1="130" x2="180" y2="62" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>'+
+    '<text x="300" y="98" text-anchor="middle" font-size="15" fill="var(--ink)">太陽</text>'+
+    '<text x="340" y="155" text-anchor="end" font-size="16" fill="var(--ink)">東</text>'+
+    '<text x="20" y="155" font-size="16" fill="var(--ink)">西</text>'+
+    '<text x="180" y="155" text-anchor="middle" font-size="14" fill="var(--muted)">竿子</text>'+
+    '</svg></figure>';
+}
+
+/* ---------- exit tickets ---------- */
+function exitItems(){
+  var list=[], seen={};
+  function add(cid,why){if(CONCEPTS[cid]&&!seen[cid]&&(CONCEPTS[cid].unit!=="3"||S.unit3)){seen[cid]=1;list.push({cid:cid,why:why});}}
+  Object.keys(S.concepts).forEach(function(cid){if(S.concepts[cid].exit==="fail")add(cid,"上次還不行，再問一次");});
+  var prev=S.days[addDays(TODAY,-1)], today=S.days[TODAY];
+  (prev?prev.concepts:[]).forEach(function(cid){add(cid,"昨天練過");});
+  (today?today.concepts:[]).forEach(function(cid){add(cid,"今天練過（最好明天再問）");});
+  return list;
+}
+function renderExit(){
+  var list=exitItems(), el=$("#exitList");
+  if(!list.length){el.innerHTML='<p class="muted">練過的概念會出現在這裡。隔天不看提示、用說的或寫在紙上回答，答得出來才算真的學會。</p>';return;}
+  el.innerHTML='<p class="small muted">不給提示、不給選項，請她用說的或寫在紙上。這些題目在練習裡沒出現過。</p><ol>'+
+    list.map(function(x){var c=CONCEPTS[x.cid],cc=S.concepts[x.cid]||{};
+      return '<li><div><strong>'+esc(c.title)+'</strong> <span class="small muted">'+esc(x.why)+'</span></div><div>'+esc(c.exit)+'</div>'+
+        '<details><summary>參考答案</summary><div class="small">'+esc(c.exitAns)+'</div></details>'+
+        '<div class="row" style="margin-top:6px"><button class="btn ghost" type="button" data-c="'+x.cid+'" data-r="pass">答得出來</button><button class="btn ghost" type="button" data-c="'+x.cid+'" data-r="fail">還不行</button>'+
+        (cc.exit?'<span class="small muted" style="align-self:center">上次（'+esc((cc.exitDay||"").slice(5).replace("-","/"))+'）：'+(cc.exit==="pass"?"答得出來":"還不行")+'</span>':"")+'</div></li>';}).join("")+"</ol>";
+  el.querySelectorAll("button[data-c]").forEach(function(b){b.onclick=function(){
+    var cid=b.dataset.c, cc=S.concepts[cid]||(S.concepts[cid]={});
+    cc.exit=b.dataset.r; cc.exitDay=TODAY;
+    if(cc.exit==="fail"){
+      // 出口題沒過：這個概念的卡全部回到明天複習
+      allCards().forEach(function(card){if(card.concept===cid){var s=cs(card.id);s.retired=false;s.streak=0;s.box=1;s.due=addDays(TODAY,1);}});
+    }
+    save(); refreshSide();
+  };});
+}
+
+/* ---------- parent summary ---------- */
+function summaryData(){
+  var d=S.days[TODAY]||{n:0,right:0,errs:{}};
+  var rows=Object.keys(CONCEPTS).map(function(cid){
+    var r=0,w=0;allCards().forEach(function(c){if(c.concept===cid){var s=S.cards[c.id];if(s){r+=s.right;w+=s.wrong;}}});
+    var cc=S.concepts[cid]||{};
+    return {cid:cid,r:r,w:w,rate:(r+w)?r/(r+w):null,exit:cc.exit,exitDay:cc.exitDay};
+  });
+  var lines=["五上自然複習 "+TODAY.slice(5).replace("-","/")+"（距考試 "+Math.max(0,diffDays(TODAY,EXAM))+" 天）",
+    "今天作答 "+d.n+" 次，答對 "+d.right+" 次"];
+  var e=d.errs||{};
+  var et=Object.keys(ERRS).filter(function(k){return e[k];}).map(function(k){return ERRS[k]+" "+e[k];});
+  if(et.length) lines.push("錯誤類型："+et.join("、"));
+  var need=rows.filter(function(x){return x.exit==="fail"||(x.rate!==null&&x.rate<0.8);}).map(function(x){return CONCEPTS[x.cid].title+(x.exit==="fail"?"（出口題還不行）":"（答對率 "+Math.round(x.rate*100)+"%）");});
+  lines.push(need.length?"要加強："+need.join("、"):"目前沒有要特別加強的概念");
+  var passed=rows.filter(function(x){return x.exit==="pass";}).map(function(x){return CONCEPTS[x.cid].title+"（"+(x.exitDay||"").slice(5).replace("-","/")+"）";});
+  if(passed.length) lines.push("出口題答得出來："+passed.join("、"));
+  return {lines:lines,rows:rows};
+}
+function renderSummary(){
+  var sd=summaryData();
+  var rows=sd.rows.map(function(x){var c=CONCEPTS[x.cid];return "<tr><td>"+esc(c.title)+"</td><td>"+(x.rate===null?"還沒練":Math.round(x.rate*100)+"%（"+x.r+"/"+(x.r+x.w)+"）")+"</td><td>"+(x.exit==="pass"?"答得出來":x.exit==="fail"?"還不行":"–")+"</td></tr>";}).join("");
+  $("#summary").innerHTML='<div style="display:grid;gap:12px"><pre id="sumText" style="white-space:pre-wrap;margin:0;font-family:var(--f-body)">'+esc(sd.lines.join("\n"))+'</pre>'+
+    '<div class="row"><button class="btn ghost" id="copySum" type="button">複製摘要（貼到 LINE）</button><span class="small muted" id="copyMsg"></span></div>'+
+    '<div class="tblwrap"><table class="tbl"><thead><tr><th>概念</th><th>累計答對率（含重答）</th><th>出口題</th></tr></thead><tbody>'+rows+"</tbody></table></div></div>";
+  $("#copySum").onclick=function(){
+    var t=sd.lines.join("\n");
+    function done(){$("#copyMsg").textContent="已複製";}
+    function fail(){var r=document.createRange();r.selectNodeContents($("#sumText"));var s=getSelection();s.removeAllRanges();s.addRange(r);$("#copyMsg").textContent="已選取文字，請按複製";}
+    try{navigator.clipboard.writeText(t).then(done,fail);}catch(e){fail();}
+  };
+}
+
+/* ---------- settings ---------- */
+function resetIdle(){
+  $("#resetRow").innerHTML='<button class="btn ghost" id="resetBtn" type="button">清除全部作答紀錄</button>';
+  $("#resetBtn").onclick=function(){
+    $("#resetRow").innerHTML='<span style="align-self:center">確定要清除所有作答紀錄？</span><button class="btn warnbtn" id="resetYes" type="button">清除</button><button class="btn ghost" id="resetNo" type="button">取消</button>';
+    $("#resetNo").onclick=resetIdle;
+    $("#resetYes").onclick=function(){var keep=S.extra;S=blank();S.extra=keep;save();boot();resetIdle();};
+  };
+}
+function wireSettings(){
+  $("#u3").onchange=function(e){S.unit3=e.target.checked;save();boot();};
+  $("#importBtn").onclick=function(){
+    var msg=$("#importMsg");
+    try{
+      var arr=JSON.parse($("#importBox").value);
+      if(!Array.isArray(arr)) throw new Error("最外層要是 [ … ]");
+      var have={};allCards().forEach(function(c){have[c.id]=1;});
+      var n=0,bad=0;
+      arr.forEach(function(c){
+        if(!validCard(c)||have[c.id]){bad++;return;}
+        S.extra.push(c);have[c.id]=1;n++;
+      });
+      save();boot();
+      msg.textContent="加入 "+n+" 張"+(bad?"，略過 "+bad+" 張（重複、缺欄位或答案編號不對）":"");
+      if(n)$("#importBox").value="";
+    }catch(e){msg.textContent="格式不對："+e.message;}
+  };
+  resetIdle();
+}
+
+function boot(){
+  TODAY=dayKey(new Date());
+  header();buildQueue();sessionDone=0;sessionRight=0;redo={};renderPractice();renderExit();renderSummary();
+}
+
+loadLocal();
+wireSettings();
+boot();
+saveLocal();
+setSync("作答紀錄存在這台裝置。");
+
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState==="visible"&&dayKey(new Date())!==TODAY) boot();   // 跨過午夜回來，換成新的一天
+});
+
+(function connect(){
+  if(!window.claude||typeof window.claude.use!=="function") return;
+  window.claude.use("db").then(function(d){
+    if(!d) return;
+    return d.doc("progress/main").get().then(function(snap){
+      db=d;
+      var remote=snap.exists?normalize(snap.data()):null;
+      if(remote&&remote.updatedAt>S.updatedAt){S=remote;saveLocal();boot();}
+      else if(S.updatedAt>0){flushDb();}          // 本機比雲端新（或雲端還是空的）：補傳一次
+      $("#storeWarn").hidden=true;
+      setSync("作答紀錄會同步到雲端，換裝置也接得上。");
+    });
+  }).catch(function(){setSync("雲端紀錄目前連不上，作答先存在這台裝置。");});
+})();
+})();
+</script>
+</body></html>
