@@ -938,7 +938,7 @@ var EXPLAIN = {
        '<text x="360" y="214" font-size="16" fill="var(--ink)">東</text><text x="674" y="214" text-anchor="end" font-size="16" fill="var(--ink)">西</text>'+
        '<text x="676" y="16" text-anchor="end" font-size="11" fill="var(--muted)">面向南方看</text>');},
      lines:["影子一定在竿子「背對太陽」的那一邊：太陽在東，影子在西；太陽在西，影子在東。","太陽愈高，影子愈短。中午前後太陽最高，所以影子最短。"],
-     task:"做做看：在實驗室把時間從早上拉到下午，盯著影子轉向哪一邊。"},
+     task:"做做看：在實驗室把時間從早上拉到下午，盯著影子轉向哪一邊。",ask:"如果太陽在西邊，影子會在哪一邊？為什麼？"},
     {name:"換個說法：手電筒照鉛筆",
      svg:function(){return svgWrap(690,200,"手電筒從左邊斜斜照鉛筆，光線擦過鉛筆頂端，影子落在右邊",
        '<rect width="690" height="200" rx="14" fill="var(--pri-soft)"/><line x1="30" y1="160" x2="660" y2="160" stroke="var(--muted)" stroke-width="2"/>'+
@@ -949,7 +949,7 @@ var EXPLAIN = {
        '<line x1="330" y1="160" x2="330" y2="110" stroke="var(--soil)" stroke-width="8" stroke-linecap="round"/>'+
        '<text x="156" y="24" text-anchor="middle" font-size="15" fill="var(--ink)">手電筒＝太陽</text><text x="402" y="186" text-anchor="middle" font-size="15" fill="var(--ink)">影子</text><text x="330" y="186" text-anchor="middle" font-size="13" fill="var(--muted)">鉛筆</text>');},
      lines:["把手電筒當太陽：手電筒從左邊照，鉛筆的影子就跑到右邊。","手電筒舉高（像中午的太陽），影子變短；放低（像早上、傍晚），影子變長。","一天裡太陽從東邊升起、經過南方的天空、從西邊落下，所以影子會從西邊慢慢轉到北邊、再到東邊。"],
-     task:"做做看：在實驗室看中午 12 點時，太陽在哪一方、影子朝哪一方。"}
+     task:"做做看：在實驗室看中午 12 點時，太陽在哪一方、影子朝哪一方。",ask:"手電筒舉高一點，影子會變長還是變短？像一天中的什麼時候？"}
   ],
   "1-2":[
     {name:"看圖：光碰到東西的四種情形",
@@ -963,7 +963,7 @@ var EXPLAIN = {
        '<text x="595" y="160" text-anchor="middle" font-size="15" fill="var(--ink)">三稜鏡→多種色光</text></g>'+
        '<text x="345" y="214" text-anchor="middle" font-size="16" fill="var(--ink)">光直線前進；碰到鏡子會反射；斜斜穿過水或玻璃會折射</text>');},
      lines:["光直線前進，被擋住的地方照不到光，就是影子。","光碰到鏡子會彈回來：反射（照鏡子、潛望鏡）。","光斜斜穿過水、玻璃時方向會改變：折射（筷子在水面像折斷、放大鏡）。","陽光穿過三稜鏡會分成多種顏色：陽光是由多種色光組成的。"],
-     task:"做做看：在實驗室四個分頁各玩一次，看光怎麼走。"},
+     task:"做做看：在實驗室四個分頁各玩一次，看光怎麼走。",ask:"照鏡子和筷子在水裡看起來折斷，哪一個的光有穿過去？"},
     {name:"換個說法：問自己三個問題",
      svg:function(){return svgWrap(690,150,"判斷光的現象三個問題",
        '<rect width="690" height="150" rx="14" fill="var(--sun-soft)"/>'+
@@ -971,7 +971,7 @@ var EXPLAIN = {
        '<text x="30" y="84" font-size="18" fill="var(--ink)">2. 光彈回來了嗎？ → 反射（鏡子、光滑的金屬）</text>'+
        '<text x="30" y="124" font-size="18" fill="var(--ink)">3. 光穿過去又轉彎了嗎？ → 折射（水、玻璃、鏡片）</text>');},
      lines:["先看題目裡有沒有「鏡子」：有鏡子、光彈回來，就是反射。","題目裡有水、玻璃、鏡片，光穿過去看起來彎掉、放大，就是折射。","白光變成彩色（三稜鏡、彩虹），是因為陽光由多種色光組成。"],
-     task:"做做看：在實驗室「反射」和「折射」兩頁各玩一次，比比看光有沒有穿過去。"}
+     task:"做做看：在實驗室「反射」和「折射」兩頁各玩一次，比比看光有沒有穿過去。",ask:"放大鏡是反射還是折射？你怎麼判斷的？"}
   ],
   "2-1":[
     {name:"看圖：水從根走到葉",
@@ -984,7 +984,7 @@ var EXPLAIN = {
        '<text x="420" y="214" font-size="16" fill="var(--ink)">根：吸收水分、固定植物</text><text x="420" y="150" font-size="16" fill="var(--ink)">莖：運送水分和養分、支持植物</text>'+
        '<text x="60" y="60" font-size="16" fill="var(--ink)">葉：製造養分、蒸散水分</text>');},
      lines:["根：在土裡吸收水分，也把植物抓牢（固定）。","莖：把水分和養分運送到各處，也支持植物站起來。","葉：利用陽光製造養分；水分會從葉子散失到空氣中（蒸散作用）。"],
-     task:"做做看：在實驗室把時間拉到 6 小時，看紅色的水先到哪裡。"},
+     task:"做做看：在實驗室把時間拉到 6 小時，看紅色的水先到哪裡。",ask:"如果把根剪掉，植物會先少了哪些工作？"},
     {name:"換個說法：植物的身體像一棟房子",
      svg:function(){return svgWrap(690,150,"根像吸管加地基，莖像水管加柱子，葉像廚房",
        '<rect width="690" height="150" rx="14" fill="var(--sun-soft)"/>'+
@@ -992,7 +992,7 @@ var EXPLAIN = {
        '<text x="30" y="84" font-size="18" fill="var(--ink)">莖 ＝ 水管＋柱子（運送水和養分、撐住植物）</text>'+
        '<text x="30" y="124" font-size="18" fill="var(--ink)">葉 ＝ 廚房（用陽光做出養分）</text>');},
      lines:["根像吸管＋地基：吸水，也把植物固定住。","莖像水管＋柱子：運送水和養分，也撐住整棵植物。","葉像廚房：用陽光做出養分。","紅色的水實驗裡，莖會先變紅，因為水是從莖往上送的。"],
-     task:"做做看：在實驗室點根、莖、葉，把三個工作各看一次。"}
+     task:"做做看：在實驗室點根、莖、葉，把三個工作各看一次。",ask:"紅色的水為什麼是莖先變紅、葉子後變紅？"}
   ],
   "2-2":[
     {name:"看圖：新芽從哪裡長出來",
@@ -1003,7 +1003,7 @@ var EXPLAIN = {
        '<path d="M380 120 q50 -46 100 0 q-50 30 -100 0" fill="var(--leaf)"/>'+[392,412,432,452,470].map(function(x){return '<path d="M'+x+' '+(108-Math.abs(431-x)*0.3)+' l0 -12" stroke="var(--leaf)" stroke-width="3"/>';}).join("")+'<text x="430" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">落地生根（葉）</text>'+
        '<path d="M560 106 q40 -10 80 6 q-30 30 -80 -6" fill="var(--soil)"/><path d="M600 104 q2 -24 12 -34" stroke="var(--leaf)" stroke-width="4" fill="none"/><text x="600" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">地瓜（根）</text>');},
      lines:["大部分開花的植物用種子繁殖。","有些植物不用種子也能長出新植物：落地生根用葉、馬鈴薯用莖、地瓜用根。"],
-     task:"做做看：在實驗室點三種植物，看新芽長在哪裡。"},
+     task:"做做看：在實驗室點三種植物，看新芽長在哪裡。",ask:"馬鈴薯和地瓜，哪一個是莖、哪一個是根？你怎麼分？"},
     {name:"換個說法：先找「新芽長在哪個部位上」",
      svg:function(){return svgWrap(690,150,"判斷繁殖部位：看新芽從哪裡長出來",
        '<rect width="690" height="150" rx="14" fill="var(--sun-soft)"/>'+
@@ -1011,14 +1011,14 @@ var EXPLAIN = {
        '<text x="30" y="84" font-size="18" fill="var(--ink)">馬鈴薯有芽眼、是長在土裡的莖 → 用莖繁殖</text>'+
        '<text x="30" y="124" font-size="18" fill="var(--ink)">落地生根的葉子邊緣長小芽 → 用葉繁殖</text>');},
      lines:["看新芽從哪裡長出來，那個部位就是它用來繁殖的部位。","馬鈴薯有芽眼，是長在土裡的莖 → 用莖繁殖。","地瓜是變胖的根，埋在土裡也會長出新芽 → 用根繁殖。","落地生根的葉子邊緣長小芽 → 用葉繁殖。"],
-     task:"做做看：在實驗室再點一次馬鈴薯和落地生根，說出各是哪個部位。"}
+     task:"做做看：在實驗室再點一次馬鈴薯和落地生根，說出各是哪個部位。",ask:"落地生根的新芽長在哪裡？所以它用什麼部位繁殖？"}
   ],
   "2-3":[
     {name:"看圖：我們吃的是植物的哪個部位",
      svg:function(){var rows=[["根","蘿蔔、地瓜"],["莖","馬鈴薯、薑、甘蔗、蓮藕、木材"],["葉","高麗菜、菠菜"],["花","花椰菜、金針花"],["果實","番茄、蘋果"],["種子","花生仁、紅豆"]];
        return svgWrap(690,250,"植物部位與食物對照表",'<rect width="690" height="250" rx="14" fill="var(--leaf-soft)"/>'+rows.map(function(r,i){return '<text x="40" y="'+(42+i*36)+'" font-size="19" fill="var(--leaf)">'+r[0]+'</text><text x="130" y="'+(42+i*36)+'" font-size="18" fill="var(--ink)">'+r[1]+'</text>';}).join(""));},
      lines:["我們吃的、用的東西，很多來自植物的不同部位。","同一個問題要先想：它是植物的根、莖、葉、花、果實，還是種子？"],
-     task:"做做看：在實驗室把 16 樣東西放進正確的籃子。"},
+     task:"做做看：在實驗室把 16 樣東西放進正確的籃子。",ask:"早餐桌上，哪一樣是植物的葉？哪一樣是種子？"},
     {name:"換個說法：判斷小撇步",
      svg:function(){return svgWrap(690,190,"判斷植物部位的小撇步",
        '<rect width="690" height="190" rx="14" fill="var(--sun-soft)"/>'+
@@ -1027,7 +1027,7 @@ var EXPLAIN = {
        '<text x="30" y="112" font-size="17" fill="var(--ink)">一片一片、一層一層 → 葉</text>'+
        '<text x="30" y="148" font-size="17" fill="var(--ink)">裡面有種子 → 果實；種下去會發芽 → 種子</text>');},
      lines:["有節、有芽眼，或是用來站直、運送水分的 → 莖（馬鈴薯、薑、甘蔗、蓮藕、樹幹）。","長在土裡、沒有節和芽眼 → 根（蘿蔔、地瓜）。","一片一片、一層一層 → 葉（高麗菜、菠菜）。","裡面有種子 → 果實（番茄、蘋果）；種下去會發芽 → 種子（花生仁、紅豆）。"],
-     task:"做做看：在實驗室分類時，每放一樣先說出你用了哪一個撇步。"}
+     task:"做做看：在實驗室分類時，每放一樣先說出你用了哪一個撇步。",ask:"薑有一節一節的，它是根還是莖？為什麼？"}
   ],
   "3-1":[
     {name:"看圖：糖去哪裡了",
@@ -1041,7 +1041,7 @@ var EXPLAIN = {
        '<text x="380" y="206" text-anchor="middle" font-size="15" fill="var(--ink)">溶解後：看不見，但還在</text>'+
        '<rect x="500" y="110" width="140" height="70" rx="8" fill="var(--card)" stroke="var(--line)"/><text x="570" y="152" text-anchor="middle" font-size="22" fill="var(--ink)">220 g</text><text x="570" y="96" text-anchor="middle" font-size="15" fill="var(--ink)">前後一起秤都一樣</text>');},
      lines:["糖溶解後分散成很小很小、眼睛看不見的粒子，還在水裡，沒有消失。","證明：溶解前後一起秤（沒有灑出來），重量一樣。","攪拌、用熱水、把糖弄碎，都能讓溶解變快。","同樣多的水、同樣溫度，能溶解的量有限度，加太多會沉在杯底。"],
-     task:"做做看：在實驗室放入方糖，看秤上的數字有沒有變。"},
+     task:"做做看：在實驗室放入方糖，看秤上的數字有沒有變。",ask:"糖溶解後看不見了，可以用什麼方法證明它還在？"},
     {name:"換個說法：用「秤」和「蒸發」證明",
      svg:function(){return svgWrap(690,150,"證明溶解的東西還在：秤重不變、蒸發後留下鹽",
        '<rect width="690" height="150" rx="14" fill="var(--sun-soft)"/>'+
@@ -1049,7 +1049,7 @@ var EXPLAIN = {
        '<text x="30" y="84" font-size="18" fill="var(--ink)">證據二：鹽水放著讓水慢慢蒸發，杯底會留下鹽</text>'+
        '<text x="30" y="124" font-size="18" fill="var(--ink)">提醒：實驗用的溶液不可以嚐</text>');},
      lines:["證據一：溶解前後一起秤，總重量一樣，表示糖沒有不見。","證據二：把鹽水放著讓水慢慢蒸發，杯底會留下鹽，表示鹽一直在水裡。","加到溶不下的時候，多的會沉在杯底：同樣多的水，能溶解的量有限度。"],
-     task:"做做看：在實驗室一直加鹽，看什麼時候杯底開始留下鹽。"}
+     task:"做做看：在實驗室一直加鹽，看什麼時候杯底開始留下鹽。",ask:"鹽水放著讓水蒸發，最後杯底會看到什麼？這說明了什麼？"}
   ]
 };
 
@@ -1213,8 +1213,9 @@ function renderConcept(cid){
   on("#cBack",renderHome);
   el.scrollIntoView({behavior:"smooth",block:"start"});
 }
+function askLine(ex){return '<div class="hint"><strong>給爸媽：</strong>先讓她說，不直接報答案。可以追問：「'+esc(ex.ask)+'」</div>';}
 function explainBlock(ex){
-  return '<div class="remedy"><strong style="font-size:19px">'+esc(ex.name)+'</strong>'+ex.svg()+'<ul>'+ex.lines.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ul></div>';
+  return '<div class="remedy"><strong style="font-size:19px">'+esc(ex.name)+'</strong>'+ex.svg()+'<ul>'+ex.lines.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ul>'+askLine(ex)+'</div>';
 }
 
 /* ---------- 題目（練習與考考爸媽共用同一個 renderer） ---------- */
@@ -1319,7 +1320,8 @@ function retrySave(){
 function feedback(p,info){
   var c=p.c, ok=p.ok, shaky=ok&&(p.m.unsure||p.m.hint), box=$("#ansBox");
   if(ok){
-    var msg=shaky?"答對了！你有勾「不太確定」或用了提示，明天再確認一次。":info.graduated?"答對了！這張卡在 3 個不同的日子都答對，畢業了。":info.variation?"答對了！換了題目也會，觀念弄懂了。":"答對了！";
+    var today=V().today, before=S().log.some(function(e){return e.card===c.id&&!e.ok&&e.d<today;});
+    var msg=shaky?"答對了！你有勾「不太確定」或用了提示，明天再確認一次。":info.graduated?"答對了！這張卡在 3 個不同的日子都答對，畢業了。":info.variation?"答對了！換了題目也會，觀念弄懂了。":before?"答對了！上次卡住的這題，這次你自己答對了。":"答對了！";
     if(!shaky) chime();
     if(!p.selfGraded) box.insertAdjacentHTML("beforeend",'<div class="fb ok"><strong>'+esc(msg)+'</strong><span>'+esc(c.why||"")+'</span>'+(c.type==="figure"?figureSvg(c.fig,true):"")+srcLine(c)+'</div>');
     else box.insertAdjacentHTML("beforeend",'<div class="fb ok"><strong>'+esc(msg)+'</strong></div>');
@@ -1348,9 +1350,9 @@ function remedy(c){
   var r=act({type:"help",cid:c.concept,ways:ways});
   if(!r.ok) return;
   var ex=EXPLAIN[c.concept][r.info.way], prev=r.info.previous;
-  var h='<div class="remedy" id="remedy">'+
-    (prev?'<div class="prev">上次 '+md(prev.last)+' 你也在這個觀念卡住，那次看的是「'+esc(EXPLAIN[c.concept][prev.way].name)+'」。這次換一種說法：</div>':'')+
-    '<strong style="font-size:19px">'+esc(ex.name)+'</strong>'+ex.svg()+'<ul>'+ex.lines.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ul>'+
+  var h='<div class="remedy" id="remedy"><div class="sect-t">一起弄懂</div>'+
+    (prev?'<div class="prev">上次 '+md(prev.last)+' 你也在這個觀念卡住，那次看的是「'+esc(EXPLAIN[c.concept][prev.way].name)+'」。<br>先指給爸媽看：這一題是哪一步想不通？這次換一種說法：</div>':'')+
+    '<strong style="font-size:19px">'+esc(ex.name)+'</strong>'+ex.svg()+'<ul>'+ex.lines.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ul>'+askLine(ex)+
     '<div class="task"><strong>觀察任務</strong><span>'+esc(ex.task)+'</span></div>'+
     '<div class="row"><button class="btn" type="button" id="toLab">做觀察任務，再換一題確認</button><button class="btn ghost sm" type="button" id="skipRemedy">先跳過，下一題</button></div></div>';
   $("#ansBox").insertAdjacentHTML("beforeend",h);

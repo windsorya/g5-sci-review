@@ -1,10 +1,11 @@
 #!/opt/homebrew/opt/python@3.12/bin/python3.12
 """v3 端到端驗收：Chromium 桌機＋WebKit iPad，用 Playwright 假時鐘固定日期。
 
-跑法：python3.12 tests/e2e_v3.py [--shots DIR]
+跑法：python3.12 tests/e2e_v3.py [--shots DIR] [--page v3/index.html]
 涵蓋：補救三分支（第一次求助→圖解＋觀察任務→換題確認→仍錯就停本輪、標待協助）、預測前鎖實驗、
 短回合≠當日完成（矩陣 8）、考考爸媽題圖（25）、寫入失敗不宣告（27）、壞存檔不覆蓋（19）、
 舊資料遷移（28）、跨午夜換任務（16/17）、不碰 window.claude（18）、溶解帳本與減少動態效果（21–23）。
+預設測 v3/index.html（預覽版）；換到正式網址後改 --page index.html。
 """
 import json
 import sys
@@ -13,7 +14,8 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
-URL = (ROOT / "index.html").as_uri()
+PAGE = sys.argv[sys.argv.index("--page") + 1] if "--page" in sys.argv else "v3/index.html"
+URL = (ROOT / PAGE).as_uri()
 SHOTS = Path(sys.argv[sys.argv.index("--shots") + 1]) if "--shots" in sys.argv else None
 RESULTS = []
 
@@ -37,8 +39,12 @@ def new_page(browser, when, device=None, init=None, reduced=False, **kw):
     page.clock.install(time=when)
     if init:
         page.add_init_script(init)
-    page.goto(URL)
+    page.goto(URL, wait_until="domcontentloaded")   # 外部字型（Google Fonts）慢時不拖垮測試
     page.wait_for_selector("#main")
+    try:
+        page.wait_for_load_state("load", timeout=15000)
+    except Exception:
+        pass
     return ctx, page, errors
 
 
@@ -65,6 +71,7 @@ def flow_remedy(browser, label, device=None):
     btn(page, "還不懂這個觀念").click()
     txt = page.inner_text("#remedy")
     check(f"{label} 第一次求助＝說法一＋觀察任務", "影子在背對太陽的那一邊" in txt and "觀察任務" in txt and "上次" not in txt, txt[:80])
+    check(f"{label} 一起弄懂＋給爸媽追問（不直接報答案）", "一起弄懂" in txt and "給爸媽" in txt and "不直接報答案" in txt, txt[:200])
     check(f"{label} 圖解有圖", page.locator("#remedy svg.fig").count() == 1)
     shot(page, f"{label}_03_remedy")
     btn(page, "做觀察任務，再換一題確認").click()
@@ -114,7 +121,22 @@ def flow_second_help(browser):
     btn(page, "還不懂這個觀念").click()
     txt = page.inner_text("#remedy")
     check("再次求助＝帶出前次紀錄、換說法", "上次 10/11" in txt and "手電筒照鉛筆" in txt, txt[:120])
+    check("再次求助先請她指出卡在哪", "哪一步想不通" in txt, txt[:160])
     check("再次求助沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def flow_comeback(browser):
+    ctx, page, errors = new_page(browser, "2026-10-12T19:00:00+08:00",
+                                 init="""if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');
+      localStorage.setItem('g5sci.v3', JSON.stringify({v:3,cards:{s1:{seen:1,goodDays:[],blockedDay:'2026-10-11',due:'2026-10-12'}},
+        exits:{'1-1':{status:'pending',due:'2026-10-12',opened:'2026-10-11',last:null}},days:{},labRuns:{},session:null,
+        log:[{op:'x1',d:'2026-10-11',card:'s1',c:'1-1',ok:false,hint:false,unsure:false,variation:false,first:true}],ops:['x1'],
+        help:{},extra:[],settings:{unit3:false,sound:false}}));}""")
+    btn(page, "開始今天的練習").click()
+    btn(page, "東邊升起、西邊落下").click()
+    check("上次卡住、這次獨立答對有專屬回饋", "上次卡住的這題，這次你自己答對了" in page.inner_text("#ansBox"), page.inner_text("#ansBox")[:120])
+    check("回饋流程沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
 
@@ -245,6 +267,7 @@ def main():
         flow_remedy(ch, "chromium")
         flow_remedy(wk, "webkit_ipad", ipad)
         flow_second_help(ch)
+        flow_comeback(ch)
         flow_short_round_and_teach(wk, dict(p.devices["iPad Mini"]))
         flow_save_fail(ch)
         flow_corrupt(ch)
