@@ -902,7 +902,8 @@ function wireVideos(box){
   box.querySelectorAll("button[data-play]").forEach(function(b){b.onclick=function(){
     var src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(b.dataset.play)+'?rel=0&playsinline=1&autoplay=1&start='+(+b.dataset.start||0)+(b.dataset.end?'&end='+(+b.dataset.end):'');
     var w=document.createElement("div"); w.className="vframe";
-    w.innerHTML='<iframe src="'+src+'" title="教學影片" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+    // YouTube 嵌入要收到來源網址，否則顯示「錯誤 153」（file:// 或 no-referrer 時會發生）；明確給 YouTube 建議的 strict-origin-when-cross-origin
+    w.innerHTML='<iframe src="'+src+'" title="教學影片" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
     b.replaceWith(w);
   };});
 }

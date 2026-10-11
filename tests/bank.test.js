@@ -109,9 +109,9 @@ test("看圖題一律保留（看圖是另一種考法）", () => {
   assert.deepEqual(figDropped, []);
 });
 
-test("合併後題數：第一單元 101、第二單元 96、第三單元 5；安親班卷每一題都還練得到（本身留下或由留下的題代表）", () => {
+test("合併後題數：第一單元 108、第二單元 97、第三單元 5（Codex 審查後改回 8 對）；安親班卷每一題都還練得到（本身留下或由留下的題代表）", () => {
   const unit = (c) => c.concept[0];
-  assert.deepEqual(["1", "2", "3"].map((u) => kept.filter((c) => unit(c) === u).length), [101, 96, 5]);
+  assert.deepEqual(["1", "2", "3"].map((u) => kept.filter((c) => unit(c) === u).length), [108, 97, 5]);
   const anqinAll = cards.filter((c) => c.set === "anqin");
   anqinAll.forEach((c) => {
     if (!merged[c.id]) return;

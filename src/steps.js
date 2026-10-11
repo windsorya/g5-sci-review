@@ -303,7 +303,7 @@
           var s = ground(160) + P("M30 168 Q160 -60 290 168", null, "var(--sun)", 3.5) + P("M70 152 Q160 70 250 152", null, "var(--leaf)", 3.5, ' stroke-dasharray="4 5"');
           s += T(160, 34, "夏至：路線長", 14, "middle", "var(--sun-deep)", true) + T(160, 128, "冬至：路線短", 14, "middle", "var(--leaf)", true) + T(16, 186, "東", 15, "start") + T(304, 186, "西", 15, "end") + T(306, 20, "面向南方看", 11, "end", "var(--muted)");
           return svg("面向南方看：夏至太陽路線又高又長，冬至又低又短", s); } },
-        { say: "所以夏至太陽最早出來、最晚下山；冬至最晚出來、最早下山（下面是台中的時間）。", fig: function () {
+        { say: "所以夏至白天最長、冬至白天最短；夏天日出比較早、日落比較晚，冬天相反（下面是台中的時間）。", fig: function () {
           var st = sunTimesFn(), rows = [["夏至", new Date(2026, 5, 21), "var(--sun)"], ["春分", new Date(2026, 2, 20), "var(--pri)"], ["冬至", new Date(2026, 11, 22), "var(--leaf)"]], s = '';
           function X(h) { return 60 + (h - 4) * 15.5; }
           rows.forEach(function (r, i) {
@@ -318,7 +318,7 @@
           s += T(122, 110, "白天", 16, "middle", "var(--ink)", true) + T(198, 110, "晚上", 16, "middle", "#fff", true) + T(160, 24, "春分、秋分：各約 12 小時", 14);
           return svg("春分秋分白天和晚上差不多各 12 小時", s, "var(--pri-soft)"); } }
       ],
-      remember: "夏天日出早、日落晚、白天長；冬天剛好相反；春分秋分差不多一樣長。",
+      remember: "夏至白天最長、冬至白天最短；春分秋分白天和晚上差不多一樣長。",
       ask: "哪個季節放學時天就快黑了？為什麼？" },
     "ss-trop": { cid: "1-3", title: "回歸線和「直射」",
       steps: [
@@ -398,7 +398,7 @@
       ask: "光垂直照進水裡，會不會轉彎？" },
     "lt-shallow": { cid: "1-2", title: "水裡的東西，為什麼看起來比較淺？",
       steps: [
-        { say: "腳發出的光，從水裡斜斜跑到空氣中，在水面轉了彎，才進到你的眼睛。", fig: function () { return svg("水中腳的光，在水面轉彎後進入岸上的眼睛", shallowScene(false)); } },
+        { say: "光照到腳上再彈出來（腳反射的光），從水裡斜斜跑到空氣中，在水面轉了彎，才進到你的眼睛。", fig: function () { return svg("水中腳的光，在水面轉彎後進入岸上的眼睛", shallowScene(false)); } },
         { say: "可是眼睛以為光是一直線來的，順著線往回找，就把腳看在比較高的地方。", fig: function () { return svg("眼睛順著直線往回看，以為腳在比較高的位置", shallowScene(true)); } },
         { say: "所以水裡的腳看起來變短，池底看起來變淺。池水其實比看起來深，下水前要小心。", fig: function () {
           var s = box(0, 70, 320, 130, "var(--waterfill)") + L(0, 70, 320, 70, "var(--pri)", 2);
@@ -434,11 +434,15 @@
           s += A(150, 130, 150, 104, "var(--leaf)", 4) + T(150, 150, "東西", 13) + '<g opacity=".5">' + A(90, 150, 90, 66, "var(--leaf)", 6, "6 4") + '</g>' + T(90, 176, "看到：放大、正立", 13, "middle", "var(--ink)", true);
           return svg("東西靠近放大鏡時，從另一邊看到放大、正立的樣子", s, "var(--pri-soft)"); } },
         { say: "東西離遠一點：會看到倒立的影像，也能投在紙上。用放大鏡看不到「縮小又正立」的樣子。", fig: function () {
-          var s = P("M160 40 Q182 100 160 160 Q138 100 160 40 Z", "var(--waterfill)", "var(--pri)", 3);
-          s += box(40, 100, 14, 40, "var(--card)", "var(--ink)") + P("M47 98 Q38 84 47 70 Q56 84 47 98 Z", "var(--sunball)", "var(--sun)", 1.5) + T(47, 160, "燭火", 13);
-          s += box(268, 50, 8, 110, "var(--card)", "var(--ink)") + P("M258 112 Q251 122 258 132 Q265 122 258 112 Z", "var(--sunball)", "var(--sun)", 1.5) + box(252, 92, 12, 20, "var(--card)", "var(--ink)") + T(272, 180, "紙板：倒立", 13);
-          s += L(47, 80, 258, 122, "var(--sun)", 1.5, "4 4") + L(47, 120, 258, 100, "var(--sun)", 1.5, "4 4");
-          return svg("燭火離放大鏡遠一點，紙板上出現倒立的燭火", s, "var(--pri-soft)"); } }
+          // 薄透鏡：光心 (160,100)、焦距 50；燭火在 x=47（物距 113＞2 倍焦距）⇒ 像在 x≈249.7、倒立、放大率 −0.79
+          var g = lensImage(), s = L(14, 100, 306, 100, "var(--muted)", 1, "3 4") + P("M160 40 Q182 100 160 160 Q138 100 160 40 Z", "var(--waterfill)", "var(--pri)", 3) + dot(110, 100, 3, "var(--pri)") + dot(210, 100, 3, "var(--pri)") + T(210, 116, "焦點", 11, "middle", "var(--pri)");
+          s += box(41, g.oy + 14, 12, 100 - g.oy - 14, "var(--card)", "var(--ink)") + P('M47 ' + (g.oy + 14) + ' Q40 ' + (g.oy + 7) + ' 47 ' + g.oy + ' Q54 ' + (g.oy + 7) + ' 47 ' + (g.oy + 14) + ' Z', "var(--sunball)", "var(--sun)", 1.5) + T(47, 156, "燭火", 13);
+          s += box(g.ix + 6, 46, 7, 118, "var(--card)", "var(--ink)");
+          var k = (g.iy - 100) / (100 - g.oy);   // 像的縮放（正數＝往下）
+          s += box(g.ix - 6, 100, 12, (100 - g.oy - 14) * k, "var(--card)", "var(--ink)") + P('M' + g.ix + ' ' + r1(100 + (100 - g.oy - 14) * k) + ' Q' + (g.ix - 7) + ' ' + r1(100 + (100 - g.oy - 7) * k) + ' ' + g.ix + ' ' + r1(g.iy) + ' Q' + (g.ix + 7) + ' ' + r1(100 + (100 - g.oy - 7) * k) + ' ' + g.ix + ' ' + r1(100 + (100 - g.oy - 14) * k) + ' Z', "var(--sunball)", "var(--sun)", 1.5);
+          s += L(47, g.oy, 160, g.oy, "var(--sun)", 2) + L(160, g.oy, g.ix, g.iy, "var(--sun)", 2) + L(47, g.oy, g.ix, g.iy, "var(--sun)", 2, "5 4");
+          s += T(276, 182, "紙板：倒立", 13);
+          return svg("燭火在放大鏡兩倍焦距外：平行光經放大鏡折射通過焦點、通過鏡心的光直走，兩條光在紙板上交會成倒立的燭火", s, "var(--pri-soft)"); } }
       ],
       remember: "放大鏡靠折射：靠近看放大正立，遠一點變倒立；沒有縮小又正立。",
       ask: "用放大鏡把燭火投到紙上，燭火是正的還是倒的？" },
@@ -485,14 +489,14 @@
           s += L(240, 150, 240, 50, "var(--soil)", 12) + '<polygon points="240,150 200,150 236,112" fill="var(--soil)"/><polygon points="240,150 282,150 244,108" fill="var(--soil)"/>' + T(240, 176, "銀葉樹：板根", 12);
           return svg("榕樹的氣生根和支柱根；銀葉樹像三角形翅膀的板根", s, "var(--leaf-soft)"); } }
       ],
-      remember: "根：吸水、固定植物；根在土裡曬不到太陽，不做光合作用。",
+      remember: "多數根長在土裡，負責吸水、固定植物；一般土裡的根不做光合作用。",
       ask: "颱風天，大樹為什麼不容易被吹倒？" },
     "pl-stem": { cid: "2-1", title: "莖的工作",
       steps: [
         { say: "莖像柱子，撐住整棵植物，讓葉子曬到太陽；莖還會往有陽光的方向長。", fig: function () {
           var s = soil(170) + P("M150 170 Q150 110 196 60", null, "var(--leaf)", 8) + leaf(170, 110, 34, -20) + leaf(196, 60, 30, -40) + leaf(160, 130, 30, 200) + sun(278, 40, 16) + A(240, 56, 214, 64, "var(--sun)", 2);
           return svg("莖撐住植物，往有陽光的方向彎", s + T(90, 120, "撐住", 15, "middle", "var(--ink)", true), "var(--leaf-soft)"); } },
-        { say: "莖像水管：枝條插在紅色的水裡，莖會先變紅；切開莖，可以看到一條一條紅色的細絲。", fig: function () {
+        { say: "莖像水管：枝條插在紅色的水裡，莖會先變紅。直的切開看到紅色細線；橫的切開（像右圖）看到一圈紅點。", fig: function () {
           var s = cup(60, 110, 70, 80, 130, { fill: "#f4a3a3" }) + L(95, 186, 95, 50, "var(--bad)", 8) + leaf(95, 70, 34, 210) + leaf(95, 56, 30, -30);
           s += '<ellipse cx="236" cy="100" rx="42" ry="42" fill="var(--leaf-soft)" stroke="var(--leaf)" stroke-width="3"/>';
           for (var i = 0; i < 8; i++) { var a = i * 45 * DEG; s += dot(236 + Math.cos(a) * 26, 100 + Math.sin(a) * 26, 5, "var(--bad)"); }
@@ -514,9 +518,9 @@
     "pl-leaf": { cid: "2-1", title: "葉子的工作",
       steps: [
         { say: "葉子像廚房：用陽光、水和空氣（二氧化碳）做出植物需要的養分，同時放出氧氣。這叫光合作用。", fig: function () {
-          var s = leaf(100, 120, 120, -10, "var(--leaf)") + sun(40, 40, 14) + A(56, 52, 108, 96, "var(--sun)", 2) + T(60, 180, "水（從根來）", 13) + A(90, 166, 120, 128, "var(--pri)", 2);
+          var s = leaf(100, 120, 120, -10, "var(--leaf)") + sun(40, 40, 14) + A(56, 52, 108, 96, "var(--sun)", 2) + T(60, 180, "水（從根來）", 13) + A(90, 166, 120, 128, "var(--pri)", 2) + T(140, 60, "二氧化碳", 13, "start") + A(160, 66, 150, 98, "var(--muted)", 2);
           s += A(230, 96, 284, 70, "var(--ink)", 2) + T(290, 64, "養分", 14, "end", "var(--ink)", true) + A(230, 116, 284, 140, "var(--ink)", 2) + T(290, 158, "氧氣", 14, "end", "var(--ink)", true) + T(176, 30, "葉子＝廚房", 15, "middle", "var(--leaf)", true);
-          return svg("葉子用陽光和水做出養分，放出氧氣", s, "var(--leaf-soft)"); } },
+          return svg("葉子用陽光、水和空氣中的二氧化碳做出養分，放出氧氣", s, "var(--leaf-soft)"); } },
         { say: "葉子還會讓水變成水蒸氣跑到空氣中，這叫蒸散作用。", fig: function () {
           var s = leaf(70, 130, 170, -12, "var(--leaf)");
           for (var i = 0; i < 4; i++) s += P('M' + (110 + i * 34) + ' 100 q-8 -12 0 -24 q8 -12 0 -24', null, "var(--pri)", 2.5, ' stroke-dasharray="4 4"');
@@ -585,11 +589,11 @@
           var s = flowerSide() + '<ellipse cx="236" cy="54" rx="14" ry="9" fill="var(--sunball)" stroke="var(--ink)" stroke-width="2"/>' + '<ellipse cx="232" cy="44" rx="8" ry="5" fill="var(--card)" opacity=".8"/>' + L(229, 54, 229, 64, "var(--ink)", 2);
           s += P("M190 72 Q176 46 168 60", null, "var(--sun-deep)", 2, ' stroke-dasharray="3 4"') + head(176, 50, 166, 58, "var(--sun-deep)", 8) + T(262, 30, "昆蟲帶花粉", 13);
           return svg("昆蟲把花藥的花粉帶到柱頭上，叫授粉", s, "var(--leaf-soft)"); } },
-        { say: "授粉以後，花瓣慢慢掉了，子房一天一天變大。", fig: function () {
+        { say: "授粉以後，花裡面還要完成「受精」；接著花瓣慢慢掉了，子房一天一天變大。", fig: function () {
           var s = L(80, 190, 80, 140, "var(--leaf)", 6) + '<ellipse cx="80" cy="124" rx="14" ry="16" fill="var(--leaf-soft)" stroke="var(--leaf)" stroke-width="2.5"/>' + T(80, 92, "花瓣掉了", 13);
           s += A(116, 130, 156, 130, "var(--ink)", 3) + L(220, 190, 220, 150, "var(--leaf)", 6) + tomato(220, 116, 32, false) + T(220, 70, "子房變大", 13);
           return svg("花瓣掉落後，子房慢慢長大成果實", s, "var(--leaf-soft)"); } },
-        { say: "最後：子房變成果實，子房裡的胚珠變成種子。果實把種子包起來保護。", fig: function () {
+        { say: "最後：子房通常會長成果實，子房裡的胚珠長成種子。果實把種子包起來保護。", fig: function () {
           var s = '<ellipse cx="70" cy="110" rx="26" ry="30" fill="var(--leaf-soft)" stroke="var(--leaf)" stroke-width="2.5"/>' + dot(62, 104, 4, "var(--sun-deep)") + dot(76, 116, 4, "var(--sun-deep)") + T(70, 166, "子房（胚珠）", 13);
           s += A(108, 110, 158, 110, "var(--ink)", 3) + tomato(226, 110, 52, true) + T(226, 184, "果實（種子）", 13);
           return svg("子房變成果實，胚珠變成種子", s, "var(--leaf-soft)"); } }
@@ -658,7 +662,7 @@
           var s = soil(60) + '<ellipse cx="80" cy="120" rx="40" ry="26" fill="#c99a62"/>' + dot(66, 112, 3.5) + dot(96, 128, 3.5) + T(80, 176, "馬鈴薯：莖", 14, "middle", "var(--ink)", true);
           s += P("M210 76 L250 76 L232 170 Z", "#f1ede2", "var(--muted)", 2) + leaf(230, 76, 26, -70) + leaf(230, 76, 26, -110) + T(232, 190, "蘿蔔：根", 14, "middle", "var(--ink)", true);
           return svg("馬鈴薯有芽眼是莖；蘿蔔是根", s, "var(--leaf-soft)"); } },
-        { say: "一層一層的是葉（高麗菜）；花椰菜吃的是還沒開的花；包著種子的是果實（番茄）；一顆一顆能種的是種子（紅豆、花生仁）。", fig: function () {
+        { say: "一層一層的是葉（高麗菜）；花椰菜吃的是還沒開的花；包著種子的是果實（番茄）；紅豆、花生仁是種子。", fig: function () {
           var s = '<circle cx="50" cy="90" r="30" fill="#b9d98b"/>' + P("M28 90 Q50 66 72 90", null, "var(--leaf)", 2) + T(50, 150, "葉", 15, "middle", "var(--ink)", true);
           s += '<circle cx="125" cy="84" r="24" fill="#e8e2c4"/>' + dot(115, 78, 7, "#f4efd9") + dot(132, 76, 7, "#f4efd9") + dot(124, 92, 7, "#f4efd9") + L(125, 108, 125, 124, "var(--leaf)", 8) + T(125, 150, "花", 15, "middle", "var(--ink)", true);
           s += tomato(200, 90, 26, true) + T(200, 150, "果實", 15, "middle", "var(--ink)", true);
@@ -730,8 +734,8 @@
       ask: "冰水和熱水，哪一杯的糖溶得比較快？" },
     "ds-limit": { cid: "3-1", title: "能溶解的量有限度",
       steps: [
-        { say: "一匙一匙加鹽，一開始都溶得掉，看不見。", fig: function () { return svg("加入的鹽都溶解了", cup(110, 50, 100, 130, 80) + P("M180 26 L230 6 L236 18 L186 36 Z", "var(--muted)") + particles(114, 84, 92, 90, 20, 1.5), "var(--pri-soft)"); } },
-        { say: "加到某一個量，再怎麼攪，杯底都會留下鹽，溶不下了。", fig: function () { return svg("鹽加太多，杯底留下溶不掉的鹽", cup(110, 50, 100, 130, 80) + particles(114, 84, 92, 70, 30, 1.5) + P("M114 176 Q160 160 206 176 Z", "#ffffff", "var(--muted)", 1.5) + T(160, 30, "杯底留下鹽", 14, "middle", "var(--ink)", true), "var(--pri-soft)"); } },
+        { say: "一匙一匙加鹽，一開始都溶得掉，看不見。", fig: function () { return svg("加入的鹽都溶解了，水看起來還是透明的", cup(110, 50, 100, 130, 80) + P("M180 26 L230 6 L236 18 L186 36 Z", "var(--muted)") + T(160, 196, "溶掉了：看不見", 13), "var(--pri-soft)"); } },
+        { say: "加到某一個量，再怎麼攪，杯底都會留下鹽，溶不下了。", fig: function () { return svg("鹽加太多，杯底留下溶不掉的鹽", cup(110, 50, 100, 130, 80) + P("M114 176 Q160 160 206 176 Z", "#ffffff", "var(--muted)", 1.5) + T(160, 30, "杯底留下鹽", 14, "middle", "var(--ink)", true), "var(--pri-soft)"); } },
         { say: "同樣多的水、同樣的溫度，能溶解的量是有限的。", fig: function () { return svg("同樣多的水能溶解的鹽有上限", cup(60, 60, 80, 110, 84) + cup(180, 60, 80, 110, 84) + T(160, 196, "水一樣多、溫度一樣：能溶的量一樣", 13) + T(100, 40, "100 毫升", 13) + T(220, 40, "100 毫升", 13), "var(--pri-soft)"); } }
       ],
       remember: "水能溶解的量有上限，多的會沉在杯底。",
@@ -746,11 +750,17 @@
     var t = Math.tan(alt * DEG), xTop = wallX - (floor - winTop) / t, xBot = wallX - (floor - winBot) / t;
     var hit = Math.max(xTop, 20);
     s += '<polygon points="' + wallX + ',' + winTop + ' ' + wallX + ',' + winBot + ' ' + r1(Math.max(xBot, 20)) + ',' + floor + ' ' + r1(hit) + ',' + floor + '" fill="var(--sunball)" opacity=".45"/>';
-    var sx = Math.min(304, wallX + 70 / t), sy = winTop - 70;
-    s += sun(sx, Math.max(sy, 22), 12) + L(sx, Math.max(sy, 22), wallX, winTop, "var(--sun)", 2, "6 5");
+    // 太陽沿「同一個高度角」往窗外延伸：只縮短距離、不分別截 x、y（Codex 審查 A-02：分別截限會讓光線在窗口轉彎）
+    var d = Math.min((304 - wallX) / Math.cos(alt * DEG), (winTop - 22) / Math.sin(alt * DEG)), sx = wallX + d * Math.cos(alt * DEG), sy = winTop - d * Math.sin(alt * DEG);
+    s += sun(sx, sy, 12) + L(sx, sy, wallX, winTop, "var(--sun)", 2, "6 5");
     if (alt > 80) s += tag(150, 120, "只照到窗邊");
     s += T(28, 196, "北（屋內）", 11, "start", "var(--muted)") + T(312, 196, "南", 11, "end", "var(--muted)") + T(130, 30, label + "（約 " + Math.round(alt) + " 度）", 14, "middle", "var(--ink)", true);
     return s;
+  }
+  // 薄透鏡成像（1/u + 1/v = 1/f）：給 lt-lens 第 4 格用，也給測試核對
+  function lensImage() {
+    var f = 50, cx = 160, ox = 47, oy = 60, u = cx - ox, v = u * f / (u - f), m = -v / u;
+    return { ix: r1(cx + v), iy: r1(100 - (100 - oy) * m), oy: oy, u: u, v: v, m: m, f: f };
   }
   function bendScene(dir) {
     var wy = 100, s = box(0, wy, 320, 100, "var(--waterfill)") + L(0, wy, 320, wy, "var(--pri)", 2) + L(160, 14, 160, 190, "var(--muted)", 1.5, "4 4");
@@ -808,15 +818,15 @@
   var OF = {
     s1: "sun-path", s2: "sun-path", s5: "sun-path", k21: "sun-path", k49: "sun-path", q9: "sun-path", q29: "sun-path", q63: "sun-path",
     s3: "sh-dir", s23: "sh-dir", k24: "sh-dir", k33: "sh-dir", k41: "sh-dir", k42: "sh-dir", k52: "sh-dir", k65: "sh-dir", k69: "sh-dir", q10: "sh-dir", q28: "sh-dir", q55: "sh-dir", q59: "sh-dir",
-    k25: "sh-len", k60: "sh-len", k70: "sh-len", q24: "sh-len", q56: "sh-len", q57: "sh-len", q58: "sh-len",
-    k26: "sh-move", k71: "sh-move", q11: "sh-move",
+    k25: "sh-len", q25: "sh-len", q61: "sh-len", k60: "sh-len", k70: "sh-len", q24: "sh-len", q56: "sh-len", q57: "sh-len", q58: "sh-len",
+    k26: "sh-move", q62: "sh-move", k71: "sh-move", q11: "sh-move",
     k47: "fair-test",
-    k5: "ss-rise", k50: "ss-rise", k53: "ss-rise", q14: "ss-rise", q15: "ss-rise", q37: "ss-rise", q50: "ss-rise", q52: "ss-rise", q67: "ss-rise", q70: "ss-rise", q72: "ss-rise",
+    k5: "ss-rise", q65: "ss-rise", s43: "ss-rise", k50: "ss-rise", k53: "ss-rise", q14: "ss-rise", q15: "ss-rise", q37: "ss-rise", q50: "ss-rise", q52: "ss-rise", q67: "ss-rise", q70: "ss-rise", q72: "ss-rise",
     k43: "ss-noon", k58: "ss-noon", q16: "ss-noon", q30: "ss-noon", q33: "ss-noon", q34: "ss-noon", q35: "ss-noon", q36: "ss-noon", q48: "ss-noon", q69: "ss-noon", s41: "ss-noon", s42: "ss-noon", s45: "ss-noon",
     k22: "ss-day", q51: "ss-day", q64: "ss-day", s44: "ss-day",
-    k3: "ss-trop", k4: "ss-trop", k32: "ss-trop", k44: "ss-trop", k48: "ss-trop", s37: "ss-trop", s38: "ss-trop", s39: "ss-trop",
+    k3: "ss-trop", s40: "ss-trop", k4: "ss-trop", k32: "ss-trop", k44: "ss-trop", k48: "ss-trop", s37: "ss-trop", s38: "ss-trop", s39: "ss-trop",
     k57: "ss-window", k72: "ss-window", k73: "ss-window", k74: "ss-window", q32: "ss-window",
-    s27: "lt-straight",
+    s27: "lt-straight", s6: "lt-straight",
     s8: "lt-reflect", s25: "lt-reflect", k55: "lt-reflect",
     k23: "lt-bend", k30: "lt-bend", k45: "lt-bend", q5: "lt-bend", q6: "lt-bend",
     k40: "lt-shallow", q1: "lt-shallow", q2: "lt-shallow", q3: "lt-shallow", q4: "lt-shallow",
@@ -834,7 +844,7 @@
     s13: "rp-veg", s14: "rp-veg", s15: "rp-veg", s31: "rp-veg", s32: "rp-veg", k29: "rp-veg", k39: "rp-veg", k63: "rp-veg", p1: "rp-veg",
     p47: "rp-organ", p69: "rp-organ", p70: "rp-organ", p71: "rp-organ",
     s16: "us-part", s17: "us-part", s18: "us-part", s33: "us-part", s34: "us-part",
-    k51: "us-econ", p12: "us-econ", p13: "us-econ", p14: "us-econ", p15: "us-econ", p16: "us-econ", p51: "us-econ", p78: "us-econ", p79: "us-econ", p82: "us-econ", p83: "us-econ",
+    k51: "us-econ", p52: "us-econ", p12: "us-econ", p13: "us-econ", p14: "us-econ", p15: "us-econ", p16: "us-econ", p51: "us-econ", p78: "us-econ", p79: "us-econ", p82: "us-econ", p83: "us-econ",
     k35: "us-bio", p18: "us-bio", p19: "us-bio", p80: "us-bio", p81: "us-bio",
     s19: "ds-stay", s22: "ds-stay", s20: "ds-fast", s35: "ds-fast", s21: "ds-limit"
   };
@@ -858,6 +868,6 @@
     return null;
   }
   var api = { topics: TOPICS, of: OF, rules: RULES, topicOf: topicOf,
-    geo: { refractPath: refractPath, snellOut: snellOut, riseAz: riseAz, noonAlt: noonAlt, altaz: altaz, skyTop: skyTop, coinGeo: coinGeo, strawGeo: strawGeo, poleScene: poleScene, SHALLOW: SHALLOW, COIN: COIN, STRAW: STRAW, CHIAYI: CHIAYI, TROPIC: TROPIC } };
+    geo: { refractPath: refractPath, snellOut: snellOut, riseAz: riseAz, noonAlt: noonAlt, altaz: altaz, skyTop: skyTop, coinGeo: coinGeo, strawGeo: strawGeo, lensImage: lensImage, poleScene: poleScene, SHALLOW: SHALLOW, COIN: COIN, STRAW: STRAW, CHIAYI: CHIAYI, TROPIC: TROPIC } };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.G5_STEPS = api;
 })(typeof window !== "undefined" ? window : this);

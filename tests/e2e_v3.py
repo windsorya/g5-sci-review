@@ -74,6 +74,12 @@ def flow_remedy(browser, label, device=None):
     check(f"{label} 第一次求助＝小題型逐格圖解＋回到這一題＋觀察任務", "一步一步看：太陽一天怎麼走？" in txt and "回到這一題" in txt and "一句話記住" in txt and "觀察任務" in txt and "上次" not in txt, txt[:120])
     check(f"{label} 一起弄懂＋給爸媽追問（不直接報答案）", "一起弄懂" in txt and "給爸媽" in txt and "不直接報答案" in txt, txt[:200])
     check(f"{label} 圖解有 4 格圖、每格有編號和一句話", page.locator("#remedy .step svg.fig").count() == 4 and page.locator("#remedy .step .n").count() == 4, page.locator("#remedy svg.fig").count())
+    check(f"{label} 有影片區（看影片，聽老師講一次）", "看影片，聽老師講一次" in txt and page.locator("#remedy button[data-play]").count() >= 1, txt[-300:])
+    page.locator("#remedy button[data-play]").first.click()
+    src = page.locator("#remedy .vframe iframe").first.get_attribute("src") or ""
+    check(f"{label} 按影片才在原地插入播放器，帶起訖秒數（sun-path：LIS 154–330 秒）", "youtube-nocookie.com/embed/N106-kP8KBg" in src and "start=154" in src and "end=330" in src, src)
+    rp = page.locator("#remedy .vframe iframe").first.get_attribute("referrerpolicy")
+    check(f"{label} 播放器帶來源網址（沒有會出現 YouTube 錯誤 153）", rp == "strict-origin-when-cross-origin", rp)
     shot(page, f"{label}_03_remedy")
     btn(page, "做觀察任務，再換一題確認").click()
     check(f"{label} 預測前實驗區隱藏", page.locator("#labBody").is_hidden())
@@ -137,7 +143,7 @@ def flow_review(browser, device=None):
     main = page.inner_text("#main")
     check("首頁有小考複習兩個單元、溶解未開放不出現", "第一單元 太陽與光" in main and "第二單元 植物世界" in main and "第三單元" not in main, main[-200:])
     n1 = int(main.split("第一單元 太陽與光（")[1].split(" 題")[0])
-    check("重複題只留一題：第一單元 101 題、含安親班卷 56 題；被併掉的 q8 不在題庫", n1 == 101 and "含安親班卷 56 題" in main and page.evaluate("!!(window.G5_MERGED && G5_MERGED.q8)") is True, main[-300:])
+    check("重複題只留一題：第一單元 108 題、含安親班卷 59 題；被併掉的 q8 不在題庫", n1 == 108 and "含安親班卷 59 題" in main and page.evaluate("!!(window.G5_MERGED && G5_MERGED.q8)") is True, main[-300:])
     page.locator("button[data-rv='u1']").click()
     m = page.inner_text("#main")
     check("小考複習一段＝20 題（不是從第 1 題排到最後一題）", "小考複習" in m and "1 / 20" in m, m[:160])
@@ -152,7 +158,7 @@ def flow_review(browser, device=None):
     # R1／M20（4agent 2026-10-11）：小考複習做到一半，首頁仍要有「開始今天的練習」，複習另有續接鈕
     check("小考複習中首頁仍有「開始今天的練習」（M20）", "開始今天的練習" in home and "繼續小考複習（還有" in home and "繼續這一輪" not in home, home[:240])
     check("小考複習中首頁仍顯示今天要練幾張", "今天還有" in home or "今天要練" in home, home[:120])
-    check("首頁顯示練過幾題（隔天接著練，不會從頭來）", "練過 1／101 題" in home, home[-400:])
+    check("首頁顯示練過幾題（隔天接著練，不會從頭來）", "練過 1／108 題" in home, home[-400:])
     btn(page, "開始今天的練習").click()
     check("從首頁開今天的練習＝計畫回合", state(page)["session"]["kind"] == "plan" and "小考複習" not in page.inner_text("#main")[:40], json.dumps(state(page)["session"])[:160])
     page.reload(); page.wait_for_selector("#main")
@@ -161,7 +167,7 @@ def flow_review(browser, device=None):
     n2 = int(home.split("安親班複習卷：植物世界（")[1].split(" 題")[0])
     page.locator("button[data-rvall='a2']").click()
     m = page.inner_text("#main")
-    check("安親班卷一次做完全部＝整份植物世界（重複題只留一題）", f"1 / {n2}" in m and n2 == 68, m[:160])
+    check("安親班卷一次做完全部＝整份植物世界（重複題只留一題）", f"1 / {n2}" in m and n2 == 69, m[:160])
     # 測試自己用公開的題庫檔＋合併表重算一次「安親班卷」的範圍，當獨立對照
     ok_set = page.evaluate("""(() => { const M = window.G5_MERGED, X = window.G5_EXTRA_CARDS, ok = new Set();
       X.forEach(c => { if (c.set !== 'anqin') return; if (M[c.id]) M[c.id].keep.forEach(k => ok.add(k)); else ok.add(c.id); });

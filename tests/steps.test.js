@@ -108,3 +108,33 @@ test("新匯入的題（不在對照表）用關鍵字對小題型；對不到�
   assert.equal(S.topicOf({ id: "x3", concept: "1-2", type: "choice", q: "這是什麼？", opts: ["甲"], a: 0 }), null);
   assert.equal(S.topicOf({ id: "q1", concept: "2-1", type: "choice", q: "題號撞到但觀念不同", opts: ["甲"], a: 0 }), null, "對照表的觀念和卡片不同時不能硬套");
 });
+
+test("透鏡成像（Codex 審查 A-03）：燭火在兩倍焦距外，像在另一側、倒立、縮小；兩條成像光線（平行光過焦點、過鏡心直走）交在同一點", () => {
+  const g = S.geo.lensImage();
+  assert.ok(Math.abs(1 / g.u + 1 / g.v - 1 / g.f) < 1e-9, "薄透鏡公式不成立");
+  assert.ok(g.ix > 160 && g.m < 0 && Math.abs(g.m) < 1, "像要在另一側、倒立、縮小");
+  const yCenter = 100 + (100 - g.oy) / g.u * (g.ix - 160);          // 過鏡心的光
+  const yFocus = g.oy + (100 - g.oy) / g.f * (g.ix - 160);          // 平行光折射後過焦點
+  assert.ok(Math.abs(yCenter - g.iy) < 0.2 && Math.abs(yFocus - g.iy) < 0.2, "兩條光線沒有交在像上");
+});
+
+test("窗戶（Codex 審查 A-02）：窗外的太陽光線和窗內的光照邊界是同一個高度角（不在窗口轉彎）", () => {
+  const out = S.topics["ss-window"].steps[1].fig();
+  const m = out.match(/<line x1="([\d.]+)" y1="([\d.]+)" x2="250" y2="86" stroke="var\(--sun\)"/);
+  assert.ok(m, "找不到窗外的光線");
+  const ang = Math.atan2(86 - +m[2], +m[1] - 250) * 180 / Math.PI;
+  assert.ok(Math.abs(ang - S.geo.noonAlt(24.15, -S.geo.TROPIC)) < 0.5, "窗外光線角度 " + ang.toFixed(1));
+});
+
+test("影片：每個小題型都有、最多 2 支、ID 格式正確、起訖合理；不用「小豬玉」頻道", () => {
+  const V = require("../src/videos.js");
+  Object.keys(S.topics).forEach((k) => assert.ok(Array.isArray(V[k]) && V[k].length >= 1 && V[k].length <= 2, k + " 影片數"));
+  Object.keys(V).forEach((k) => {
+    assert.ok(S.topics[k], k + " 不是小題型");
+    V[k].forEach((v) => {
+      assert.ok(/^[A-Za-z0-9_-]{11}$/.test(v.id), k + " ID " + v.id);
+      assert.ok(v.title && v.channel && !/小豬玉/.test(v.channel), k + " " + v.channel);
+      assert.ok(Number.isInteger(v.start) && v.start >= 0 && (v.end === null || v.end > v.start), k + " 起訖");
+    });
+  });
+});
