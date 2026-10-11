@@ -53,7 +53,11 @@
       c.branches.every(function (b) { return isObj(b) && isStr(b.k) && isStr(b.show) && isStr(b.blank); });
     return false;
   }
-  function allCards(state, bank) { return bank.cards.concat(state.extra); }
+  function allCards(state, bank) {
+    var seen = {};
+    bank.cards.forEach(function (c) { seen[c.id] = 1; });
+    return bank.cards.concat(state.extra.filter(function (c) { if (seen[c.id]) return false; seen[c.id] = 1; return true; }));
+  }
   function cardById(state, bank, id) {
     var a = allCards(state, bank);
     for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i];
@@ -114,6 +118,15 @@
     var ids = remainingOf(d).filter(function (id) { return !!cardById(state, bank, id); });   // 題庫改版後消失的卡不排進回合
     return { day: day, kind: "plan", queue: stuckLast(state, bank, sessionOrder(state, bank, day, ids)), answered: [], wrong: [], kinds: {} };
   }
+  function pruneVanished(state, bank, day) {
+    var ok = function (id) { return !!cardById(state, bank, id); }, d = state.days[day];
+    if (d) { d.planIds = d.planIds.filter(ok); d.doneIds = d.doneIds.filter(ok); }
+    if (state.session) {
+      state.session.queue = state.session.queue.filter(ok);
+      state.session.answered = state.session.answered.filter(ok);
+      state.session.wrong = state.session.wrong.filter(ok);
+    }
+  }
   // 跨午夜：日期與任務一起切換（矩陣 16、17）
   function syncSession(state, bank, day) {
     if (state.session && state.session.day !== day) state.session = planSession(state, bank, day);
@@ -136,6 +149,7 @@
     var s = clone(state0), info = {};
     var day = ensureDay(s, bank, today);
     syncSession(s, bank, today);
+    pruneVanished(s, bank, today);
     var wasDone = dayCompleted(day);
     function extra() { if (wasDone) day.extraDone = true; }   // 只有計畫先完成，之後實際完成的才算加碼（矩陣 9、10、12）
 
@@ -373,6 +387,7 @@
     var s = clone(state);
     var d = ensureDay(s, bank, today);
     syncSession(s, bank, today);
+    pruneVanished(s, bank, today);
     var exitPending = 0, exitLater = 0;
     Object.keys(s.exits).forEach(function (cid) {
       var e = s.exits[cid];
@@ -468,6 +483,7 @@
       if (!bank.concepts[k] || !isObj(h) || !isNat(h.count) || !(h.last === null || isDay(h.last)) || !isNat(h.way) || !isBool(h.needsHelp)) bad("help " + k);
     });
     if (!Array.isArray(o.extra) || !o.extra.every(function (c) { return validCard(c, bank); })) bad("extra");
+    else if (!uniqList(o.extra.map(function (c) { return c.id; }))) bad("extra duplicate");
     if (!isObj(o.settings) || !isBool(o.settings.unit3) || !isBool(o.settings.sound)) bad("settings");
     return errs;
   }
@@ -522,6 +538,7 @@
       try { old = storage.getItem(LS_V1); } catch (e) { st.loadError = "READ"; st.saveStatus = "blocked"; return st; }
       if (old !== null) {
         var m = migrateV1(old, clock(), bank);
+        if (!m) { st.loadError = "MIGRATE"; st.saveStatus = "blocked"; return st; }
         if (m) {
           var w = write(m);   // 寫入成功才公布；寫不進去就封鎖，下次開啟再搬（v1 原文始終不動）
           if (w === "ok") { st.state = m; st.migrated = true; st.saveStatus = "ok"; }
@@ -560,8 +577,8 @@
     }
     function retry() { return st.pendingAction ? dispatch(st.pendingAction) : { ok: true, nothing: true, state: st.state }; }
     function accepted(id) { return st.state.ops.indexOf(id) >= 0; }   // 畫面只在「這個操作 ID 真的寫進去了」才公布結果
-    function discardBroken() {   // 家長明確按「清除並重新開始」：一樣先驗證、寫入成功才公布
-      if (st.loadError !== "SCHEMA") return false;
+    function discardBroken() {   // 家長明確按「清除並重新開始」：一樣先驗證、寫入成功才公布；v1 原文不動
+      if (st.loadError !== "SCHEMA" && st.loadError !== "MIGRATE") return false;
       var b0 = blankState();
       if (checkState(b0, bank).length) return false;
       try { storage.setItem(LS_KEY, JSON.stringify(b0)); } catch (e) { st.saveStatus = "failed"; return false; }

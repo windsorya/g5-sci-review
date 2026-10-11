@@ -626,3 +626,60 @@ test("Q1 每日新卡額度：10/14 前診斷期最多 10 張，之後 5 張（�
   assert.equal(C.view(C.blankState(), env(b, NOON("2026-10-12"))).planIds.length, 10);
   assert.equal(C.view(C.blankState(), env(b, NOON("2026-10-14"))).planIds.length, 5);
 });
+
+/* ---------- Codex 第 2 輪（設計後）缺陷的回歸測試 ---------- */
+test("D1 store：A 待重試時送 B 被拒（SAVE_PENDING），恢復後 A 先寫、B 再送才成功，不會丟 B", () => {
+  const b = bank(["s1", "s2"]); const mem = memStorage(); const st = mkStore(mem, b, { t: NOON(D) });
+  mem.setFail(true);
+  st.dispatch({ type: "answer", id: "A", cardId: "s1", ok: true });
+  mem.setFail(false);
+  mem.setFail(true);
+  const rb = st.dispatch({ type: "answer", id: "B", cardId: "s2", ok: true });
+  assert.deepEqual([rb.ok, rb.error, st.get().pendingAction.id], [false, "SAVE_PENDING", "A"]);
+  mem.setFail(false);
+  assert.equal(st.dispatch({ type: "answer", id: "B", cardId: "s2", ok: true }).ok, true);
+  assert.deepEqual([st.accepted("A"), st.accepted("B")], [true, true]);
+});
+
+test("D2 舊資料是壞的（無法解析的 v1）：封鎖、不建立 v3；家長按略過才從頭開始，v1 原文不動", () => {
+  const b = bank(["s1"]); const mem = memStorage({ "g5sci.v1": "{" });
+  const st = mkStore(mem, b, { t: NOON(D) });
+  assert.equal(st.get().loadError, "MIGRATE");
+  st.dispatch({ type: "tick" });
+  assert.equal(mem.raw["g5sci.v3"], undefined);
+  assert.equal(st.discardBroken(), true);
+  assert.ok(mem.raw["g5sci.v3"]); assert.equal(mem.raw["g5sci.v1"], "{");
+});
+
+test("D3 題卡 id：匯入題自己重複 → schema 拒絕；與內建題同 id → 以內建題為準，不卡住操作", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  const dupSelf = JSON.parse(JSON.stringify(s)); dupSelf.extra = [card("x1"), card("x1")];
+  assert.equal(C.decode(JSON.stringify(dupSelf), b).accepted, false);
+  const clash = JSON.parse(JSON.stringify(s)); clash.extra = [card("s1", "1-1", { q: "匯入的同名題" })];
+  assert.equal(C.decode(JSON.stringify(clash), b).accepted, true);
+  const mem = memStorage({ "g5sci.v3": JSON.stringify(clash) }); const st = mkStore(mem, b, { t: NOON(D) });
+  assert.equal(st.dispatch(op("sessionStart", {})).ok, true);
+  assert.deepEqual(st.get().state.days[D].planIds, ["s1"]);
+  assert.equal(C.cardById(st.get().state, b, "s1").q, "題目 s1");
+});
+
+test("D4 題庫改版後消失的卡：從計畫與回合剔除，不假完成、不留永遠做不完的計畫", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s.days[D] = { planIds: ["gone", "s1"], doneIds: [], touched: [], extraDone: false, labRuns: 0, teach: 0, mood: null };
+  s.session = { day: D, kind: "plan", queue: ["gone", "s1"], answered: [], wrong: [], kinds: {} };
+  let v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual([v.planIds, v.session.queue], [["s1"], ["s1"]]);
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  assert.deepEqual([s.days[D].planIds, s.session.queue], [["s1"], []]);   // 存檔本身也剔除，不只畫面
+  v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual([v.remainingIds, v.completed], [[], true]);
+});
+
+test("D10 schema：實驗任務 tasksDone 重複要拒絕", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("labStart", { runId: "r1", lab: "shadow", tasks: 3, answer: 0, from: "menu" }));
+  s = run(s, b, NOON(D), op("labPredict", { runId: "r1", choice: 0 }));
+  s = run(s, b, NOON(D), op("labTask", { runId: "r1", task: 0 }));
+  const o = JSON.parse(JSON.stringify(s)); o.labRuns.r1.tasksDone.push(0);
+  assert.equal(C.decode(JSON.stringify(o), b).accepted, false);
+});

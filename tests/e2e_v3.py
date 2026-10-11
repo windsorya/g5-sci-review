@@ -247,6 +247,91 @@ def flow_season(browser, device=None):
     ctx.close()
 
 
+def answer_and_next(page):
+    """隨便作答一題並前進：選擇題按第一個選項；答錯就選「先跳過」錯因，再按下一題。"""
+    if page.locator("#main .opt").count():
+        page.locator("#main .opt").first.click()
+    elif page.locator("#reveal").count():
+        page.locator("#reveal").click(); page.locator("#selfGrade button").first.click()
+    if page.locator("#errq").count():
+        page.locator("#errq button[data-k='']").click()
+    btn(page, "下一題").click()
+
+
+def flow_review_after_plan_done(browser):
+    """D5：做完今天計畫後開小考複習、做到一半重載，首頁要能接續，剩下的題與順序保留。"""
+    seed = {"v": 3, "cards": {}, "exits": {}, "days": {"2026-10-11": {"planIds": ["s1"], "doneIds": ["s1"], "touched": ["s1"],
+            "extraDone": False, "labRuns": 0, "teach": 0, "mood": None}}, "labRuns": {}, "session": None,
+            "log": [], "ops": [], "help": {}, "extra": [], "settings": {"unit3": False, "sound": False}}
+    seed["cards"]["s1"] = {"seen": 1, "goodDays": ["2026-10-11"], "blockedDay": None, "due": "2026-10-12"}
+    ctx, page, errors = new_page(browser, "2026-10-11T20:00:00+08:00",
+                                 init=f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', {json.dumps(json.dumps(seed))});}}")
+    check("當日計畫已完成", "今天的卡片都做完了" in page.inner_text("#main"))
+    btn(page, "第一單元 太陽與光").click()
+    for _ in range(3):
+        answer_and_next(page)
+    before = state(page)["session"]["queue"]
+    page.reload(); page.wait_for_selector("#main")
+    main = page.inner_text("#main")
+    check("做完計畫後的小考複習可在首頁接續（D5）", "繼續這一輪" in main, main[:200])
+    btn(page, "繼續這一輪").click()
+    after = state(page)["session"]["queue"]
+    check("接續後剩下的題與順序不變", after == before and len(after) > 0, (before[:3], after[:3]))
+    check("接續流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def flow_pending_blocks_new_answer(browser):
+    """D1：A 存檔失敗 → 回首頁再開始 → 作答 B 不得覆蓋待存的 A；存好後可以重答 B。"""
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00")
+    btn(page, "開始今天的練習").click()
+    page.evaluate("window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function(){ throw new Error('QuotaExceededError'); }; 0")
+    btn(page, "東邊升起、西邊落下").click()
+    check("A 沒存到", "還沒存到" in page.inner_text("#ansBox"))
+    page.locator(".ccard[data-cid='1-2']").click()
+    btn(page, "回首頁").click()
+    btn(page, "開始今天的練習").click()                    # 存不進去：留在首頁，不進練習
+    check("開始回合沒存到就不進練習（停在首頁）", page.locator("#main .opt").count() == 0, page.inner_text("#main")[:120])
+    page.evaluate("Storage.prototype.setItem = window.__realSet; 0")
+    page.locator("#retrySave").click()                      # 補寫 A
+    s = state(page)
+    check("補寫的是 A（s1 作答一次）", s and s["cards"]["s1"]["seen"] == 1, s and s["cards"].get("s1"))
+    btn(page, "繼續這一輪").click()                         # A 已寫進那一輪，首頁正確地給「繼續這一輪」
+    page.locator("#main .opt").first.click()
+    check("存好以後可以正常作答下一題", "答對了" in page.inner_text("#ansBox") or "正確答案" in page.inner_text("#ansBox"), page.inner_text("#ansBox")[:120])
+    check("待存流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def flow_dissolve_fair_test(browser):
+    """D9：冷水＋攪拌、熱水＋不攪拌 → 不能算冷熱對照；熱水也攪拌才算。"""
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00")
+    page.locator("#setBox summary").click(); page.locator("#u3").check()
+    page.locator(".ccard[data-cid='3-1']").click(); btn(page, "去實驗室動手做").click()
+    page.locator("#labPredict button[data-g='0']").click()
+    page.locator("#dsStir").check(); btn(page, "放入方糖").click(); page.clock.run_for(6000)
+    btn(page, "換一杯清水").click(); page.locator("#dsStir").uncheck(); page.locator("#dsHot").check()
+    btn(page, "放入方糖").click(); page.clock.run_for(6000)
+    ro = page.inner_text("#dsRo")
+    check("攪拌方式不同：提示不能比、任務 2 不打勾", "不能比較快慢" in ro and page.locator("#labTask .ck.got").count() == 2, (ro[-80:], page.locator("#labTask .ck.got").count()))
+    btn(page, "換一杯清水").click(); page.locator("#dsStir").check()
+    btn(page, "放入方糖").click(); page.clock.run_for(4000)
+    check("熱水也攪拌：可以比較、任務 2 打勾", page.locator("#labTask .ck.got").count() == 3, page.inner_text("#labTask"))
+    check("對照流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def shots_season_diagrams(browser):
+    if not SHOTS:
+        return
+    ctx, page, _ = new_page(browser, "2026-10-11T20:00:00+08:00", {"viewport": {"width": 810, "height": 1080}, "device_scale_factor": 2})
+    page.locator(".ccard[data-cid='1-3']").click()
+    page.locator("#main .remedy").screenshot(path=str(SHOTS / "season_way0.png"))
+    btn(page, "換另一種說法").click()
+    page.locator("#main .remedy").screenshot(path=str(SHOTS / "season_way1.png"))
+    ctx.close()
+
+
 def flow_corrupt(browser):
     bad = json.dumps({"v": 3, "cards": {"s1": {"seen": "2"}}})
     ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00",
@@ -343,6 +428,10 @@ def main():
         flow_short_round_and_teach(wk, dict(p.devices["iPad Mini"]))
         flow_save_fail(ch)
         flow_save_fail_then_tick(ch)
+        flow_review_after_plan_done(ch)
+        flow_pending_blocks_new_answer(ch)
+        flow_dissolve_fair_test(ch)
+        shots_season_diagrams(ch)
         flow_season(ch)
         flow_season(wk, ipad)
         flow_corrupt(ch)
