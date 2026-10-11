@@ -162,7 +162,7 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
   <div id="banners" aria-live="polite"></div>
   <main class="panel" id="main" aria-live="polite"></main>
   <section id="conceptBox" style="display:grid;gap:12px">
-    <div class="sect-t">六個觀念（點一下看圖解、做實驗）</div>
+    <div class="sect-t" id="conceptTitle">觀念（點一下看圖解、做實驗）</div>
     <div class="concepts" id="concepts"></div>
   </section>
   <section style="display:grid;gap:10px">
@@ -834,6 +834,9 @@ var CONCEPTS = {
   "1-1":{unit:"1",short:"太陽與影子",title:"太陽在天空中的位置變化",lab:"shadow",tone:"c1",
          exit:"下午三點，太陽在西邊的天空。地上竿子的影子會朝哪個方向？為什麼？",
          exitAns:"朝東邊。影子出現在物體背對太陽的那一邊。"},
+  "1-3":{unit:"1",short:"季節與回歸線",title:"一年中太陽位置的變化（季節與回歸線）",lab:"season",tone:"c1",
+         exit:"夏至和冬至，哪一天中午竿子的影子比較長？為什麼？",
+         exitAns:"冬至比較長。冬至時太陽直射南回歸線，台灣中午的太陽比較低（高度角比較小），影子就比較長。"},
   "1-2":{unit:"1",short:"光的現象",title:"認識光的現象與特性",lab:"light",tone:"c2",
          exit:"把一枝鉛筆斜斜放進裝水的透明杯子，畫出你看到的樣子，並寫出這是哪一種光的現象。",
          exitAns:"鉛筆在水面的地方看起來像折斷、彎掉；這是光的折射。"},
@@ -861,6 +864,15 @@ var BASE_CARDS = [
   {id:"s5",concept:"1-1",type:"choice",q:"要說清楚太陽在天空中的位置，除了「方位」，還要說出什麼？",opts:["高度角","溫度","亮度","太陽的大小"],a:0,hint:"太陽離地面看起來有多高",why:"太陽的位置用方位和高度角來描述。"},
   {id:"s23",concept:"1-1",type:"figure",fig:"sun-pm",q:"下午太陽在西邊（看圖），竿子的影子會在哪一邊？",opts:["東邊","西邊","南邊","沒有影子"],a:0,hint:"影子在背對太陽的那一邊",why:"太陽在西，影子就在東。"},
   {id:"s24",concept:"1-1",type:"choice",q:"是非題：「一天之中，竿子影子的長度都一樣。」",opts:["對","錯"],a:1,hint:"比比看早上和中午的影子",why:"早上和傍晚太陽低、影子長；中午太陽高、影子短。"},
+  {id:"s37",concept:"1-3",type:"choice",q:"北回歸線大約在北緯幾度？",opts:["約 23.5 度","0 度","約 45 度","約 66.5 度"],a:0,hint:"台灣的嘉義有北回歸線標誌",why:"北回歸線在北緯約 23.5 度，經過台灣的嘉義縣和花蓮縣，那裡都有北回歸線標誌。"},
+  {id:"s38",concept:"1-3",type:"choice",q:"夏至（約 6 月 21 日）這一天，太陽直射在哪一條線上？",opts:["赤道","北回歸線","南回歸線","北極圈"],a:1,hint:"夏至是北半球太陽最高的時候",why:"夏至太陽直射北回歸線；這天北半球白天最長，台灣中午的太陽是一年中最高的。"},
+  {id:"s39",concept:"1-3",type:"choice",q:"冬至（約 12 月 22 日）這一天，太陽直射在哪一條線上？",opts:["北回歸線","赤道","南回歸線","南極圈"],a:2,hint:"冬至時太陽直射到南半球那一邊",why:"冬至太陽直射南回歸線；這天北半球白天最短，台灣中午的太陽是一年中最低的。"},
+  {id:"s40",concept:"1-3",type:"recall",q:"春分和秋分這兩天，太陽直射在地球的哪一條線上？",hint:"地球中間那一圈",ans:"赤道",why:"春分、秋分太陽直射赤道；這兩天白天和晚上差不多一樣長，太陽從正東方升起、正西方落下。"},
+  {id:"s41",concept:"1-3",type:"choice",q:"在台灣，一年之中哪一天中午的太陽最高、竿子的影子最短？",opts:["冬至","春分","夏至","秋分"],a:2,hint:"太陽直射北回歸線的那一天",why:"夏至太陽直射北回歸線，台灣中午太陽最高、影子最短；冬至中午太陽最低、影子最長。"},
+  {id:"s42",concept:"1-3",type:"choice",q:"冬至前後的中午，竿子的影子和夏至中午比起來會怎樣？",opts:["比較長","比較短","一樣長","沒有影子"],a:0,hint:"冬至中午太陽比較低",why:"冬至中午太陽的高度角比較小，光斜斜照過來，影子比較長。"},
+  {id:"s43",concept:"1-3",type:"choice",q:"夏天在台灣，太陽大約從哪個方向升起？",opts:["東偏南","正西","東偏北","正北"],a:2,hint:"夏天日出的位置會往北移",why:"夏天太陽從東偏北升起、西偏北落下；冬天從東偏南升起、西偏南落下；春分、秋分從正東升起、正西落下。"},
+  {id:"s44",concept:"1-3",type:"choice",q:"在台灣，夏天和冬天哪一個季節的白天比較長？",opts:["夏天","冬天","一樣長"],a:0,hint:"夏天太陽在天空走的路比較長",why:"夏天太陽升得早、落得晚，在天空走的路線又高又長，所以白天比較長；冬天白天比較短。"},
+  {id:"s45",concept:"1-3",type:"choice",q:"是非題：「冬至的時候，台灣中午的太陽在南方的天空，而且比夏至的時候低。」",opts:["對","錯"],a:0,hint:"冬至太陽直射南回歸線",why:"台灣在北回歸線附近，冬至中午太陽在南方天空，高度角是一年中最低的。"},
   {id:"s6",concept:"1-2",type:"choice",q:"光在空氣中是怎麼前進的？",opts:["直線前進","彎彎曲曲地前進","會自己繞過物體","只會往上走"],a:0,hint:"想想影子為什麼會出現",why:"光直線前進，被物體擋住的地方就形成影子。"},
   {id:"s7",concept:"1-2",type:"choice",q:"把筷子斜斜插進裝水的杯子，看起來像在水面折斷了。這是光的什麼現象？",opts:["反射","折射","直線前進","溶解"],a:1,hint:"光從水跑到空氣，方向有沒有改變？",why:"光斜斜通過水和空氣的交界時，前進方向會改變，這叫折射。"},
   {id:"s8",concept:"1-2",type:"choice",q:"照鏡子能看到自己，是光的什麼現象？",opts:["折射","反射","溶解","蒸散"],a:1,hint:"光碰到鏡子會怎樣？",why:"光碰到鏡子會被反彈回來，這叫反射。"},
@@ -883,7 +895,7 @@ var BASE_CARDS = [
   {id:"s17",concept:"2-3",type:"choice",q:"我們吃的高麗菜，主要是植物的哪個部位？",opts:["根","莖","葉","果實"],a:2,hint:"一層一層的",why:"高麗菜一層一層的是葉子。"},
   {id:"s18",concept:"2-3",type:"choice",q:"我們吃的蘿蔔，主要是植物的哪個部位？",opts:["根","莖","葉","花"],a:0,hint:"蘿蔔長在土裡，下面還有細細的鬚",why:"蘿蔔長在土裡、是根。"},
   {id:"s33",concept:"2-3",type:"choice",q:"我們吃的花椰菜，主要是植物的哪個部位？",opts:["根","莖","葉","花"],a:3,hint:"名字裡就有答案",why:"花椰菜吃的是還沒開的花。"},
-  {id:"s34",concept:"2-3",type:"choice",q:"我們吃的花生仁、紅豆，是植物的哪個部位？",opts:["種子","根","葉","花"],a:0,hint:"種下去會發芽",why:"花生仁和紅豆都是種子，種下去可以長出新植物。"},
+  {id:"s34",concept:"2-3",type:"choice",q:"我們吃的花生仁、紅豆，是植物的哪個部位？",opts:["種子","根","葉","花"],a:0,hint:"它們原本一顆一顆長在豆莢裡",why:"花生仁和紅豆都是種子，種下去可以長出新植物。"},
   {id:"s19",concept:"3-1",type:"choice",q:"糖放進水裡攪一攪就看不見了，糖跑去哪裡？",opts:["消失了","溶解在水裡，還在水中","變成空氣跑掉","全部沉到杯底"],a:1,hint:"想一想：溶解前後一起秤重，會不會變輕？（實驗用的溶液不可以嚐）",why:"糖溶解了、還在水中。可以用溶解前後秤重量來證明（實驗用的溶液不可以嚐）。"},
   {id:"s20",concept:"3-1",type:"choice",q:"想讓方糖在水裡溶解得快一點，可以怎麼做？",opts:["一直攪拌","把杯子放進冰箱","蓋上蓋子","什麼都不做"],a:0,hint:"讓水動起來",why:"攪拌可以讓溶解變快；把方糖弄碎也有幫助。"},
   {id:"s21",concept:"3-1",type:"choice",q:"在同樣溫度、同樣多的水裡，可以一直加鹽、無限溶解下去嗎？",opts:["可以，加多少都會溶解","不行，能溶解的量有限度","只有熱水才不行","只有冷水才可以"],a:1,hint:"加到最後，杯底會出現什麼？",why:"同樣多的水、同樣溫度下，能溶解的量有上限，加太多就會沉在杯底。"},
@@ -900,6 +912,7 @@ var STAGE = ["種子","發芽了","長葉了","開花了","結果了"];
 /* ---------- 線條圖示（禁 emoji） ---------- */
 var ICON = {
   "1-1":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><circle cx="17" cy="15" r="8" fill="none" stroke="var(--sun)" stroke-width="2.5"/><path d="M17 2v4M17 24v4M4 15h4M26 15h4" stroke="var(--sun)" stroke-width="2.5" stroke-linecap="round"/><line x1="30" y1="40" x2="30" y2="26" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><line x1="30" y1="40" x2="42" y2="42" stroke="var(--ink)" stroke-width="4" stroke-linecap="round" opacity=".4"/></svg>',
+  "1-3":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><circle cx="20" cy="25" r="15" fill="none" stroke="var(--pri)" stroke-width="2.5"/><path d="M7 19h26M5 25h30M7 31h26" stroke="var(--pri)" stroke-width="1.6" stroke-dasharray="3 2"/><circle cx="39" cy="9" r="5" fill="var(--sunball)"/></svg>',
   "1-2":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><path d="M23 6L40 38H6Z" fill="none" stroke="var(--pri)" stroke-width="2.5" stroke-linejoin="round"/><path d="M2 24h12" stroke="var(--sun)" stroke-width="3" stroke-linecap="round"/><path d="M32 26l12-6M33 30l12 0M32 34l12 6" stroke="var(--leaf)" stroke-width="2.5" stroke-linecap="round"/></svg>',
   "2-1":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><path d="M23 30V10" stroke="var(--leaf)" stroke-width="3" stroke-linecap="round"/><path d="M23 16c-8-6-14-2-14 2 6 4 10 2 14-2zM23 20c8-6 14-2 14 2-6 4-10 2-14-2z" fill="var(--leaf)"/><path d="M23 30l-8 10M23 30l0 12M23 30l8 10" stroke="var(--soil)" stroke-width="2.5" stroke-linecap="round"/><path d="M6 30h34" stroke="var(--soil)" stroke-width="2"/></svg>',
   "2-2":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><ellipse cx="23" cy="34" rx="12" ry="7" fill="none" stroke="var(--soil)" stroke-width="2.5"/><path d="M23 30c0-10 4-16 12-18" stroke="var(--leaf)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M35 12c-2 6-8 6-10 4 2-4 6-6 10-4z" fill="var(--leaf)"/></svg>',
@@ -929,13 +942,12 @@ var EXPLAIN = {
        '<line x1="120" y1="190" x2="120" y2="130" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/>'+
        '<text x="185" y="216" text-anchor="middle" font-size="15" fill="var(--ink)">影子長</text>'+
        '<text x="16" y="214" font-size="16" fill="var(--ink)">東</text><text x="330" y="214" text-anchor="end" font-size="16" fill="var(--ink)">西</text>'+
-       // 中午：高度角約 60°，光線經過竿頂 (520,130) 落到影子尖端 (554.6,190)
+       // 中午：太陽在正南方高空（面向南方看就是正前方），影子朝北、落在竿子後面，這個方向只看得到竿腳一小塊
        '<line x1="358" y1="190" x2="676" y2="190" stroke="var(--muted)" stroke-width="2"/>'+
-       '<line x1="464.6" y1="34" x2="554.6" y2="190" stroke="var(--sun)" stroke-width="2" stroke-dasharray="8 6"/>'+
-       '<circle cx="464.6" cy="34" r="16" fill="var(--sunball)"/><text x="490" y="40" font-size="15" fill="var(--ink)">中午：太陽高</text>'+
-       '<line x1="520" y1="190" x2="554.6" y2="190" stroke="var(--ink)" stroke-width="12" stroke-linecap="round" opacity=".45"/>'+
+       '<circle cx="520" cy="40" r="16" fill="var(--sunball)"/><text x="544" y="46" font-size="15" fill="var(--ink)">中午：太陽最高</text>'+
+       '<ellipse cx="520" cy="189" rx="14" ry="4" fill="var(--ink)" opacity=".45"/>'+
        '<line x1="520" y1="190" x2="520" y2="130" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/>'+
-       '<text x="548" y="216" text-anchor="middle" font-size="15" fill="var(--ink)">影子短</text>'+
+       '<text x="520" y="216" text-anchor="middle" font-size="15" fill="var(--ink)">影子短（朝北）</text>'+
        '<text x="360" y="214" font-size="16" fill="var(--ink)">東</text><text x="674" y="214" text-anchor="end" font-size="16" fill="var(--ink)">西</text>'+
        '<text x="676" y="16" text-anchor="end" font-size="11" fill="var(--muted)">面向南方看</text>');},
      lines:["影子一定在竿子「背對太陽」的那一邊：太陽在東，影子在西；太陽在西，影子在東。","太陽愈高，影子愈短。中午前後太陽最高，所以影子最短。"],
@@ -952,6 +964,41 @@ var EXPLAIN = {
      lines:["把手電筒當太陽：手電筒從左邊照，鉛筆的影子就跑到右邊。","手電筒舉高（像中午的太陽），影子變短；放低（像早上、傍晚），影子變長。","一天裡太陽從東邊升起、經過南方的天空、從西邊落下，所以影子會從西邊慢慢轉到北邊、再到東邊。"],
      task:"做做看：在實驗室看中午 12 點時，太陽在哪一方、影子朝哪一方。",ask:"手電筒舉高一點，影子會變長還是變短？像一天中的什麼時候？"}
   ],
+  "1-3":[
+    {name:"看圖：一年中太陽走的路線不一樣",
+     svg:function(){
+       // 面向南方看的天空：地平線畫成橢圓（後半＝北、前半＝南），夏至／春秋分／冬至三條路線（二次貝茲，頂點高度＝控制點換算）
+       return svgWrap(690,270,"面向南方看：夏至太陽從東偏北升起、中午最高；春分秋分從正東升起；冬至從東偏南升起、中午最低",
+       '<rect width="690" height="270" rx="14" fill="var(--sky1)"/>'+
+       '<ellipse cx="345" cy="205" rx="285" ry="48" fill="var(--grass)" opacity=".45" stroke="var(--muted)" stroke-width="1.5"/>'+
+       '<path d="M88.4 184.1 Q345 -124.1 601.6 184.1" fill="none" stroke="var(--sun)" stroke-width="3"/>'+
+       '<path d="M60 205 Q345 -49 630 205" fill="none" stroke="var(--pri)" stroke-width="3" stroke-dasharray="10 6"/>'+
+       '<path d="M88.4 225.9 Q345 30.1 601.6 225.9" fill="none" stroke="var(--leaf)" stroke-width="3" stroke-dasharray="3 5"/>'+
+       '<circle cx="345" cy="30" r="13" fill="var(--sunball)"/><text x="364" y="35" font-size="15" fill="var(--ink)">夏至：中午最高</text>'+
+       '<circle cx="345" cy="78" r="13" fill="var(--sunball)"/><text x="364" y="83" font-size="15" fill="var(--ink)">春分、秋分</text>'+
+       '<circle cx="345" cy="128" r="13" fill="var(--sunball)"/><text x="364" y="133" font-size="15" fill="var(--ink)">冬至：中午最低</text>'+
+       '<text x="100" y="188" font-size="13" fill="var(--ink)">東偏北</text><text x="74" y="209" font-size="13" fill="var(--ink)">正東</text><text x="100" y="232" font-size="13" fill="var(--ink)">東偏南</text>'+
+       '<text x="26" y="210" font-size="16" fill="var(--ink)">東</text><text x="664" y="210" text-anchor="end" font-size="16" fill="var(--ink)">西</text>'+
+       '<text x="345" y="152" text-anchor="middle" font-size="14" fill="var(--muted)">北</text><text x="345" y="266" text-anchor="middle" font-size="14" fill="var(--ink)">南（面向這邊看）</text>');},
+     lines:["夏至（約 6 月 21 日）：太陽從東偏北升起、西偏北落下，中午最高，白天最長、影子最短。","春分、秋分：太陽從正東升起、正西落下，白天和晚上差不多一樣長。","冬至（約 12 月 22 日）：太陽從東偏南升起、西偏南落下，中午最低，白天最短、中午影子最長。"],
+     task:"做做看：在實驗室選「夏至」和「冬至」，各把時間拉到中午，比比看影子有多長。",ask:"夏天太陽從哪個方向升起？冬天呢？"},
+    {name:"換個說法：地球上的三條線",
+     svg:function(){return svgWrap(690,250,"地球上的北回歸線、赤道、南回歸線；夏至太陽直射北回歸線，春分秋分直射赤道，冬至直射南回歸線",
+       '<rect width="690" height="250" rx="14" fill="var(--pri-soft)"/>'+
+       '<circle cx="230" cy="125" r="100" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>'+
+       '<line x1="138.3" y1="85.2" x2="321.7" y2="85.2" stroke="var(--sun)" stroke-width="3"/>'+
+       '<line x1="130" y1="125" x2="330" y2="125" stroke="var(--pri)" stroke-width="3"/>'+
+       '<line x1="138.3" y1="164.8" x2="321.7" y2="164.8" stroke="var(--leaf)" stroke-width="3"/>'+
+       '<text x="124" y="90" text-anchor="end" font-size="15" fill="var(--ink)">北回歸線</text><text x="124" y="130" text-anchor="end" font-size="15" fill="var(--ink)">赤道</text><text x="124" y="170" text-anchor="end" font-size="15" fill="var(--ink)">南回歸線</text>'+
+       '<circle cx="300" cy="85.2" r="5" fill="var(--bad)"/><text x="300" y="72" text-anchor="middle" font-size="13" fill="var(--ink)">台灣</text>'+
+       '<circle cx="644" cy="125" r="24" fill="var(--sunball)"/>'+
+       '<line x1="616" y1="85.2" x2="334" y2="85.2" stroke="var(--sun)" stroke-width="2" stroke-dasharray="7 5"/><polygon points="326,85.2 337,80 337,90.4" fill="var(--sun)"/><text x="480" y="78" text-anchor="middle" font-size="14" fill="var(--ink)">夏至直射</text>'+
+       '<line x1="616" y1="125" x2="342" y2="125" stroke="var(--pri)" stroke-width="2" stroke-dasharray="7 5"/><polygon points="334,125 345,120 345,130" fill="var(--pri)"/><text x="480" y="118" text-anchor="middle" font-size="14" fill="var(--ink)">春分、秋分直射</text>'+
+       '<line x1="616" y1="164.8" x2="334" y2="164.8" stroke="var(--leaf)" stroke-width="2" stroke-dasharray="7 5"/><polygon points="326,164.8 337,159.6 337,170" fill="var(--leaf)"/><text x="480" y="158" text-anchor="middle" font-size="14" fill="var(--ink)">冬至直射</text>'+
+       '<text x="345" y="240" text-anchor="middle" font-size="13" fill="var(--muted)">北回歸線：北緯約 23.5 度；南回歸線：南緯約 23.5 度</text>');},
+     lines:["地球上有三條重要的緯線：北回歸線（北緯約 23.5 度）、赤道、南回歸線（南緯約 23.5 度）。","夏至太陽直射北回歸線，春分和秋分直射赤道，冬至直射南回歸線。","北回歸線經過台灣（嘉義縣、花蓮縣都有北回歸線標誌），所以夏至時台灣中午的太陽幾乎在頭頂上。"],
+     task:"做做看：在實驗室比較「夏至」和「冬至」，太陽從哪個方向升起、白天有多長。",ask:"夏至那天，太陽直射哪一條線？台灣有這條線經過嗎？"}
+  ],
   "1-2":[
     {name:"看圖：光碰到東西的四種情形",
      svg:function(){return svgWrap(690,250,"四格圖：擋住變影子、鏡子反射、水中折射、三稜鏡分出色光",
@@ -959,8 +1006,8 @@ var EXPLAIN = {
        '<g><circle cx="40" cy="70" r="12" fill="var(--sunball)"/><line x1="52" y1="70" x2="110" y2="70" stroke="var(--sun)" stroke-width="4"/><rect x="110" y="48" width="14" height="44" fill="var(--soil)"/><rect x="124" y="56" width="40" height="28" fill="var(--ink)" opacity=".2"/><text x="100" y="118" text-anchor="middle" font-size="15" fill="var(--ink)">擋住→影子</text></g>'+
        '<g><rect x="200" y="96" width="120" height="8" fill="var(--pri)"/><line x1="210" y1="40" x2="260" y2="96" stroke="var(--red)" stroke-width="4"/><line x1="260" y1="96" x2="310" y2="40" stroke="var(--red)" stroke-width="4" stroke-dasharray="8 5"/><text x="260" y="128" text-anchor="middle" font-size="15" fill="var(--ink)">鏡子→反射</text></g>'+
        '<g><rect x="370" y="30" width="110" height="100" rx="6" fill="none" stroke="var(--ink)" stroke-width="2"/><rect x="372" y="72" width="106" height="56" fill="var(--waterfill)"/><line x1="385" y1="20" x2="416.2" y2="72" stroke="var(--soil)" stroke-width="6" stroke-linecap="round"/><line x1="416.2" y1="72" x2="448.6" y2="112.6" stroke="var(--soil)" stroke-width="6" stroke-linecap="round"/><text x="425" y="156" text-anchor="middle" font-size="15" fill="var(--ink)">水→折射</text></g>'+
-       '<g><polygon points="590,40 640,130 540,130" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/><line x1="500" y1="96" x2="565" y2="90" stroke="var(--sunball)" stroke-width="5"/>'+
-       ['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa'].map(function(c,i){return '<line x1="612" y1="92" x2="680" y2="'+(70+i*12)+'" stroke="'+c+'" stroke-width="4"/>';}).join("")+
+       '<g><polygon points="590,40 640,130 540,130" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/><line x1="500" y1="96" x2="562" y2="90" stroke="var(--sunball)" stroke-width="5"/><line x1="562" y1="90" x2="620" y2="95" stroke="var(--sunball)" stroke-width="3" opacity=".6"/>'+
+       ['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa'].map(function(c,i){var a=(15+i*4)*Math.PI/180;return '<line x1="620" y1="95" x2="'+(620+60*Math.cos(a)).toFixed(1)+'" y2="'+(95+60*Math.sin(a)).toFixed(1)+'" stroke="'+c+'" stroke-width="4"/>';}).join("")+
        '<text x="595" y="160" text-anchor="middle" font-size="15" fill="var(--ink)">三稜鏡→多種色光</text></g>'+
        '<text x="345" y="214" text-anchor="middle" font-size="16" fill="var(--ink)">光直線前進；碰到鏡子會反射；斜斜穿過水或玻璃會折射</text>');},
      lines:["光直線前進，被擋住的地方照不到光，就是影子。","光碰到鏡子會彈回來：反射（照鏡子、潛望鏡）。","光斜斜穿過水、玻璃時方向會改變：折射（筷子在水面像折斷、放大鏡）。","陽光穿過三稜鏡會分成多種顏色：陽光是由多種色光組成的。"],
@@ -1001,7 +1048,7 @@ var EXPLAIN = {
        '<rect width="690" height="200" rx="14" fill="var(--leaf-soft)"/>'+
        '<ellipse cx="90" cy="120" rx="18" ry="12" fill="var(--soil)"/><path d="M90 110 q0 -30 14 -42" stroke="var(--leaf)" stroke-width="4" fill="none"/><text x="90" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">種子</text>'+
        '<ellipse cx="260" cy="120" rx="40" ry="26" fill="var(--soil)"/><circle cx="246" cy="112" r="3" fill="var(--ink)"/><path d="M246 108 q-6 -26 -16 -36" stroke="var(--leaf)" stroke-width="4" fill="none"/><text x="260" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">馬鈴薯（莖，有芽眼）</text>'+
-       '<path d="M380 120 q50 -46 100 0 q-50 30 -100 0" fill="var(--leaf)"/>'+[392,412,432,452,470].map(function(x){return '<path d="M'+x+' '+(108-Math.abs(431-x)*0.3)+' l0 -12" stroke="var(--leaf)" stroke-width="3"/>';}).join("")+'<text x="430" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">落地生根（葉）</text>'+
+       '<path d="M380 120 q50 -46 100 0 q-50 30 -100 0" fill="var(--leaf)"/>'+[392,412,432,452,470].map(function(x){var t=(x-380)/100,y=120-92*t*(1-t);return '<path d="M'+x+' '+y.toFixed(1)+' l0 -12" stroke="var(--leaf)" stroke-width="3"/><circle cx="'+x+'" cy="'+(y-14).toFixed(1)+'" r="3.5" fill="var(--leaf)"/>';}).join("")+'<text x="430" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">落地生根（葉）</text>'+
        '<path d="M560 106 q40 -10 80 6 q-30 30 -80 -6" fill="var(--soil)"/><path d="M600 104 q2 -24 12 -34" stroke="var(--leaf)" stroke-width="4" fill="none"/><text x="600" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">地瓜（根）</text>');},
      lines:["大部分開花的植物用種子繁殖。","有些植物不用種子也能長出新植物：落地生根用葉、馬鈴薯用莖、地瓜用根。"],
      task:"做做看：在實驗室點三種植物，看新芽長在哪裡。",ask:"馬鈴薯和地瓜，哪一個是莖、哪一個是根？你怎麼分？"},
@@ -1026,8 +1073,8 @@ var EXPLAIN = {
        '<text x="30" y="40" font-size="17" fill="var(--ink)">有節、有芽眼，或用來站直、運送水分 → 莖</text>'+
        '<text x="30" y="76" font-size="17" fill="var(--ink)">長在土裡、沒有節和芽眼 → 根</text>'+
        '<text x="30" y="112" font-size="17" fill="var(--ink)">一片一片、一層一層 → 葉</text>'+
-       '<text x="30" y="148" font-size="17" fill="var(--ink)">裡面有種子 → 果實；種下去會發芽 → 種子</text>');},
-     lines:["有節、有芽眼，或是用來站直、運送水分的 → 莖（馬鈴薯、薑、甘蔗、蓮藕、樹幹）。","長在土裡、沒有節和芽眼 → 根（蘿蔔、地瓜）。","一片一片、一層一層 → 葉（高麗菜、菠菜）。","裡面有種子 → 果實（番茄、蘋果）；種下去會發芽 → 種子（花生仁、紅豆）。"],
+       '<text x="30" y="148" font-size="17" fill="var(--ink)">包著種子的 → 果實；果實裡一顆一顆的 → 種子</text>');},
+     lines:["有節、有芽眼，或是用來站直、運送水分的 → 莖（馬鈴薯、薑、甘蔗、蓮藕、樹幹）。","長在土裡、沒有節和芽眼 → 根（蘿蔔、地瓜）。","一片一片、一層一層 → 葉（高麗菜、菠菜）。","包著種子的 → 果實（番茄、蘋果）；果實裡面一顆一顆、能長成新植物的 → 種子（花生仁、紅豆）。"],
      task:"做做看：在實驗室分類時，每放一樣先說出你用了哪一個撇步。",ask:"薑有一節一節的，它是根還是莖？為什麼？"}
   ],
   "3-1":[
@@ -1057,6 +1104,7 @@ var EXPLAIN = {
 /* ---------- 實驗室的預測題 ---------- */
 var PREDICT={
   shadow:{q:"先猜猜看：下午 4 點，竿子的影子會朝哪一邊？",opts:["東邊","西邊","南邊","沒有影子"],a:0,why:"下午太陽在西邊，影子在相反的東邊（這個季節偏東北）。"},
+  season:{q:"先猜猜看：冬至中午竿子的影子，和夏至中午比起來會怎樣？",opts:["比較長","比較短","一樣長"],a:0,why:"冬至中午太陽比較低，光斜斜照過來，影子比較長；夏至中午太陽幾乎在頭頂，影子非常短。"},
   light:{q:"先猜猜看：杯子裡加水以後，斜插的筷子看起來會怎樣？",opts:["還是直的","在水面好像折斷了","整枝不見了"],a:1,why:"光從水斜斜跑到空氣時方向改變（折射），筷子看起來在水面折了一下。"},
   transport:{q:"先猜猜看：枝條插在紅色的水裡，過幾個小時，紅色會先出現在哪裡？",opts:["葉子先變紅","莖先變紅，再到葉子","都不會變紅"],a:1,why:"水從下面被莖往上運送，所以莖先變紅，最後才到葉子。"},
   grow:{q:"先猜猜看：落地生根的新芽會從哪裡長出來？",opts:["葉子的邊緣","花","種子"],a:0,why:"落地生根是用葉繁殖，小芽長在葉子邊緣。"},
@@ -1181,6 +1229,7 @@ function wireReview(el){
 function startRound(){screen="practice";route();window.scrollTo({top:$("#main").offsetTop-8,behavior:"smooth"});}
 function renderConcepts(){
   var v=V();
+  $("#conceptTitle").textContent=["","一","二","三","四","五","六","七","八","九","十"][CIDS.length]+"個觀念（點一下看圖解、做實驗）";
   $("#concepts").innerHTML=CIDS.map(function(cid){
     var c=CONCEPTS[cid], ok=conceptOn(cid), st=v.stages[cid];
     var dueN=v.remainingIds.filter(function(id){var k=card(id);return k&&k.concept===cid;}).length;
@@ -1433,6 +1482,7 @@ var labTimer=null;
 function stopAnim(){if(labTimer){cancelAnimationFrame(labTimer);labTimer=null;}}
 var LAB_TASKS={
   shadow:["把時間拉到早上 8 點左右，看影子朝哪邊","拉到中午 12 點左右，看影子變長還是變短","拉到下午 4 點左右，看影子朝哪邊"],
+  season:["選「夏至」，把時間拉到中午 12 點左右，看影子多長","選「冬至」，把時間拉到中午 12 點左右，比比看影子","比較夏至和冬至：太陽從哪個方向升起（兩天都看過）"],
   light:["看光怎麼被擋住變成影子","看鏡子怎麼把光反射回來","在杯子裡加水，看筷子怎麼「折斷」","讓陽光穿過三稜鏡"],
   transport:["把時間拉到 6 小時，看紅色的水跑到哪裡","點「根」看它的工作","點「莖」看它的工作","點「葉」看它的工作"],
   grow:["點落地生根的葉子","點馬鈴薯","點果實"],
@@ -1521,6 +1571,48 @@ LABS.shadow=function(box){
   }
   $("#shT").oninput=draw; draw();
 };
+/* 1-3 季節：選夏至／春分／秋分／冬至，看台中真實的日出方向、白天長短、正午高度與影子（sun.js 約略計算） */
+LABS.season=function(box){
+  var DAYS=[["夏至","6/21",new Date(2026,5,21)],["春分","3/20",new Date(2026,2,20)],["秋分","9/23",new Date(2026,8,23)],["冬至","12/21",new Date(2026,11,21)]];
+  var st={k:0,seen:{}};
+  box.innerHTML='<p class="small muted" style="margin:0">台中（約略計算）。先選一個日子，再拉時間看太陽和影子。從上往下看，像地圖：上北、下南、右東、左西。</p>'+
+    '<div class="tabs" id="seTabs">'+DAYS.map(function(d,i){return '<button type="button" data-k="'+i+'">'+d[0]+'（'+d[1]+'）</button>';}).join("")+'</div>'+
+    '<svg class="labsvg" viewBox="0 0 360 270" id="seSvg"></svg><label for="seT" class="small">時間：<b id="seTl"></b></label><input type="range" id="seT" min="5" max="19" step="0.25" value="12"><div class="readout" id="seRo"></div>';
+  function pos(date,h){return sunPosition(date,h,TAICHUNG.lat,TAICHUNG.lon,TAICHUNG.tz);}
+  function fmt(h){var hh=Math.floor(h),mm=Math.round((h-hh)*60);if(mm===60){hh++;mm=0;}return hh+":"+(mm<10?"0":"")+mm;}
+  function riseDir(az){return Math.abs(az-90)<=3?"正東":az<90?"東偏北":"東偏南";}
+  function setDir(az){return Math.abs(az-270)<=3?"正西":az>270?"西偏北":"西偏南";}
+  function onCircle(az,R){return [180+R*Math.sin(az*Math.PI/180),135-R*Math.cos(az*Math.PI/180)];}
+  function draw(){
+    var d=DAYS[st.k], date=d[2], tm=sunTimes(date,TAICHUNG.lat,TAICHUNG.lon,TAICHUNG.tz), r=$("#seT");
+    r.min=Math.ceil(tm.rise*4)/4; r.max=Math.floor(tm.set*4)/4;
+    if(+r.value<+r.min) r.value=r.min; if(+r.value>+r.max) r.value=r.max;
+    var t=+r.value, p=pos(date,t), sh=C.shadowFromSun(p.az,p.alt,1), ri=pos(date,tm.rise+0.02), se=pos(date,tm.set-0.02);
+    var noon=0; for(var h=11;h<=13;h+=1/30){var q=pos(date,h); if(q.alt>noon) noon=q.alt;}
+    var sp=onCircle(p.az,95), rp=onCircle(ri.az,95), ep=onCircle(se.az,95);
+    var L=sh.len===null?0:Math.min(110,34*sh.len), ex=180+L*Math.sin((sh.az||0)*Math.PI/180), ey=135-L*Math.cos((sh.az||0)*Math.PI/180), alt=Math.max(0,p.alt);
+    $("#seTl").textContent=d[0]+" "+fmt(t);
+    $("#seSvg").innerHTML='<circle cx="180" cy="135" r="95" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/>'+
+      '<text x="180" y="26" text-anchor="middle" font-size="15" fill="var(--ink)">北</text><text x="180" y="258" text-anchor="middle" font-size="15" fill="var(--ink)">南</text>'+
+      '<text x="296" y="140" font-size="15" fill="var(--ink)">東</text><text x="54" y="140" text-anchor="end" font-size="15" fill="var(--ink)">西</text>'+
+      '<circle cx="'+rp[0].toFixed(1)+'" cy="'+rp[1].toFixed(1)+'" r="5" fill="var(--sun)"/><text x="'+(rp[0]+8).toFixed(1)+'" y="'+(rp[1]-8).toFixed(1)+'" font-size="12" fill="var(--sun-deep)">日出</text>'+
+      '<circle cx="'+ep[0].toFixed(1)+'" cy="'+ep[1].toFixed(1)+'" r="5" fill="var(--sun)"/><text x="'+(ep[0]-8).toFixed(1)+'" y="'+(ep[1]-8).toFixed(1)+'" text-anchor="end" font-size="12" fill="var(--sun-deep)">日落</text>'+
+      (L>=1?'<line x1="180" y1="135" x2="'+ex.toFixed(1)+'" y2="'+ey.toFixed(1)+'" stroke="var(--ink)" stroke-width="8" stroke-linecap="round" opacity=".5"/>':'')+
+      '<circle cx="180" cy="135" r="6" fill="var(--soil)"/><circle cx="'+sp[0].toFixed(1)+'" cy="'+sp[1].toFixed(1)+'" r="15" fill="var(--sunball)"/>'+
+      '<rect x="330" y="40" width="14" height="180" rx="7" fill="var(--line)"/><rect x="330" y="'+(220-180*alt/90).toFixed(1)+'" width="14" height="'+(180*alt/90).toFixed(1)+'" rx="7" fill="var(--sun)"/>'+
+      '<text x="337" y="236" text-anchor="middle" font-size="11" fill="var(--muted)">高度</text>';
+    $("#seRo").innerHTML='<b>'+d[0]+'</b>：日出 '+fmt(tm.rise)+'（'+riseDir(ri.az)+'）、日落 '+fmt(tm.set)+'（'+setDir(se.az)+'），白天約 '+(tm.set-tm.rise).toFixed(1)+' 小時；中午太陽高度約 '+Math.round(noon)+'°。<br>'+
+      '現在：太陽在'+C.dirName(p.az)+'方的天空、高度約 '+Math.round(p.alt)+'°，影子'+(p.alt<=0?'看不到':sh.len<0.1?'非常短（幾乎看不到）':sh.len>2?'很長':sh.len>0.9?'中等':'很短')+'。';
+    document.querySelectorAll("#seTabs button").forEach(function(b){b.classList.toggle("on",+b.dataset.k===st.k);});
+    var rr=lab&&run(); if(rr&&rr.phase!=="predict"){st.seen[st.k]=1;
+      if(t>=11.5&&t<=12.5){ if(st.k===0) check(0); if(st.k===3) check(1); }
+      if(st.seen[0]&&st.seen[3]) check(2);}
+  }
+  document.querySelectorAll("#seTabs button").forEach(function(b){b.onclick=function(){st.k=+b.dataset.k;draw();};});
+  $("#seT").oninput=draw;
+  LABS.season.after=draw;
+  draw();
+};
 /* 1-2 光：四個小實驗 */
 LABS.light=function(box){
   box.innerHTML='<div class="tabs" id="lgTabs"><button type="button" data-k="0">影子</button><button type="button" data-k="1">反射</button><button type="button" data-k="2">折射</button><button type="button" data-k="3">三稜鏡</button></div><svg class="labsvg" viewBox="0 0 360 220" id="lgSvg"></svg><div id="lgCtl" class="row"></div><div class="readout" id="lgRo"></div>';
@@ -1546,10 +1638,12 @@ LABS.light=function(box){
       ctl='<button class="btn sm" type="button" id="lgW">'+(st.water?"把水倒掉":"倒水進杯子")+'</button>';
       ro=st.water?"有水以後，水下的筷子看起來在水面「折」了一下：光從水斜斜跑到空氣，方向改變，這叫折射。":"杯子沒水時，筷子看起來是直的。按「倒水進杯子」看看。";
     }else{
-      s+='<polygon points="180,50 240,170 120,170" fill="var(--pri-soft)" stroke="var(--ink)" stroke-width="2"/><line x1="20" y1="120" x2="152" y2="112" stroke="var(--sunball)" stroke-width="6"/>';
-      if(st.shine) ["#e53935","#fb8c00","#fdd835","#43a047","#1e88e5","#3949ab","#8e24aa"].forEach(function(c,i){s+='<line x1="212" y1="118" x2="350" y2="'+(70+i*18)+'" stroke="'+c+'" stroke-width="5"/>';});
+      // 光從左面進、右面出，兩次都往三稜鏡比較厚的底邊偏；紅光偏得最少（最上面）、紫光最多（最下面）
+      s+='<polygon points="180,50 240,170 120,170" fill="var(--pri-soft)" stroke="var(--ink)" stroke-width="2"/><line x1="20" y1="120" x2="149" y2="112" stroke="var(--sunball)" stroke-width="6"/>';
+      if(st.shine){s+='<line x1="149" y1="112" x2="217" y2="124" stroke="var(--sunball)" stroke-width="4" opacity=".6"/>';
+        ["#e53935","#fb8c00","#fdd835","#43a047","#1e88e5","#3949ab","#8e24aa"].forEach(function(c,i){var a=(18+i*20/6)*Math.PI/180;s+='<line x1="217" y1="124" x2="'+(217+130*Math.cos(a)).toFixed(1)+'" y2="'+(124+130*Math.sin(a)).toFixed(1)+'" stroke="'+c+'" stroke-width="5"/>';});}
       ctl='<button class="btn sun sm" type="button" id="lgP">'+(st.shine?"再照一次":"讓陽光穿過三稜鏡")+'</button>';
-      ro=st.shine?"白色的陽光被分成好多顏色：陽光是由多種色光組成的。彩虹也是同樣的道理。":"按按鈕，讓陽光照進三稜鏡。";
+      ro=st.shine?"白色的陽光被分成好多顏色：陽光是由多種色光組成的。彩虹也是同樣的道理。（光穿過三稜鏡會往比較厚的那一邊偏）":"按按鈕，讓陽光照進三稜鏡。";
     }
     $("#lgSvg").innerHTML=s; $("#lgCtl").innerHTML=ctl; $("#lgRo").textContent=ro;
     document.querySelectorAll("#lgTabs button").forEach(function(b){b.classList.toggle("on",+b.dataset.k===st.k);});
@@ -1586,7 +1680,7 @@ LABS.grow=function(box){
     ['落地生根','馬鈴薯','果實與種子'].map(function(n,i){return '<button class="pot" type="button" id="gr'+i+'"><svg viewBox="0 0 100 100" id="g'+i+'" aria-hidden="true"></svg><span class="small">'+n+'</span></button>';}).join("")+'</div><div class="readout" id="grRo">點上面的植物。</div>';
   var st=[0,0,0];
   function draw(){
-    $("#g0").innerHTML='<path d="M15 60 q35 -40 70 0 q-35 25 -70 0" fill="var(--leaf)"/>'+(st[0]?[20,35,50,65,80].map(function(x){return '<path d="M'+x+' '+(60-Math.abs(50-x)*0.5)+' l0 -10" stroke="var(--leaf)" stroke-width="3"/><circle cx="'+x+'" cy="'+(48-Math.abs(50-x)*0.5)+'" r="4" fill="var(--leaf)"/>';}).join(""):"");
+    $("#g0").innerHTML='<path d="M15 60 q35 -40 70 0 q-35 25 -70 0" fill="var(--leaf)"/>'+(st[0]?[20,35,50,65,80].map(function(x){var t=(x-15)/70,y=60-80*t*(1-t);return '<path d="M'+x+' '+y.toFixed(1)+' l0 -8" stroke="var(--leaf)" stroke-width="3"/><circle cx="'+x+'" cy="'+(y-11).toFixed(1)+'" r="4" fill="var(--leaf)"/>';}).join(""):"");
     $("#g1").innerHTML='<ellipse cx="50" cy="62" rx="32" ry="22" fill="var(--soil)"/><circle cx="38" cy="56" r="3" fill="var(--ink)"/><circle cx="60" cy="66" r="3" fill="var(--ink)"/>'+(st[1]?'<path d="M38 54 q-4 -20 -12 -28" stroke="var(--leaf)" stroke-width="4" fill="none"/><path d="M60 64 q6 -24 14 -34" stroke="var(--leaf)" stroke-width="4" fill="none"/>':'');
     $("#g2").innerHTML=st[2]?'<path d="M30 70 q20 -40 40 0" fill="var(--red)" opacity=".4"/><ellipse cx="50" cy="76" rx="8" ry="5" fill="var(--soil)"/><path d="M50 72 q0 -18 8 -26" stroke="var(--leaf)" stroke-width="4" fill="none"/>':'<circle cx="50" cy="56" r="26" fill="var(--red)"/><ellipse cx="44" cy="58" rx="4" ry="3" fill="var(--soil)"/><ellipse cx="56" cy="54" rx="4" ry="3" fill="var(--soil)"/>';
   }
@@ -1597,7 +1691,7 @@ LABS.grow=function(box){
 /* 2-3 分類遊戲 */
 LABS.sort=function(box){
   var ITEMS=[["胡蘿蔔","根"],["地瓜","根"],["白蘿蔔","根"],["馬鈴薯","莖"],["薑","莖"],["甘蔗","莖"],["蓮藕","莖"],["木材","莖"],["高麗菜","葉"],["菠菜","葉"],["花椰菜","花"],["金針花","花"],["番茄","果實"],["蘋果","果實"],["花生仁","種子"],["紅豆","種子"]];
-  var HINT={"根":"它長在土裡，沒有節和芽眼。","莖":"它有節、芽眼，或是植物用來站直、運送水分的部分。","葉":"它是一片一片、一層一層的。","花":"它是植物開花的部分。","果實":"它是花謝了以後長出來、裡面常有種子的部分。","種子":"種下去會發芽長出新植物。"};
+  var HINT={"根":"它長在土裡，沒有節和芽眼。","莖":"它有節、芽眼，或是植物用來站直、運送水分的部分。","葉":"它是一片一片、一層一層的。","花":"它是植物開花的部分。","果實":"它是花謝了以後長出來、裡面常有種子的部分。","種子":"它是果實裡面一顆一顆、能長成新植物的。"};
   var BINS=["根","莖","葉","花","果實","種子"], placed={}, sel=null;
   box.innerHTML='<p class="small muted" style="margin:0">先點一樣東西，再點它屬於植物的哪個部位。</p><div class="chips" id="soItems"></div><div class="bins" id="soBins"></div><div class="readout" id="soRo"></div>';
   function draw(){
@@ -1617,7 +1711,7 @@ LABS.sort=function(box){
 LABS.dissolve=function(box){
   box.innerHTML='<svg class="labsvg" viewBox="0 0 360 240" id="dsSvg"></svg><div class="row"><button class="btn sm" type="button" id="dsGo">放入方糖（10 g）</button><label class="toggle small"><input type="checkbox" id="dsStir"> 攪拌</label><label class="toggle small"><input type="checkbox" id="dsHot"> 熱水</label><button class="btn sun sm" type="button" id="dsSalt">加一匙鹽（6 g）</button><button class="btn ghost sm" type="button" id="dsNew">換一杯清水</button></div><div class="readout" id="dsRo">按「放入方糖」開始。溶解快慢是示意，不是真實測量。</div>';
   var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var m=C.dissolveNew(), P=[], sugarStart=null, coldDone=false, hotDone=false;
+  var m=C.dissolveNew(), P=[], sugarStart=null, coldDone=false, hotDone=false, mixed=false;
   function now(){return performance.now();}
   function sync(){m=C.dissolveStep(m,now());}
   function draw(){
@@ -1637,8 +1731,10 @@ LABS.dissolve=function(box){
     draw();
     if(r.sugarTotal>0&&r.sugarSolid===0&&m.sugarDoneAt!==null&&sugarStart!==null){
       var sec=((m.sugarDoneAt-sugarStart)/1000).toFixed(1), label=(m.hot?"熱水":"冷水")+(m.stir?"＋攪拌":"");
-      $("#dsRo").innerHTML='方糖不見了，可是糖還在水裡（分散成看不見的小粒子）。'+label+'：花了 '+sec+' 秒（示意）。<br>秤重：杯子＋水 '+m.base+' g、糖 '+r.sugarTotal+' g；溶解後一起秤 <b>'+r.scaleMass+' g</b>，重量一樣。';
-      if(!m.hot) coldDone=true; else hotDone=true;
+      var weigh='<br>秤重：杯子＋水 '+m.base+' g、糖 '+r.sugarTotal+' g；溶解後一起秤 <b>'+r.scaleMass+' g</b>，重量一樣。';
+      if(mixed) $("#dsRo").innerHTML='方糖溶完了，糖還在水裡。這次溶到一半換了條件，不能拿來比冷水和熱水；按「換一杯清水」再各做一次。'+weigh;
+      else{ $("#dsRo").innerHTML='方糖不見了，可是糖還在水裡（分散成看不見的小粒子）。'+label+'：花了 '+sec+' 秒（示意）。'+weigh;
+        if(!m.hot) coldDone=true; else hotDone=true; }
       if(coldDone) check(0); if(hotDone) check(1); check(2);
       sugarStart=null;
     }
@@ -1646,14 +1742,15 @@ LABS.dissolve=function(box){
   }
   function start(){if(!labTimer) labTimer=requestAnimationFrame(tick);}
   on("#dsGo",function(){sync();if(C.dissolveRead(m).sugarSolid>0){$("#dsRo").textContent="上一顆方糖還在溶解，等它溶完再放。";return;}
-    m=C.dissolveAddSugar(m,now()); sugarStart=now(); $("#dsRo").textContent="糖正在溶解……"; start();});
-  $("#dsStir").onchange=function(e){sync();m.stir=e.target.checked;};
-  $("#dsHot").onchange=function(e){sync();m.hot=e.target.checked;};
+    m=C.dissolveAddSugar(m,now()); sugarStart=now(); mixed=false; $("#dsRo").textContent="糖正在溶解……"; start();});
+  function changed(){if(sugarStart!==null&&C.dissolveRead(m).sugarSolid>0) mixed=true;}
+  $("#dsStir").onchange=function(e){sync();changed();m.stir=e.target.checked;};
+  $("#dsHot").onchange=function(e){sync();changed();m.hot=e.target.checked;};
   on("#dsSalt",function(){sync();m=C.dissolveAddSalt(m);var r=C.dissolveRead(m);
     if(!reduce&&r.saltSolid===0)for(var i=0;i<20;i++)P.push({x:180+(Math.random()-.5)*60,y:90+Math.random()*120,vx:(Math.random()-.5),vy:(Math.random()-.5)});
     $("#dsRo").innerHTML=r.saltSolid===0?'加了 '+(r.saltTotal/6)+' 匙鹽（'+r.saltTotal+' g），攪一攪都溶解了。秤：'+r.scaleMass+' g。':'加到第 '+(r.saltTotal/6)+' 匙，杯底的鹽<b>溶不下了</b>（留下 '+r.saltSolid+' g）：同樣多的水、同樣溫度，能溶解的量有限度。秤：'+r.scaleMass+' g。（數量是示意）';
     if(r.saltSolid>0) check(3); draw(); start();});
-  on("#dsNew",function(){stopAnim();m=C.dissolveNew();m.hot=$("#dsHot").checked;m.stir=$("#dsStir").checked;P=[];sugarStart=null;draw();$("#dsRo").textContent="換了一杯清水：秤 "+m.base+" g。";});
+  on("#dsNew",function(){stopAnim();m=C.dissolveNew();m.hot=$("#dsHot").checked;m.stir=$("#dsStir").checked;P=[];sugarStart=null;mixed=false;draw();$("#dsRo").textContent="換了一杯清水：秤 "+m.base+" g。";});
   draw();
 };
 

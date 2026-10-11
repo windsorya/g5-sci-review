@@ -105,7 +105,8 @@ def flow_remedy(browser, label, device=None):
     main = page.inner_text("#main")
     check(f"{label} 重載後進度還在", "今天還有 8 張" in main, main[:120])
     btn(page, "開始今天的練習").click()
-    check(f"{label} 新一輪把卡住的觀念排到最後", "光在空氣中是怎麼前進的" in page.inner_text("#main"), page.inner_text("#main")[:120])
+    head = page.inner_text("#main .qhead")
+    check(f"{label} 新一輪把卡住的觀念排到最後", "太陽在天空中的位置變化" not in head, head)
     check(f"{label} 沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
