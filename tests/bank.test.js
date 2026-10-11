@@ -14,7 +14,9 @@ function grab(startMarker, endMarker) {
   assert.ok(i >= 0 && j > i, "找不到 " + startMarker);
   return html.slice(i + startMarker.length, j);
 }
-const cards = vm.runInNewContext("(" + grab("var BASE_CARDS = ", ";\nvar BANK") + ")");
+const base = vm.runInNewContext("(" + grab("var BASE_CARDS = ", ";\nvar BANK") + ")");
+const extra = require("../src/bank_extra.js");                     // 加題檔（考古卷改寫 k*、安親班卷 q*/p*）
+const cards = Array.from(base).concat(extra);
 const concepts = vm.runInNewContext("(" + grab("var CONCEPTS = ", ";\nvar CIDS") + ")");
 const figs = vm.runInNewContext("(" + grab("var FIGS = ", ";\nvar BASE_CARDS") + ")");
 const bank = { cards: [], concepts: {}, figs };
@@ -40,6 +42,19 @@ test("每個觀念都有卡、都有出口題與兩種說法", () => {
   });
   const explainKeys = (html.match(/^  "(\d-\d)":\[\n    \{name:/gm) || []).map((m) => m.slice(3, 6));
   assert.deepEqual(explainKeys.sort(), Object.keys(concepts).sort());
+});
+
+test("加題檔有接進 app（BANK 用 BASE_CARDS.concat(G5_EXTRA_CARDS)），且 build 有內嵌它", () => {
+  assert.ok(/var BANK = \{cards:BASE_CARDS\.concat\(window\.G5_EXTRA_CARDS\|\|\[\]\)/.test(html));
+  assert.ok(html.includes("<!--@INLINE src/bank_extra.js-->"));
+  assert.ok(extra.length >= 150, "加題只有 " + extra.length);
+});
+
+test("安親班卷改寫的題都標出處；不收範圍外的蕨類／孢子題", () => {
+  const anqin = extra.filter((c) => c.set === "anqin");
+  assert.ok(anqin.length >= 140);
+  anqin.forEach((c) => assert.ok(/^改寫自安親班複習卷（/.test(c.page), c.id));
+  cards.forEach((c) => assert.ok(!/蕨類|孢子/.test(c.q + (c.why || "") + (c.opts || []).join("")), c.id + " 含範圍外的蕨類／孢子"));
 });
 
 test("依考古卷改寫的題（id 以 k 開頭）一定標出處，且不是示範題", () => {

@@ -193,6 +193,7 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 </div>
 
 <!--@INLINE src/sun.js-->
+<!--@INLINE src/bank_extra.js-->
 <!--@INLINE src/core.js-->
 <script>
 (function(){
@@ -275,7 +276,7 @@ var BASE_CARDS = [
   {id:"s35",concept:"3-1",type:"choice",q:"同樣多的水，熱水和冷水，哪一個能讓方糖溶解得比較快？",opts:["熱水","冷水","一樣快","都不會溶解"],a:0,hint:"在實驗室試試看冷水和熱水",why:"水溫比較高，糖通常溶解得比較快。"},
   {id:"s36",concept:"3-1",type:"choice",q:"是非題：「糖攪拌溶解以後，糖水的總重量會變輕。」",opts:["對","錯"],a:1,hint:"糖還在不在水裡？",why:"糖還在水裡，總重量不變。"}
 ];
-var BANK = {cards:BASE_CARDS, concepts:{}, figs:FIGS};
+var BANK = {cards:BASE_CARDS.concat(window.G5_EXTRA_CARDS||[]), concepts:{}, figs:FIGS};   // 加題在 src/bank_extra.js
 CIDS.forEach(function(k){BANK.concepts[k]={unit:CONCEPTS[k].unit};});
 
 var ERRS = {concept:"還不懂這個觀念", reading:"看錯題目", slip:"知道但選錯了"};
@@ -598,14 +599,18 @@ function renderHome(){
 }
 // 小考複習：把整個單元（或一個觀念）排成一輪；作答照規則記分、隔天照樣複習，不改今天的計畫
 function unitCards(unit){return C.allCards(S(),BANK).filter(function(c){return CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
+function setCards(unit){return C.allCards(S(),BANK).filter(function(c){return c.set==="anqin"&&CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
 function reviewRow(){
   var units=Object.keys(UNITS).filter(function(u){return unitCards(u).length;});
+  var sets=Object.keys(UNITS).filter(function(u){return setCards(u).length;});
   return '<div style="display:grid;gap:8px;border-top:1px solid var(--line-soft);padding-top:14px"><div style="font-weight:700">小考前想全部練一次</div><div class="row">'+
-    units.map(function(u){return '<button class="btn ghost sm" type="button" data-unit="'+u+'">第'+["","一","二","三"][+u]+'單元 '+esc(UNITS[u].replace(/^.、/,""))+'（'+unitCards(u).length+' 題）</button>';}).join("")+
-    '</div><span class="small muted">每題照樣記分、隔天照樣複習，不影響今天的計畫。</span></div>';
+    units.map(function(u){return '<button class="btn ghost sm" type="button" data-unit="'+u+'">第'+["","一","二","三"][+u]+'單元 '+esc(UNITS[u].replace(/^.、/,""))+'（'+unitCards(u).length+' 題）</button>';}).join("")+'</div>'+
+    (sets.length?'<div class="row">'+sets.map(function(u){return '<button class="btn ghost sm" type="button" data-set="'+u+'">安親班複習卷：'+esc(UNITS[u].replace(/^.、/,""))+'（'+setCards(u).length+' 題）</button>';}).join("")+'</div>':'')+
+    '<span class="small muted">每題照樣記分、隔天照樣複習，不影響今天的計畫。</span></div>';
 }
 function wireReview(el){
   el.querySelectorAll("button[data-unit]").forEach(function(b){b.onclick=function(){act({type:"sessionStart",kind:"review",ids:unitCards(b.dataset.unit)});startRound();};});
+  el.querySelectorAll("button[data-set]").forEach(function(b){b.onclick=function(){act({type:"sessionStart",kind:"review",ids:setCards(b.dataset.set)});startRound();};});
 }
 function startRound(){screen="practice";route();window.scrollTo({top:$("#main").offsetTop-8,behavior:"smooth"});}
 function renderConcepts(){
