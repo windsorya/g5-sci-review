@@ -229,6 +229,143 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
 
 </script>
 <script>
+// 看圖題的圖（2026-10-11）：照考古卷題型「自己重畫」，不用原卷圖片（著作權屬原學校，網站是公開的）。
+// 規則：凡是跟太陽有關的座標，一律由 sun.js 的 sunPosition 算出來，不憑手感畫（五個科學圖錯的教訓）。
+// 匯出 G5_FIGS = { kinds: {名稱: 繪圖函式(annotated)}, geo: {…可測的幾何…} }；app.html 的 figureSvg 遇到這裡的圖種就交給它畫。
+(function (root) {
+  "use strict";
+  var TC = { lat: 24.15, lon: 120.68, tz: 8 };
+  function sunAt(date, hour) {
+    var f = root.sunPosition || (typeof require === "function" ? require("./sun.js").sunPosition : null);
+    return f(date, hour, TC.lat, TC.lon, TC.tz);
+  }
+  function r1(x) { return Math.round(x * 10) / 10; }
+  function wrap(kind, label, inner, cap) {
+    return '<figure style="margin:0"><svg class="fig" data-fig="' + kind + '" viewBox="0 0 360 220" role="img" aria-label="' + label + '">' +
+      '<rect width="360" height="220" rx="12" fill="var(--sky1)"/>' + inner + '</svg>' + (cap ? '<figcaption class="small">' + cap + '</figcaption>' : '') + '</figure>';
+  }
+  function txt(x, y, s, size, anchor, fill) {
+    return '<text x="' + r1(x) + '" y="' + r1(y) + '" font-size="' + (size || 14) + '" text-anchor="' + (anchor || "middle") + '" fill="' + (fill || "var(--ink)") + '">' + s + '</text>';
+  }
+
+  /* ---------- 1. 竿影一天紀錄（俯視圖，上方是北） ---------- */
+  var POLE_DATE = new Date(2026, 9, 15);           // 台中 10 月 15 日（期中考前）
+  var POLE_HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+  var POLE = { x: 180, y: 190 };
+  function poleDay() {
+    var raw = POLE_HOURS.map(function (h) {
+      var p = sunAt(POLE_DATE, h), dir = (p.az + 180) % 360, len = 1 / Math.tan(p.alt * Math.PI / 180);
+      return { h: h, sunAz: p.az, alt: p.alt, dir: dir, len: len };
+    });
+    // 俯視、上北下南、左西右東：x＝東西、y 往上＝北。整體縮放到最長影子 170（螢幕座標）。
+    var maxDx = Math.max.apply(null, raw.map(function (s) { return Math.abs(Math.sin(s.dir * Math.PI / 180) * s.len); }));
+    var maxDy = Math.max.apply(null, raw.map(function (s) { return Math.max(0, Math.cos(s.dir * Math.PI / 180) * s.len); }));
+    var k = Math.min(165 / maxDx, 165 / maxDy);
+    raw.forEach(function (s) {
+      s.x = POLE.x + Math.sin(s.dir * Math.PI / 180) * s.len * k;
+      s.y = POLE.y - Math.cos(s.dir * Math.PI / 180) * s.len * k;
+    });
+    return raw;
+  }
+  function drawPoleDay(annotated) {
+    var sh = poleDay(), s = '';
+    sh.forEach(function (p) {
+      var mark = annotated && (p.h === 8 || p.h === 12);
+      s += '<line x1="' + POLE.x + '" y1="' + POLE.y + '" x2="' + r1(p.x) + '" y2="' + r1(p.y) + '" stroke="var(--ink)" stroke-width="' + (mark ? 4 : 2) + '" opacity="' + (mark ? 0.9 : 0.55) + '"/>' +
+        txt(p.x, p.y - 6, p.h + "點", 11);
+    });
+    s += '<circle cx="' + POLE.x + '" cy="' + POLE.y + '" r="5" fill="var(--ink)"/>' + txt(POLE.x, POLE.y + 20 > 216 ? 214 : POLE.y + 20, "竿子", 12, "middle", "var(--muted)") +
+      txt(16, 60, "西", 16, "start") + txt(344, 60, "東", 16, "end") + txt(180, 20, "北", 16) + txt(350, 212, "俯視圖（從上往下看）", 11, "end", "var(--muted)");
+    return wrap("pole-day", "台中十月某天每小時的竿影紀錄，從上往下看，上方是北", s,
+      annotated ? "影子永遠在太陽的對面。早上太陽在東南東，8 點的影子指向西北西；中午太陽在南方最高，12 點的影子朝北而且最短。" : "台中 10 月某天，每小時記一次竿影（從上往下看，上方是北）。");
+  }
+
+  /* ---------- 2. 正午陽光從朝南窗戶照進屋內（三個季節比較） ---------- */
+  var NOON_DAYS = { equinox: new Date(2026, 2, 20), winter: new Date(2026, 11, 22), summer: new Date(2026, 5, 21) };
+  var HOUSE = { floorY: 190, wallX: 300, winTop: 90, winBot: 150 };   // 南牆在右邊；左邊是屋內（北）
+  var HOUSE_ORDER = ["equinox", "winter", "summer"];                   // 圖上 ①②③ 的順序（故意不按季節排）
+  function noonAlt(key) {
+    var best = -90;
+    for (var m = 660; m <= 780; m++) { var a = sunAt(NOON_DAYS[key], m / 60).alt; if (a > best) best = a; }
+    return best;
+  }
+  function houseRays() {
+    return HOUSE_ORDER.map(function (key, i) {
+      var alt = noonAlt(key), t = Math.tan(alt * Math.PI / 180);
+      // 從窗戶上緣進來的光往屋內（左下）走，落到地板的位置＝陽光照進最深的地方
+      var depth = (HOUSE.floorY - HOUSE.winTop) / t;
+      // 光太陡（夏至）時，到窗台高度還沒離開牆邊 6 以上＝被窗台擋住、照不進屋內：光線畫到窗台為止
+      var atSill = (HOUSE.winBot - HOUSE.winTop) / t;
+      if (atSill < 6) return { key: key, n: i + 1, alt: alt, depth: depth, blocked: true, x0: HOUSE.wallX, y0: HOUSE.winTop, x1: HOUSE.wallX - atSill, y1: HOUSE.winBot };
+      return { key: key, n: i + 1, alt: alt, depth: depth, blocked: false, x0: HOUSE.wallX, y0: HOUSE.winTop, x1: HOUSE.wallX - depth, y1: HOUSE.floorY };
+    });
+  }
+  var SEASON_NAME = { equinox: "春分／秋分", winter: "冬至", summer: "夏至" };
+  function drawHouseNoon(annotated) {
+    var rays = houseRays(), s = '';
+    s += '<line x1="10" y1="' + HOUSE.floorY + '" x2="350" y2="' + HOUSE.floorY + '" stroke="var(--muted)" stroke-width="2"/>' +
+      '<line x1="' + HOUSE.wallX + '" y1="40" x2="' + HOUSE.wallX + '" y2="' + HOUSE.winTop + '" stroke="var(--ink)" stroke-width="5"/>' +
+      '<line x1="' + HOUSE.wallX + '" y1="' + HOUSE.winBot + '" x2="' + HOUSE.wallX + '" y2="' + HOUSE.floorY + '" stroke="var(--ink)" stroke-width="5"/>' +
+      '<line x1="20" y1="40" x2="' + HOUSE.wallX + '" y2="40" stroke="var(--ink)" stroke-width="5"/>' +
+      txt(HOUSE.wallX + 8, (HOUSE.winTop + HOUSE.winBot) / 2 + 5, "窗", 13, "start", "var(--muted)");
+    rays.forEach(function (r) {
+      // 光線畫到牆外一段，看得出入射角
+      var tn = Math.tan(r.alt * Math.PI / 180), ext = Math.min(50, (r.y0 - 6) / tn), ox = r.x0 + ext, oy = r.y0 - ext * tn;   // 不截斜率
+      var lx = r.blocked ? r.x1 - 10 : r.x1, ly = r.blocked ? r.y1 + 4 : r.y1 + 18, anchor = r.blocked ? "end" : "middle";
+      s += '<line x1="' + r1(ox) + '" y1="' + r1(oy) + '" x2="' + r1(r.x1) + '" y2="' + r.y1 + '" stroke="var(--sun)" stroke-width="2.5" stroke-dasharray="6 4"/>' +
+        '<circle cx="' + r1(r.x1) + '" cy="' + r.y1 + '" r="4" fill="var(--sun)"/>' +
+        txt(lx, ly, (annotated ? SEASON_NAME[r.key] : "①②③".charAt(r.n - 1)), annotated ? 11 : 15, anchor);
+    });
+    s += txt(28, 212, "北（屋內）", 11, "start", "var(--muted)") + txt(352, 212, "南（屋外）→", 11, "end", "var(--muted)");
+    return wrap("house-noon", "台中一間房子，三條虛線是三個不同日子中午從朝南窗戶照進來的陽光", s,
+      annotated ? "冬至中午太陽最低（約 42 度），光最斜，照得最深；夏至中午太陽幾乎在頭頂（約 89 度），光被窗台擋住，照不進屋內；春分、秋分在中間（約 65 度）。" : "台中一間房子的側面圖，窗戶朝南。①②③是三個不同日子的中午，陽光照進屋內的情形。");
+  }
+
+  /* ---------- 3. 花的構造（標號） ---------- */
+  var FLOWER = {
+    stigma: { x: 180, y: 46 }, styleTop: 54, styleBot: 132,
+    ovary: { cx: 180, cy: 158, rx: 20, ry: 26 },
+    ovules: [{ x: 174, y: 150 }, { x: 186, y: 150 }, { x: 174, y: 166 }, { x: 186, y: 166 }],
+    stamens: [{ base: { x: 160, y: 176 }, top: { x: 132, y: 70 } }, { base: { x: 200, y: 176 }, top: { x: 228, y: 70 } }]
+  };
+  // 標號 → 構造（題目的正解依這張表）
+  var FLOWER_LABELS = { 1: "柱頭", 2: "花藥", 3: "子房", 4: "胚珠", 5: "花絲" };
+  function flowerPoints() {
+    var f = FLOWER;
+    return { 1: f.stigma, 2: f.stamens[1].top, 3: { x: f.ovary.cx - f.ovary.rx, y: f.ovary.cy + 10 }, 4: f.ovules[3],
+      5: { x: (f.stamens[0].base.x + f.stamens[0].top.x) / 2, y: (f.stamens[0].base.y + f.stamens[0].top.y) / 2 } };
+  }
+  function drawFlower(annotated) {
+    var f = FLOWER, s = '';
+    s += '<path d="M120 190 Q180 150 240 190 Q180 205 120 190Z" fill="var(--c3s, #cde8c4)" stroke="var(--muted)"/>';            // 花萼／花托
+    s += '<path d="M150 180 Q70 120 110 90 Q150 120 168 176Z" fill="#f6c6d4" opacity=".75"/><path d="M210 180 Q290 120 250 90 Q210 120 192 176Z" fill="#f6c6d4" opacity=".75"/>'; // 花瓣
+    f.stamens.forEach(function (st) {
+      s += '<line x1="' + st.base.x + '" y1="' + st.base.y + '" x2="' + st.top.x + '" y2="' + st.top.y + '" stroke="#8a7a3a" stroke-width="3"/>' +
+        '<ellipse cx="' + st.top.x + '" cy="' + st.top.y + '" rx="9" ry="6" fill="#e2b33c" stroke="#8a7a3a"/>';
+    });
+    s += '<rect x="176" y="' + f.styleTop + '" width="8" height="' + (f.styleBot - f.styleTop) + '" fill="#9fcf8f" stroke="var(--muted)"/>' +
+      '<ellipse cx="' + f.stigma.x + '" cy="' + f.stigma.y + '" rx="12" ry="8" fill="#9fcf8f" stroke="var(--muted)"/>' +
+      '<ellipse cx="' + f.ovary.cx + '" cy="' + f.ovary.cy + '" rx="' + f.ovary.rx + '" ry="' + f.ovary.ry + '" fill="#9fcf8f" stroke="var(--muted)"/>';
+    f.ovules.forEach(function (o) { s += '<circle cx="' + o.x + '" cy="' + o.y + '" r="4" fill="#fff8e0" stroke="var(--muted)"/>'; });
+    var pts = flowerPoints(), lab = { 1: [300, 40], 2: [300, 80], 3: [60, 175], 4: [300, 175], 5: [60, 120] };
+    Object.keys(pts).forEach(function (n) {
+      var p = pts[n], L = lab[n], name = annotated ? n + " " + FLOWER_LABELS[n] : "①②③④⑤".charAt(n - 1);
+      s += '<line x1="' + L[0] + '" y1="' + L[1] + '" x2="' + p.x + '" y2="' + p.y + '" stroke="var(--ink)" stroke-width="1.2"/>' +
+        txt(L[0] + (L[0] > 180 ? 4 : -4), L[1] + 5, name, annotated ? 12 : 16, L[0] > 180 ? "start" : "end");
+    });
+    return wrap("flower-parts", "一朵花的構造示意圖，五個部位標著號碼", s,
+      annotated ? "雌蕊由上到下是柱頭、花柱、子房，子房裡的小顆粒是胚珠；雄蕊是花絲頂著花藥。" : "");
+  }
+
+  var api = {
+    kinds: { "pole-day": drawPoleDay, "house-noon": drawHouseNoon, "flower-parts": drawFlower },
+    geo: { poleDay: poleDay, houseRays: houseRays, noonAlt: noonAlt, flowerPoints: flowerPoints, FLOWER: FLOWER, FLOWER_LABELS: FLOWER_LABELS, HOUSE_ORDER: HOUSE_ORDER, POLE: POLE }
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = api; else root.G5_FIGS = api;
+})(typeof window !== "undefined" ? window : this);
+
+</script>
+<script>
 // 加題（2026-10-11）：①依學習方舟考古卷題型改寫（k*）②改寫自安親班複習卷（q* 太陽與光、p* 植物世界）。
 // 題目是自己的文字（網站公開，不照抄評量原文）；答案逐題依科學判定，**不照卷上的手寫答案**（手寫有多題是錯的）。
 // 看圖才能作答的題改成文字題或略過。
@@ -255,6 +392,11 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     var c = { id: id, concept: concept, type: "choice", q: q, opts: opts, a: a, why: why, page: page };
     if (hint) c.hint = hint;
     if (anqin(page)) c.set = "anqin";
+    return c;
+  }
+  function fg(id, concept, fig, q, opts, a, why, page, hint) {   // 看圖題：圖由 src/figs.js 依太陽模型自己畫，不用原卷圖
+    var c = { id: id, concept: concept, type: "figure", fig: fig, q: q, opts: opts, a: a, why: why, page: page };
+    if (hint) c.hint = hint;
     return c;
   }
   var cards = [
@@ -326,6 +468,17 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     tf("k66", "2-1", "草莓的走莖會長出新的小苗。", true, "草莓會長出細長的走莖，走莖上會長出新的小苗，這是用莖繁殖。", R7),
     tf("k67", "2-1", "榕樹的莖很軟、站不直，要纏繞別的東西往上長。", false, "榕樹的莖粗壯可以直立；榕樹特別的是氣生根，可以吸收空氣中的水分，伸到土裡還能長成支柱根。", R7),
     ch("k68", "2-1", "榕樹的氣生根向下伸進土裡、長得像樹幹，叫做什麼？", ["支柱根", "板根", "塊根", "走莖"], 0, "氣生根伸進土裡後變粗，像柱子一樣撐住大樹，叫支柱根。支柱根多了，一棵榕樹看起來就像一片樹林（獨木成林）。", R7, "像柱子一樣撐住大樹"),
+    // 看圖題（照考古卷的圖型自己重畫：竿影紀錄圖、正午陽光照進屋內、花的構造標號）
+    fg("k69", "1-1", "pole-day", "看圖：8 點的竿影指向哪一方？", ["東偏南", "西偏北", "正北", "正南"], 1, "早上太陽在東偏南，影子在太陽的對面，所以 8 點的影子指向西偏北。", R1, "影子在太陽的對面"),
+    fg("k70", "1-1", "pole-day", "看圖：這一天哪一個時間的竿影最短？", ["8 點", "10 點", "12 點", "16 點"], 2, "中午太陽在南方、高度角最大，竿影最短，而且指向北方。", R1, "太陽越高，影子越短"),
+    fg("k71", "1-1", "pole-day", "看圖：從早上到下午，竿影的尖端往哪個方向移動？", ["由東往西", "由西往東", "一直不動", "由北往南"], 1, "太陽由東往西走，影子在太陽的對面，所以竿影由西往東移動。", R1, "看 8 點和 16 點的影子各在哪一邊"),
+    fg("k72", "1-3", "house-noon", "看圖：哪一條是冬至中午照進來的陽光？", ["①", "②", "③", "三條都一樣"], 1, "冬至中午太陽最低、光最斜，從窗戶照進屋內最深，就是②。", R6, "太陽越低，光照得越深"),
+    fg("k73", "1-3", "house-noon", "看圖：哪一條是夏至中午照進來的陽光？", ["①", "②", "③", "三條都一樣"], 2, "夏至中午台中的太陽幾乎在頭頂，光幾乎直直往下，只照進窗邊一點點，就是③。", R6, "太陽最高的那一天"),
+    fg("k74", "1-3", "house-noon", "看圖：為什麼②的陽光照進屋子裡最深？", ["那一天中午太陽最低，光最斜", "那一天中午太陽最高", "那一天太陽比較大", "那一天天氣最熱"], 0, "太陽越低（高度角越小），光越斜，就能從窗戶照到屋子越裡面。", R6, "看光線斜不斜"),
+    fg("k75", "2-2", "flower-parts", "看圖：①是花的哪一個部位？", ["柱頭", "花藥", "子房", "胚珠"], 0, "雌蕊最上面、用來接住花粉的部位是柱頭。", R1, "雌蕊最上面"),
+    fg("k76", "2-2", "flower-parts", "看圖：花粉是從哪一個號碼的部位來的？", ["①", "②", "③", "④"], 1, "花粉在雄蕊的花藥裡，就是②；①是柱頭，負責接住花粉。", R1, "雄蕊頂端黃黃的地方"),
+    fg("k77", "2-2", "flower-parts", "看圖：授粉以後，哪一個號碼的部位會長成果實？", ["①", "②", "③", "④"], 2, "雌蕊下方膨大的子房（③）會長成果實。", R1, "雌蕊最下面膨大的地方"),
+    fg("k78", "2-2", "flower-parts", "看圖：哪一個號碼的部位會長成種子？", ["①", "②", "③", "④"], 3, "子房裡的小顆粒是胚珠（④），會長成種子。", R1, "子房裡面的小顆粒"),
 
     /* ---------- 安親班複習卷：太陽與光 ---------- */
     tf("q1", "1-2", "站在池邊看水中的同學，會覺得他的腳變短了。", true, "光從水中斜斜射到空氣時會偏折（折射），水中的腳看起來變短、位置變淺。", A),
@@ -1166,7 +1319,7 @@ var CONCEPTS = {
 };
 var CIDS = Object.keys(CONCEPTS);
 var SAMPLE = "示範題・未對課本頁";
-var FIGS = {"sun-am":1,"sun-pm":1};
+var FIGS = {"sun-am":1,"sun-pm":1,"pole-day":1,"house-noon":1,"flower-parts":1};
 var BASE_CARDS = [
   {id:"s1",concept:"1-1",type:"choice",q:"一天之中，太陽從哪個方向升起、往哪個方向落下？",opts:["東邊升起、西邊落下","西邊升起、東邊落下","南邊升起、北邊落下","北邊升起、南邊落下"],a:0,hint:"想想早上太陽從哪裡出來",why:"太陽每天看起來都是東升西落。"},
   {id:"s2",concept:"1-1",type:"choice",q:"一天之中，大約什麼時候太陽在天空中最高？",opts:["清晨","中午前後","傍晚","半夜"],a:1,hint:"太陽最高的時候，影子最短",why:"中午前後太陽最高，這時影子也最短。"},
@@ -1616,6 +1769,7 @@ function explainBlock(ex){
 
 /* ---------- 題目（練習與考考爸媽共用同一個 renderer） ---------- */
 function figureSvg(kind,annotated){
+  if(window.G5_FIGS&&G5_FIGS.kinds[kind]) return G5_FIGS.kinds[kind](annotated);   // 自己重畫的考古卷看圖題（src/figs.js）
   var am=kind==="sun-am", sunX=am?70:290, sunY=24, topY=90, baseY=130;   // 面向南方：東在左、西在右
   var tipX=180+(180-sunX)*(baseY-topY)/(topY-sunY);
   var s='<figure style="margin:0"><svg class="fig" data-fig="'+kind+'" viewBox="0 0 360 170" role="img" aria-label="'+(am?"早上太陽在東邊":"下午太陽在西邊")+'，地上有一根竿子">'+

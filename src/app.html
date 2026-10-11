@@ -193,6 +193,7 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 </div>
 
 <!--@INLINE src/sun.js-->
+<!--@INLINE src/figs.js-->
 <!--@INLINE src/bank_extra.js-->
 <!--@INLINE src/core.js-->
 <script>
@@ -228,7 +229,7 @@ var CONCEPTS = {
 };
 var CIDS = Object.keys(CONCEPTS);
 var SAMPLE = "示範題・未對課本頁";
-var FIGS = {"sun-am":1,"sun-pm":1};
+var FIGS = {"sun-am":1,"sun-pm":1,"pole-day":1,"house-noon":1,"flower-parts":1};
 var BASE_CARDS = [
   {id:"s1",concept:"1-1",type:"choice",q:"一天之中，太陽從哪個方向升起、往哪個方向落下？",opts:["東邊升起、西邊落下","西邊升起、東邊落下","南邊升起、北邊落下","北邊升起、南邊落下"],a:0,hint:"想想早上太陽從哪裡出來",why:"太陽每天看起來都是東升西落。"},
   {id:"s2",concept:"1-1",type:"choice",q:"一天之中，大約什麼時候太陽在天空中最高？",opts:["清晨","中午前後","傍晚","半夜"],a:1,hint:"太陽最高的時候，影子最短",why:"中午前後太陽最高，這時影子也最短。"},
@@ -678,6 +679,7 @@ function explainBlock(ex){
 
 /* ---------- 題目（練習與考考爸媽共用同一個 renderer） ---------- */
 function figureSvg(kind,annotated){
+  if(window.G5_FIGS&&G5_FIGS.kinds[kind]) return G5_FIGS.kinds[kind](annotated);   // 自己重畫的考古卷看圖題（src/figs.js）
   var am=kind==="sun-am", sunX=am?70:290, sunY=24, topY=90, baseY=130;   // 面向南方：東在左、西在右
   var tipX=180+(180-sunX)*(baseY-topY)/(topY-sunY);
   var s='<figure style="margin:0"><svg class="fig" data-fig="'+kind+'" viewBox="0 0 360 170" role="img" aria-label="'+(am?"早上太陽在東邊":"下午太陽在西邊")+'，地上有一根竿子">'+
