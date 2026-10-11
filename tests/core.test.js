@@ -490,3 +490,19 @@ test("F1 概念入口：選的觀念先練，計畫與到期日不變", () => {
   assert.deepEqual(s.days[D].planIds, ["s1", "t1", "s2", "t2"]);
   assert.deepEqual(C.checkState(s, b), []);
 });
+
+test("V1 小考複習回合：指定整個單元的題、作答照規則記分、不改當日計畫與完成判定", () => {
+  const b = { cards: [card("s1"), card("s2"), card("t1", "1-2"), card("p1", "2-1")], concepts: Object.assign({ "2-1": { unit: "2" } }, CONCEPTS), figs: FIGS };
+  let s = C.blankState();
+  s.cards.s1 = learned(1, ["2026-10-19"], "2026-10-25");
+  s = run(s, b, NOON(D), op("sessionStart", { kind: "review", ids: ["s1", "s2", "t1", "zz"] }));
+  assert.deepEqual([s.session.kind, s.session.queue], ["review", ["s1", "s2", "t1"]]);
+  const planBefore = s.days[D].planIds.slice();
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  assert.deepEqual(s.cards.s1.goodDays, ["2026-10-19", D]);          // 第一次答對照樣算有效日
+  assert.equal(s.cards.s1.due, "2026-10-22");
+  assert.deepEqual(s.days[D].planIds, planBefore);
+  assert.deepEqual(C.checkState(s, b), []);
+  const v = C.view(s, env(b, NOON(D)));
+  assert.equal(v.session.queue.length, 2);
+});

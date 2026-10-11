@@ -126,6 +126,22 @@ def flow_second_help(browser):
     ctx.close()
 
 
+def flow_review(browser, device=None):
+    ctx, page, errors = new_page(browser, "2026-10-11T20:30:00+08:00", device)
+    main = page.inner_text("#main")
+    check("首頁有小考複習兩個單元、溶解未開放不出現", "第一單元 太陽與光" in main and "第二單元 植物世界" in main and "第三單元" not in main, main[-200:])
+    n1 = int(main.split("第一單元 太陽與光（")[1].split(" 題")[0])
+    btn(page, "第一單元 太陽與光").click()
+    m = page.inner_text("#main")
+    check("小考複習回合＝第一單元全部題", "小考複習" in m and f"1 / {n1}" in m, m[:160])
+    btn(page, "東邊升起、西邊落下").click()
+    s = state(page)
+    check("複習作答照規則記分、不改今天計畫", s["session"]["kind"] == "review" and s["cards"]["s1"]["goodDays"] == ["2026-10-11"] and len(s["days"]["2026-10-11"]["planIds"]) == 10, json.dumps(s["session"])[:200])
+    shot(page, "review_round")
+    check("小考複習沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
 def flow_comeback(browser):
     ctx, page, errors = new_page(browser, "2026-10-12T19:00:00+08:00",
                                  init="""if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');
@@ -268,6 +284,8 @@ def main():
         flow_remedy(wk, "webkit_ipad", ipad)
         flow_second_help(ch)
         flow_comeback(ch)
+        flow_review(ch)
+        flow_review(wk, ipad)
         flow_short_round_and_teach(wk, dict(p.devices["iPad Mini"]))
         flow_save_fail(ch)
         flow_corrupt(ch)

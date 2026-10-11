@@ -529,13 +529,25 @@ function renderHome(){
       '<div class="row">'+(inRound?'<button class="btn" type="button" id="goOn">繼續這一輪（還有 '+se.queue.length+' 張）</button>':'<button class="btn" type="button" id="goAll">開始今天的練習</button>')+
       (!inRound&&left>3?'<button class="btn ghost" type="button" id="goLight">今天有點累，只做 3 張</button>':'')+'</div></div></div>';
   }
-  el.innerHTML=h;
+  el.innerHTML=h+reviewRow();
+  wireReview(el);
   on("#goAll",function(){act({type:"sessionStart"});startRound();});
   on("#goLight",function(){act({type:"sessionStart",size:3});startRound();});
   on("#goOn",startRound);
   on("#goTeach",function(){renderTeach();});
   on("#goRedo",function(){var w=V().session.wrong.slice();act({type:"sessionStart",kind:"redo",ids:w});startRound();});
   renderSide();
+}
+// 小考複習：把整個單元（或一個觀念）排成一輪；作答照規則記分、隔天照樣複習，不改今天的計畫
+function unitCards(unit){return C.allCards(S(),BANK).filter(function(c){return CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
+function reviewRow(){
+  var units=Object.keys(UNITS).filter(function(u){return unitCards(u).length;});
+  return '<div style="display:grid;gap:8px;border-top:1px solid var(--line-soft);padding-top:14px"><div style="font-weight:700">小考前想全部練一次</div><div class="row">'+
+    units.map(function(u){return '<button class="btn ghost sm" type="button" data-unit="'+u+'">第'+["","一","二","三"][+u]+'單元 '+esc(UNITS[u].replace(/^.、/,""))+'（'+unitCards(u).length+' 題）</button>';}).join("")+
+    '</div><span class="small muted">每題照樣記分、隔天照樣複習，不影響今天的計畫。</span></div>';
+}
+function wireReview(el){
+  el.querySelectorAll("button[data-unit]").forEach(function(b){b.onclick=function(){act({type:"sessionStart",kind:"review",ids:unitCards(b.dataset.unit)});startRound();};});
 }
 function startRound(){screen="practice";route();window.scrollTo({top:$("#main").offsetTop-8,behavior:"smooth"});}
 function renderConcepts(){
@@ -570,6 +582,7 @@ function renderCal(){
 function toast(t){var el=$("#main"),d=document.createElement("div");d.className="hint";d.textContent=t;el.prepend(d);setTimeout(function(){d.remove();},3500);}
 
 /* ---------- 觀念頁（概念入口） ---------- */
+function conceptCards(cid){return C.allCards(S(),BANK).filter(function(c){return c.concept===cid;}).map(function(c){return c.id;});}
 function renderConcept(cid){
   screen="concept";
   var c=CONCEPTS[cid], v=V(), ex=EXPLAIN[cid][0];
@@ -578,9 +591,11 @@ function renderConcept(cid){
   el.innerHTML='<div style="display:grid;gap:14px"><div class="qhead"><span>'+esc(UNITS[c.unit])+'</span><span>'+STAGE[v.stages[cid]]+'</span></div><h2>'+esc(c.title)+'</h2>'+
     explainBlock(ex)+
     '<div class="row"><button class="btn" type="button" id="cLab">去實驗室動手做</button>'+(mine&&!v.completed?'<button class="btn ghost" type="button" id="cFocus">先練這個觀念（今天 '+mine+' 張）</button>':'')+
+    '<button class="btn ghost" type="button" id="cAll">練這個觀念的全部 '+conceptCards(cid).length+' 題</button>'+
     '<button class="btn ghost" type="button" id="cMore">換另一種說法</button><button class="btn ghost sm" type="button" id="cBack">回首頁</button></div></div>';
   on("#cLab",function(){openLab(cid,{from:"menu"});});
   on("#cFocus",function(){act({type:"sessionStart",focus:cid});startRound();});
+  on("#cAll",function(){act({type:"sessionStart",kind:"review",ids:conceptCards(cid)});startRound();});
   on("#cMore",function(){var b=$("#main .remedy");if(b)b.outerHTML=explainBlock(EXPLAIN[cid][1]);$("#cMore").hidden=true;});
   on("#cBack",renderHome);
   el.scrollIntoView({behavior:"smooth",block:"start"});
@@ -636,7 +651,7 @@ function renderPractice(){
   if(!c) return renderEnd();
   ui={hint:false,cardId:id,variation:se.kinds[id]==="variation"};
   var con=CONCEPTS[c.concept], total=se.answered.length+se.queue.length, pos=se.answered.length+1;
-  var h='<div class="qhead"><span>'+esc(UNITS[con.unit])+'・'+esc(con.title)+(ui.variation?'<span class="tag">同觀念換一題確認</span>':'')+'</span><span>'+pos+' / '+total+'</span></div><div class="bar"><i style="width:'+Math.round((pos-1)/total*100)+'%"></i></div>';
+  var h='<div class="qhead"><span>'+(se.kind==="review"?'<span class="tag" style="margin:0 6px 0 0">小考複習</span>':'')+esc(UNITS[con.unit])+'・'+esc(con.title)+(ui.variation?'<span class="tag">同觀念換一題確認</span>':'')+'</span><span>'+pos+' / '+total+'</span></div><div class="bar"><i style="width:'+Math.round((pos-1)/total*100)+'%"></i></div>';
   h+=questionHtml(c,"practice");
   var tools='<div class="tools"><label><input type="checkbox" id="unsure"> 我不太確定</label>'+(c.hint?'<button class="btn ghost sm" type="button" id="hintBtn">給我一點提示</button>':'')+'</div><div class="hint" id="hintBox" hidden></div>';
   if(c.type==="map"){

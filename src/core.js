@@ -141,9 +141,10 @@
       case "tick": break;
 
       case "sessionStart": {
-        if (action.kind === "redo") {
+        if (action.kind === "redo" || action.kind === "review") {
+          // redo＝再練答錯的；review＝小考前把整個單元／觀念練一次。作答規則一樣，不改當日計畫與完成判定
           var ids = (Array.isArray(action.ids) ? action.ids : []).filter(function (id) { return !!cardById(s, bank, id); });
-          s.session = { day: today, kind: "redo", queue: uniq(ids), answered: [], wrong: [], kinds: {} };
+          s.session = { day: today, kind: action.kind, queue: uniq(ids), answered: [], wrong: [], kinds: {} };
         } else {
           var sess = planSession(s, bank, today);
           if (isStr(action.focus) && bank.concepts[action.focus]) {
@@ -445,7 +446,7 @@
     });
     if (o.session !== null) {
       var se = o.session;
-      if (!isObj(se) || !isDay(se.day) || ["plan", "redo"].indexOf(se.kind) < 0 || !strList(se.queue) ||
+      if (!isObj(se) || !isDay(se.day) || ["plan", "redo", "review"].indexOf(se.kind) < 0 || !strList(se.queue) ||
           !strList(se.answered) || !strList(se.wrong) || !isObj(se.kinds) ||
           (se.size !== undefined && !isNat(se.size)) || (se.halted !== undefined && !isBool(se.halted)) ||
           (se.focus !== undefined && !bank.concepts[se.focus])) bad("session");
