@@ -1,0 +1,1720 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="自然複習"></head><body><title>五上自然複習</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Huninn&display=swap">
+<style>
+/* 版面（A 晴空實驗室）：上方天空場景＋倒數，中間是今天的任務或練習卡，六個觀念入口，下方收合家長工具 */
+:root{
+  --bg:#f4f8fb; --card:#ffffff; --ink:#17324a; --muted:#4a6276; --line:#c9d7e2; --line-soft:#dde7ef;
+  --pri:#1f5f8b; --pri-soft:#e9f2f8; --on-pri:#ffffff;
+  --sun:#b4770c; --sun-deep:#8a5a0a; --sunball:#f2b632; --sun-soft:#f8ecd6;
+  --leaf:#2f7d4f; --leaf-soft:#e2efe6; --soil:#8a5a3b;
+  --bad:#b4442f; --bad-soft:#fbe7e2;
+  --sky1:#cfe6f5; --sky2:#b7d9ef; --grass:#8fc79a; --waterfill:#bcdcef; --red:#d23c3c;
+  --f-display:"Huninn","Noto Sans TC","PingFang TC","Heiti TC",sans-serif;
+  --f-body:"Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",sans-serif;
+  --r:18px; --shadow:0 2px 10px rgba(23,50,74,.08);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1a24; --card:#172634; --ink:#e4eef6; --muted:#9db3c4; --line:#2c4256; --line-soft:#223545;
+  --pri:#6fb0de; --pri-soft:#1a3347; --on-pri:#0b1620;
+  --sun:#e6b25a; --sun-deep:#f0c879; --sunball:#f2c14e; --sun-soft:#3a2f1b;
+  --leaf:#6cc08e; --leaf-soft:#1c3328; --soil:#b58660;
+  --bad:#ec8a74; --bad-soft:#3a221d;
+  --sky1:#1b3550; --sky2:#183047; --grass:#2f5a3a; --waterfill:#24506b; --red:#ff7a7a; --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1a24; --card:#172634; --ink:#e4eef6; --muted:#9db3c4; --line:#2c4256; --line-soft:#223545;
+  --pri:#6fb0de; --pri-soft:#1a3347; --on-pri:#0b1620;
+  --sun:#e6b25a; --sun-deep:#f0c879; --sunball:#f2c14e; --sun-soft:#3a2f1b;
+  --leaf:#6cc08e; --leaf-soft:#1c3328; --soil:#b58660;
+  --bad:#ec8a74; --bad-soft:#3a221d;
+  --sky1:#1b3550; --sky2:#183047; --grass:#2f5a3a; --waterfill:#24506b; --red:#ff7a7a; --shadow:none; color-scheme:dark}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:17px;line-height:1.6;margin:0;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:disabled{cursor:default;opacity:.55}
+:focus-visible{outline:none;box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--pri)}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.03em}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 56px;display:grid;gap:18px}
+.muted{color:var(--muted)} .small{font-size:15px}
+/* 天空場景 */
+.hero{margin:0 -16px;background:var(--sky1);overflow:hidden}
+.hero .txt{padding:24px 24px 0;display:grid;gap:4px}
+.hero h1{font-size:clamp(32px,6vw,44px);line-height:1.15}
+.hero .left{font-size:15px;color:var(--muted)}
+.hero .left b{color:var(--sun-deep);font-variant-numeric:tabular-nums}
+.hero svg.sky{display:block;width:100%;height:132px}
+@media (min-width:821px){.hero{margin:0;border-radius:0 0 var(--r) var(--r)}}
+.banner{border-radius:14px;padding:12px 16px;display:grid;gap:8px;background:var(--bad-soft)}
+.banner.info{background:var(--sun-soft)}
+/* 面板 */
+.panel{background:var(--card);border-radius:var(--r);padding:22px;display:grid;gap:16px;box-shadow:var(--shadow);min-width:0}
+.today{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.today .big{display:grid;justify-items:center;min-width:88px}
+.today .big b{font-family:var(--f-display);font-weight:400;font-size:56px;line-height:1;color:var(--sun-deep);font-variant-numeric:tabular-nums}
+@media (max-width:520px){.today{grid-template-columns:1fr}.today .big{justify-items:start}}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{background:var(--pri);color:var(--on-pri);border:0;border-radius:14px;padding:12px 22px;font-size:19px;font-weight:700;min-height:52px}
+.btn.ghost{background:var(--card);color:var(--ink);border:2px solid var(--line);font-weight:500;font-size:17px}
+.btn.sun{background:var(--sun);color:#fff}
+.btn.leaf{background:var(--leaf);color:#fff}
+.btn.warn{background:var(--bad);color:#fff}
+.btn.sm{font-size:16px;padding:9px 14px;min-height:46px;font-weight:500}
+.sect-t{font-size:19px;font-weight:700}
+/* 六個觀念入口 */
+.concepts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:560px){.concepts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ccard{background:var(--card);border:2px solid var(--line-soft);border-radius:16px;padding:14px;display:grid;gap:6px;justify-items:start;text-align:left;min-height:128px;box-shadow:var(--shadow)}
+.ccard.c1{border-color:#f2d18a} .ccard.c2{border-color:#b8d4e8} .ccard.c3{border-color:#bfdcc6}
+.ccard b{font-size:18px} .ccard .st{font-size:14px;color:var(--leaf)} .ccard .due{font-size:14px;color:var(--muted)}
+.ccard.off{background:var(--line-soft);border-style:dashed;box-shadow:none;color:var(--muted)}
+.ccard.help{border-color:var(--bad)}
+/* 日曆列 */
+.cal{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:6px}
+@media (max-width:560px){.cal{grid-template-columns:repeat(7,minmax(0,1fr))}}
+.cal i{display:flex;align-items:center;justify-content:center;height:34px;border-radius:8px;background:var(--line-soft);color:var(--muted);font-size:13px;font-style:normal;font-variant-numeric:tabular-nums}
+.cal i.on{background:var(--leaf);color:#fff}
+.cal i.today{box-shadow:inset 0 0 0 2px var(--sun)}
+.cal i.exam{background:var(--sun-soft);color:var(--sun-deep)}
+/* 練習卡 */
+.qhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:15px;color:var(--muted)}
+.bar{height:10px;border-radius:99px;background:var(--line-soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--leaf)}
+.tag{display:inline-block;background:var(--sun-soft);color:var(--sun-deep);border-radius:8px;padding:0 10px;font-size:14px;margin-left:6px}
+.q{font-size:clamp(21px,3.4vw,26px);line-height:1.5;font-weight:700}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.opts{grid-template-columns:1fr}}
+.opt{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px 18px;text-align:left;font-size:20px;min-height:58px}
+.opt.right{border:3px solid var(--leaf);background:var(--leaf-soft);opacity:1}
+.opt.wrong{border:3px solid var(--bad);background:var(--bad-soft);opacity:1}
+@media (hover:hover){.opt:hover:not(:disabled){border-color:var(--pri)}}
+.tools{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.tools label{display:flex;gap:10px;align-items:center;min-height:46px}
+input[type=checkbox]{width:24px;height:24px;accent-color:var(--pri);flex:none}
+.hint{background:var(--pri-soft);border-radius:12px;padding:10px 14px}
+.fb{border-radius:14px;padding:14px 16px;display:grid;gap:8px}
+.fb.ok{background:var(--leaf-soft)} .fb.no{background:var(--bad-soft)}
+.src{font-size:13px;color:var(--muted)}
+.map .center{justify-self:center;font-family:var(--f-display);font-size:22px;padding:8px 18px;border-radius:999px;background:var(--leaf-soft);color:var(--leaf)}
+.map{display:grid;gap:12px}
+.branches{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.branch{border:2px dashed var(--line);border-radius:14px;padding:10px 12px;display:grid;gap:4px}
+.blank{border:0;background:var(--sun-soft);border-radius:10px;padding:10px;text-align:left;min-height:46px}
+.blank.shown{background:var(--leaf-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:2px solid var(--line);background:var(--card);border-radius:999px;padding:9px 18px;min-height:48px;font-size:17px}
+.chip.pri{background:var(--pri);border-color:var(--pri);color:var(--on-pri)}
+.chip.sel,.chip.picked{border-color:var(--sun);background:var(--sun-soft);color:var(--ink);opacity:1}
+.chip.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* 補救 */
+.remedy{border:2px solid var(--pri);background:var(--pri-soft);border-radius:var(--r);padding:18px;display:grid;gap:12px}
+.remedy ul{margin:0;padding-left:22px;display:grid;gap:6px}
+.prev{background:var(--card);border-radius:12px;padding:8px 12px;font-size:15px}
+.fig{width:100%;height:auto;display:block;border-radius:14px}
+/* 實驗室 */
+.lab{border:2px solid var(--pri);border-radius:var(--r);padding:16px;display:grid;gap:14px;background:var(--card)}
+.lab h2{font-size:22px;color:var(--pri)}
+.task{background:var(--pri-soft);border-radius:12px;padding:12px 14px;display:grid;gap:6px}
+.ck{display:flex;gap:10px;align-items:center}
+.ck svg{flex:none}
+.ck.got{color:var(--leaf)}
+.labsvg{width:100%;height:auto;display:block;border-radius:12px;background:var(--pri-soft)}
+.readout{font-variant-numeric:tabular-nums;background:var(--bg);border-radius:12px;padding:10px 14px}
+input[type=range]{width:100%;height:40px;accent-color:var(--sun)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tabs button{border:2px solid var(--line);background:var(--card);border-radius:999px;padding:6px 16px;min-height:46px}
+.tabs button.on{border-color:var(--pri);color:var(--pri);font-weight:700}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.bin{border:2px dashed var(--leaf);border-radius:12px;padding:8px;min-height:84px;display:grid;align-content:start;gap:4px;background:var(--leaf-soft);text-align:left}
+.bin b{font-family:var(--f-display);font-weight:400;font-size:18px;color:var(--leaf)}
+.bin span{font-size:14px}
+.pots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pot{background:var(--card);border:2px solid var(--line-soft);border-radius:14px;padding:8px;display:grid;justify-items:center;gap:4px}
+.pot svg{width:100%;max-width:120px;height:auto}
+.toggle{display:flex;gap:10px;align-items:center;min-height:46px}
+/* 結尾、家長 */
+.done{text-align:center;display:grid;gap:14px;justify-items:center}
+.done b.t{font-family:var(--f-display);font-weight:400;font-size:32px;color:var(--leaf)}
+.moods{display:flex;gap:12px}
+.moods button{border:2px solid var(--line);background:var(--card);border-radius:16px;padding:6px;min-width:64px;min-height:64px;display:grid;place-items:center}
+.moods button.on{border-color:var(--sun);background:var(--sun-soft)}
+details{background:var(--card);border-radius:var(--r);padding:16px 20px;box-shadow:var(--shadow)}
+details>summary{cursor:pointer;font-family:var(--f-display);font-size:20px;min-height:32px}
+details[open]>summary{margin-bottom:12px}
+details details{box-shadow:none;padding:6px 0;background:transparent}
+details details>summary{font-family:var(--f-body);font-size:15px}
+.exits{display:grid;gap:16px;margin:0;padding-left:22px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.three div{background:var(--bg);border-radius:12px;padding:10px;display:grid;gap:2px}
+.three b{font-family:var(--f-display);font-weight:400;font-size:28px;color:var(--pri);font-variant-numeric:tabular-nums}
+textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg);box-sizing:border-box}
+.links a{color:var(--pri)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="hero" id="hero">
+    <div class="txt"><h1>五上自然複習</h1><span>第一次定期評量 11/5（四）～11/6（五）<span class="left">・還有 <b id="days">–</b> 天</span></span></div>
+    <svg class="sky" id="sky" aria-hidden="true"></svg>
+  </header>
+  <div id="banners" aria-live="polite"></div>
+  <main class="panel" id="main" aria-live="polite"></main>
+  <section id="conceptBox" style="display:grid;gap:12px">
+    <div class="sect-t">六個觀念（點一下看圖解、做實驗）</div>
+    <div class="concepts" id="concepts"></div>
+  </section>
+  <section style="display:grid;gap:10px">
+    <div class="row" style="justify-content:space-between"><span class="sect-t">到考試的每一天</span><span class="muted small" id="streak"></span></div>
+    <div class="cal" id="cal"></div>
+  </section>
+  <details id="exitBox"><summary>出口題（爸媽隔天唸給她聽）</summary><div id="exitList"></div></details>
+  <details id="parentBox"><summary>家長摘要</summary><div id="summary"></div></details>
+  <details id="moreBox"><summary>其他練習資源</summary>
+    <div class="links small" style="display:grid;gap:8px">
+      <div><a href="https://www.pagamo.org/course/TMGQOQS7" target="_blank" rel="noopener">PaGamO 國小天地</a>：免費，選「適南國小（南一版）」，有三到六年級自然題。</div>
+      <div><a href="https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_zh_TW.html" target="_blank" rel="noopener">PhET 光的折射</a>：科羅拉多大學的免費互動實驗（繁體中文）。</div>
+      <div><a href="https://www.studyark.org/" target="_blank" rel="noopener">學習方舟</a>：各校南一五上自然期中考考古卷，適合 11/3–11/4 的紙筆模擬。</div>
+    </div>
+  </details>
+  <details id="setBox"><summary>設定與題庫</summary>
+    <div style="display:grid;gap:14px">
+      <label class="toggle"><input type="checkbox" id="u3"> 老師已經教完「水溶液 1. 溶解現象」（打勾後隔天開始出這單元的題）</label>
+      <label class="toggle"><input type="checkbox" id="snd"> 答對時播放提示音</label>
+      <p class="small muted" style="margin:0">題庫來源：目前是<strong>示範題</strong>，依學校公布的五年級課程計畫進度（南一版第 1–10 週）出的，還沒有逐題對過課本頁碼。</p>
+      <label for="importBox" class="small">加入新題卡（貼上 JSON；隔天開始出）</label>
+      <textarea id="importBox" placeholder='[{"id":"x1","concept":"1-1","type":"choice","q":"…","opts":["…","…"],"a":0,"why":"…","page":"課本 p.12"}]'></textarea>
+      <div class="row"><button class="btn ghost sm" id="importBtn" type="button">加入</button><span class="small muted" id="importMsg"></span></div>
+      <div class="row" id="resetRow"></div>
+      <p class="small muted" id="storeMsg" style="margin:0"></p>
+    </div>
+  </details>
+</div>
+
+<script>
+// 太陽位置（NOAA 簡化公式）：給日期、當地時間（小時，可帶小數）、緯度、經度、時區，
+// 回傳 {alt: 高度角°, az: 方位角°（正北為 0，順時針）}。影子實驗室用台中（24.15N, 120.68E, UTC+8）。
+// 精度約 ±0.5°，對五年級的「方位＋高度角」教學足夠；日出日落用 alt=0 求。
+function sunPosition(date, hour, lat, lon, tz) {
+  var rad = Math.PI / 180;
+  var start = Date.UTC(date.getFullYear(), 0, 1);
+  var today = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  var n = Math.round((today - start) / 86400000) + 1;
+  var g = 2 * Math.PI / 365 * (n - 1 + (hour - 12) / 24);
+  var eqt = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g)
+    - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+  var decl = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g)
+    + 0.000907 * Math.sin(2 * g) - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+  var tst = hour * 60 + eqt + 4 * lon - 60 * tz;
+  var ha = (tst / 4 - 180) * rad;
+  var phi = lat * rad;
+  var cosZ = Math.sin(phi) * Math.sin(decl) + Math.cos(phi) * Math.cos(decl) * Math.cos(ha);
+  var zen = Math.acos(Math.max(-1, Math.min(1, cosZ)));
+  var az = Math.atan2(Math.sin(ha), Math.cos(ha) * Math.sin(phi) - Math.tan(decl) * Math.cos(phi)) / rad + 180;
+  return { alt: 90 - zen / rad, az: (az + 360) % 360 };
+}
+// 日出、日落（當地時間，小時）：以 1 分鐘步進找高度角過 0 的時刻
+function sunTimes(date, lat, lon, tz) {
+  var rise = null, set = null, prev = sunPosition(date, 4, lat, lon, tz).alt;
+  for (var m = 4 * 60 + 1; m <= 20 * 60; m++) {
+    var a = sunPosition(date, m / 60, lat, lon, tz).alt;
+    if (prev <= 0 && a > 0 && rise === null) rise = m / 60;
+    if (prev > 0 && a <= 0) set = m / 60;
+    prev = a;
+  }
+  return { rise: rise, set: set };
+}
+if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, sunTimes: sunTimes };
+
+</script>
+<script>
+// g5sci 核心（v3）：所有學習狀態只經由 reduce() 改變；畫面只讀 view() 的結果。
+// 路徑固定為：操作 → 注入時鐘 → 純 reducer 產生候選狀態 → 驗證不變量 → 寫入成功 → 公布 → 畫面。
+// 設計依據：~/scripts/state/autocont/g5-v3-design-spec-20261011.md（方案乙＋30 條驗收矩陣）。
+(function (root) {
+  "use strict";
+  var LS_KEY = "g5sci.v3";
+  var LS_V1 = "g5sci.v1";
+  var NEW_PER_DAY = 5;
+  var NEW_PER_DAY_DIAG = 10;      // 10/14 前的診斷期：先把教過的卡各做一遍
+  var DIAG_END = "2026-10-14";
+  var MIX_START = "2026-10-26";
+  var OPS_KEEP = 300;              // 去重用的操作 ID；一天最多約百筆操作
+  var LOG_KEEP = 600;
+  var RUNS_KEEP = 30;
+  var TZ_MS = 8 * 3600 * 1000;     // Asia/Taipei，無日光節約
+
+  /* ---------- 日期（一律台北日） ---------- */
+  function dayKey(ms) { return new Date(ms + TZ_MS).toISOString().slice(0, 10); }
+  function isDay(x) {
+    if (typeof x !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(x)) return false;
+    var p = x.split("-").map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+    return d.getUTCFullYear() === p[0] && d.getUTCMonth() === p[1] - 1 && d.getUTCDate() === p[2];
+  }
+  function addDays(k, n) {
+    var p = k.split("-").map(Number);
+    return new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)).toISOString().slice(0, 10);
+  }
+  function diffDays(a, b) {
+    var pa = a.split("-").map(Number), pb = b.split("-").map(Number);
+    return Math.round((Date.UTC(pb[0], pb[1] - 1, pb[2]) - Date.UTC(pa[0], pa[1] - 1, pa[2])) / 86400000);
+  }
+  function weekday(k) { var p = k.split("-").map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay(); }
+
+  /* ---------- 小工具 ---------- */
+  function clone(x) { return JSON.parse(JSON.stringify(x)); }
+  function isObj(x) { return !!x && typeof x === "object" && !Array.isArray(x); }
+  function isStr(x) { return typeof x === "string" && x.trim().length > 0; }
+  function isNat(x) { return typeof x === "number" && Number.isInteger(x) && x >= 0; }
+  function isBool(x) { return typeof x === "boolean"; }
+  function uniq(a) { var s = {}; return a.filter(function (v) { if (s[v]) return false; s[v] = 1; return true; }); }
+  function pushCap(a, v, n) { a.push(v); if (a.length > n) a.splice(0, a.length - n); }
+
+  /* ---------- 題卡 ---------- */
+  function validCard(c, bank) {
+    if (!isObj(c)) return false;
+    if (!isStr(c.id) || !isStr(c.q) || !Object.prototype.hasOwnProperty.call(bank.concepts, c.concept)) return false;
+    if (c.type === "choice" || c.type === "figure") {
+      if (c.type === "figure" && !Object.prototype.hasOwnProperty.call(bank.figs, c.fig)) return false;
+      return Array.isArray(c.opts) && c.opts.length >= 2 && c.opts.every(isStr) && Number.isInteger(c.a) && c.a >= 0 && c.a < c.opts.length;
+    }
+    if (c.type === "recall") return isStr(c.ans);
+    if (c.type === "map") return isStr(c.center) && Array.isArray(c.branches) && c.branches.length > 0 &&
+      c.branches.every(function (b) { return isObj(b) && isStr(b.k) && isStr(b.show) && isStr(b.blank); });
+    return false;
+  }
+  function allCards(state, bank) { return bank.cards.concat(state.extra); }
+  function cardById(state, bank, id) {
+    var a = allCards(state, bank);
+    for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i];
+    return null;
+  }
+  function conceptOn(state, bank, cid) { return bank.concepts[cid].unit !== "3" || state.settings.unit3; }
+  function enabledCards(state, bank) {
+    return allCards(state, bank).filter(function (c) { return conceptOn(state, bank, c.concept); });
+  }
+  function cardState(state, id) { return state.cards[id] || { seen: 0, goodDays: [], blockedDay: null, due: null }; }
+  function retired(cs) { return cs.goodDays.length >= 3; }
+
+  /* ---------- 空白狀態 ---------- */
+  function blankState() {
+    return { v: 3, cards: {}, exits: {}, days: {}, labRuns: {}, session: null, log: [], ops: [],
+             help: {}, extra: [], settings: { unit3: false, sound: true } };
+  }
+  function blankDay() { return { planIds: [], doneIds: [], touched: [], extraDone: false, labRuns: 0, teach: 0, mood: null }; }
+
+  /* ---------- 每日計畫 ---------- */
+  function newQuota(day) { return day < DIAG_END ? NEW_PER_DAY_DIAG : NEW_PER_DAY; }
+  function computePlan(state, bank, day) {
+    var cards = enabledCards(state, bank), due = [], fresh = [];
+    cards.forEach(function (c) {
+      var cs = cardState(state, c.id);
+      if (cs.seen > 0) { if (!retired(cs) && cs.due && cs.due <= day) due.push(c.id); }
+      else fresh.push(c.id);
+    });
+    var pick = {}; due.concat(fresh.slice(0, newQuota(day))).forEach(function (id) { pick[id] = 1; });
+    return cards.filter(function (c) { return pick[c.id]; }).map(function (c) { return c.id; });   // 固定題庫順序
+  }
+  // 每日第一次操作就把當天計畫固定下來；之後匯入、開放單元都等隔天才納入（矩陣 29）
+  function ensureDay(state, bank, day) {
+    if (!state.days[day]) { var d = blankDay(); d.planIds = computePlan(state, bank, day); state.days[day] = d; }
+    return state.days[day];
+  }
+  function dayCompleted(d) {
+    return !!d && d.planIds.length > 0 && d.planIds.every(function (id) { return d.doneIds.indexOf(id) >= 0; });
+  }
+  function remainingOf(d) { return d.planIds.filter(function (id) { return d.doneIds.indexOf(id) < 0; }); }
+
+  // 三單元交錯期：同一份計畫，改成輪流出不同概念（不隨機，重載後順序不變）
+  function sessionOrder(state, bank, day, ids) {
+    if (day < MIX_START) return ids.slice();
+    var by = {}, order = [];
+    ids.forEach(function (id) { var c = cardById(state, bank, id), k = c ? c.concept : "?"; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(id); });
+    var out = [];
+    while (out.length < ids.length) order.forEach(function (k) { if (by[k].length) out.push(by[k].shift()); });
+    return out;
+  }
+  function planSession(state, bank, day) {
+    var d = ensureDay(state, bank, day);
+    var q = sessionOrder(state, bank, day, remainingOf(d));
+    // 待協助的概念排到這一輪最後：先別再刷她卡住的觀念（補救分支三）
+    var stuck = function (id) { var c = cardById(state, bank, id), h = c && state.help[c.concept]; return h && h.needsHelp ? 1 : 0; };
+    q = q.map(function (id, i) { return [stuck(id), i, id]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (x) { return x[2]; });
+    return { day: day, kind: "plan", queue: q, answered: [], wrong: [], kinds: {} };
+  }
+  // 跨午夜：日期與任務一起切換（矩陣 16、17）
+  function syncSession(state, bank, day) {
+    if (state.session && state.session.day !== day) state.session = planSession(state, bank, day);
+  }
+
+  /* ---------- 出口題 ---------- */
+  function openExit(state, cid, day) {
+    var e = state.exits[cid];
+    if (!e) state.exits[cid] = { status: "pending", due: addDays(day, 1), opened: day, last: null };
+  }
+
+  /* ---------- reducer ---------- */
+  function fail(state, code) { return { state: state, error: code }; }
+
+  function reduce(state0, action, env) {
+    var bank = env.bank, today = dayKey(env.now);
+    if (!isObj(action) || !isStr(action.type)) return fail(state0, "BAD_ACTION");
+    if (action.type !== "tick" && !isStr(action.id)) return fail(state0, "BAD_ACTION");
+    if (action.id && state0.ops.indexOf(action.id) >= 0) return { state: state0, dup: true };
+    var s = clone(state0), info = {};
+    var day = ensureDay(s, bank, today);
+    syncSession(s, bank, today);
+    var wasDone = dayCompleted(day);
+    function extra() { if (wasDone) day.extraDone = true; }   // 只有計畫先完成，之後實際完成的才算加碼（矩陣 9、10、12）
+
+    switch (action.type) {
+      case "tick": break;
+
+      case "sessionStart": {
+        if (action.kind === "redo") {
+          var ids = (Array.isArray(action.ids) ? action.ids : []).filter(function (id) { return !!cardById(s, bank, id); });
+          s.session = { day: today, kind: "redo", queue: uniq(ids), answered: [], wrong: [], kinds: {} };
+        } else {
+          var sess = planSession(s, bank, today);
+          if (isStr(action.focus) && bank.concepts[action.focus]) {
+            // 概念入口：她選的觀念先練，只換順序、不改到期規則與當日計畫
+            var mine = function (id) { var c = cardById(s, bank, id); return c && c.concept === action.focus ? 0 : 1; };
+            sess.queue = sess.queue.map(function (id, i) { return [mine(id), i, id]; }).sort(function (x, y) { return x[0] - y[0] || x[1] - y[1]; }).map(function (x) { return x[2]; });
+            sess.focus = action.focus;
+          }
+          if (isNat(action.size) && action.size > 0) sess.queue = sess.queue.slice(0, action.size);
+          sess.size = sess.queue.length;
+          s.session = sess;
+        }
+        break;
+      }
+
+      case "answer": {
+        var card = cardById(s, bank, action.cardId);
+        if (!card) return fail(state0, "NO_CARD");
+        if (!isBool(action.ok)) return fail(state0, "BAD_ACTION");
+        var cs = s.cards[card.id] = clone(cardState(s, card.id));
+        var sessKind = s.session && s.session.kinds[card.id];
+        var variation = !!action.variation || sessKind === "variation";
+        var first = day.touched.indexOf(card.id) < 0;
+        var shaky = !action.ok || !!action.hint || !!action.unsure;
+        cs.seen++;
+        if (cs.needsRecheck) delete cs.needsRecheck;
+        if (shaky) {
+          // 任何答錯、提示、不確定：清空有效日期，當天不得補回（矩陣 3、4）
+          cs.goodDays = []; cs.blockedDay = today; cs.due = addDays(today, 1);
+        } else if (first && !variation && cs.blockedDay !== today && cs.goodDays.indexOf(today) < 0) {
+          cs.goodDays.push(today);
+          var n = cs.goodDays.length;
+          cs.due = n === 1 ? addDays(today, 1) : n === 2 ? addDays(today, 2) : null;
+          info.graduated = n >= 3;
+        } else if (cs.due === null && cs.goodDays.length === 0) {
+          cs.due = addDays(today, 1);   // 第一次見到就是變式或重答：至少明天要回來
+        }
+        if (cs.goodDays.length > 3) cs.goodDays = cs.goodDays.slice(-3);
+        if (first) day.touched.push(card.id);
+        var inPlan = day.planIds.indexOf(card.id) >= 0;
+        if (inPlan && day.doneIds.indexOf(card.id) < 0) day.doneIds.push(card.id);
+        if (!inPlan || !first) extra();
+        else if (wasDone) extra();
+        openExit(s, card.concept, today);
+        pushCap(s.log, { op: action.id, d: today, card: card.id, c: card.concept, ok: action.ok,
+                         hint: !!action.hint, unsure: !!action.unsure, variation: variation, first: first }, LOG_KEEP);
+        if (variation && !action.ok) {
+          // 補救後換題仍錯：停止本輪、標「待協助」，交給爸媽陪她看（補救分支三）
+          var hh = s.help[card.concept] || (s.help[card.concept] = { count: 0, last: null, way: 0, needsHelp: false });
+          hh.needsHelp = true;
+          if (s.session) s.session.halted = true;
+          info.halted = true;
+        }
+        if (s.session) {
+          var q = s.session.queue, at = q.indexOf(card.id);
+          if (at >= 0) q.splice(at, 1);
+          if (s.session.answered.indexOf(card.id) < 0) s.session.answered.push(card.id);
+          if (!action.ok && s.session.wrong.indexOf(card.id) < 0) s.session.wrong.push(card.id);
+          delete s.session.kinds[card.id];
+        }
+        info.first = first; info.variation = variation;
+        break;
+      }
+
+      case "exit": {
+        var cid = action.cid;
+        if (!bank.concepts[cid]) return fail(state0, "NO_CONCEPT");
+        if (action.result !== "pass" && action.result !== "fail") return fail(state0, "BAD_ACTION");
+        var e = s.exits[cid];
+        if (e && e.status === "pass") return fail(state0, "EXIT_CLOSED");   // 通過後只有明確重測才開新票
+        e = s.exits[cid] = e || { status: "pending", due: today, opened: today, last: null };
+        e.last = today;
+        if (action.result === "pass") { e.status = "pass"; e.due = null; }
+        else {
+          e.status = "fail"; e.due = addDays(today, 1);
+          // 只動已學卡：清掉掌握，到期日取「原到期日」與「明天」較早者；未學卡維持未學（矩陣 14）
+          allCards(s, bank).forEach(function (c) {
+            if (c.concept !== cid) return;
+            var st = s.cards[c.id];
+            if (!st || st.seen === 0) return;
+            st.goodDays = [];
+            var tm = addDays(today, 1);
+            st.due = st.due && st.due < tm ? st.due : tm;
+          });
+        }
+        break;
+      }
+
+      case "exitRetest": {
+        if (!bank.concepts[action.cid]) return fail(state0, "NO_CONCEPT");
+        var ex = s.exits[action.cid];
+        if (ex && ex.status !== "pass") return fail(state0, "EXIT_OPEN");
+        s.exits[action.cid] = { status: "pending", due: today, opened: today, last: ex ? ex.last : null };
+        break;
+      }
+
+      case "labStart": {
+        if (!isStr(action.runId) || !isStr(action.lab) || !isNat(action.tasks) || action.tasks < 1 || !isNat(action.answer))
+          return fail(state0, "BAD_ACTION");
+        if (s.labRuns[action.runId]) return fail(state0, "RUN_EXISTS");
+        s.labRuns[action.runId] = { lab: action.lab, day: today, phase: "predict", prediction: null, predictionCorrect: null,
+                                    answer: action.answer, tasks: action.tasks, tasksDone: [],
+                                    from: action.from === "wrong" ? "wrong" : "menu", card: isStr(action.card) ? action.card : null };
+        var keys = Object.keys(s.labRuns);
+        if (keys.length > RUNS_KEEP) keys.slice(0, keys.length - RUNS_KEEP).forEach(function (k) { delete s.labRuns[k]; });
+        break;
+      }
+      case "labPredict": {
+        var r = s.labRuns[action.runId];
+        if (!r) return fail(state0, "NO_RUN");
+        if (r.phase !== "predict") return fail(state0, "ALREADY_PREDICTED");
+        if (!isNat(action.choice)) return fail(state0, "BAD_ACTION");
+        r.prediction = action.choice; r.predictionCorrect = action.choice === r.answer; r.phase = "observe";
+        break;
+      }
+      case "labTask": {
+        var r2 = s.labRuns[action.runId];
+        if (!r2) return fail(state0, "NO_RUN");
+        if (r2.phase === "predict") return fail(state0, "PREDICTION_REQUIRED");   // 先預測才能操作（矩陣 11）
+        if (!isNat(action.task) || action.task >= r2.tasks) return fail(state0, "BAD_ACTION");
+        if (r2.tasksDone.indexOf(action.task) < 0) r2.tasksDone.push(action.task);
+        break;
+      }
+      case "labComplete": {
+        var r3 = s.labRuns[action.runId];
+        if (!r3) return fail(state0, "NO_RUN");
+        if (r3.phase === "predict") return fail(state0, "PREDICTION_REQUIRED");
+        if (r3.phase === "complete") return { state: state0, dup: true };          // 同一次實驗只算一次（矩陣 6、12）
+        if (r3.tasksDone.length < r3.tasks) return fail(state0, "TASKS_LEFT");
+        r3.phase = "complete";
+        day.labRuns++;
+        extra();
+        if (r3.from === "wrong" && r3.card && s.session) {
+          var orig = cardById(s, bank, r3.card);
+          var v = orig ? pickVariation(s, bank, orig, action.variationId) : null;
+          if (v) {
+            var qq = s.session.queue, at2 = qq.indexOf(v);
+            if (at2 >= 0) qq.splice(at2, 1);
+            qq.unshift(v);                        // 已在佇列就移到前方，不複製（矩陣 6）
+            s.session.kinds[v] = "variation";
+            info.variation = v;
+          }
+        }
+        break;
+      }
+
+      case "help": {
+        // 「還不懂這個觀念」：只記求助紀錄、決定這次用哪一種解釋；不動任何卡片的掌握度（補救分支一、二）
+        if (!bank.concepts[action.cid]) return fail(state0, "NO_CONCEPT");
+        if (!isNat(action.ways) || action.ways < 1) return fail(state0, "BAD_ACTION");
+        var h0 = s.help[action.cid];
+        info.previous = h0 && h0.count ? { last: h0.last, way: h0.way } : null;
+        var h = s.help[action.cid] = h0 ? clone(h0) : { count: 0, last: null, way: 0, needsHelp: false };
+        h.way = h.count === 0 ? 0 : (h.way + 1) % action.ways;
+        h.count++; h.last = today;
+        info.way = h.way;
+        break;
+      }
+      case "helped": {
+        var hp = s.help[action.cid];
+        if (!hp) return fail(state0, "NO_CONCEPT");
+        hp.needsHelp = false;
+        break;
+      }
+      case "teach": {
+        if (!cardById(s, bank, action.cardId)) return fail(state0, "NO_CARD");
+        day.teach++;
+        extra();
+        break;
+      }
+      case "mood": {
+        if (["good", "ok", "tired"].indexOf(action.value) < 0) return fail(state0, "BAD_ACTION");
+        day.mood = action.value;
+        break;
+      }
+      case "settings": {
+        if (action.unit3 !== undefined) { if (!isBool(action.unit3)) return fail(state0, "BAD_ACTION"); s.settings.unit3 = action.unit3; }
+        if (action.sound !== undefined) { if (!isBool(action.sound)) return fail(state0, "BAD_ACTION"); s.settings.sound = action.sound; }
+        break;
+      }
+      case "import": {
+        if (!Array.isArray(action.cards)) return fail(state0, "BAD_ACTION");
+        var have = {}; allCards(s, bank).forEach(function (c) { have[c.id] = 1; });
+        var acc = [], rej = [];
+        action.cards.forEach(function (c) {
+          var id = isObj(c) && isStr(c.id) ? c.id : "(無 id)";
+          if (have[id] || !validCard(c, bank)) { rej.push(id); return; }
+          have[id] = 1; acc.push(id);
+          s.extra.push(clone(c));
+        });
+        info.acceptedIds = acc; info.rejectedIds = rej;
+        break;
+      }
+      case "reset": {
+        var keep = { extra: s.extra, settings: s.settings };
+        s = blankState(); s.extra = keep.extra; s.settings = keep.settings;
+        break;
+      }
+      default: return fail(state0, "BAD_ACTION");
+    }
+    if (action.id) pushCap(s.ops, action.id, OPS_KEEP);
+    return { state: s, info: info };
+  }
+
+  // 變式：同概念、已學、不是原卡；優先已在佇列的（移到前方），否則挑最不熟的（矩陣 6）
+  function pickVariation(s, bank, orig, wanted) {
+    var cands = enabledCards(s, bank).filter(function (c) {
+      return c.concept === orig.concept && c.id !== orig.id && cardState(s, c.id).seen > 0;
+    });
+    if (!cands.length) return null;
+    if (wanted && cands.some(function (c) { return c.id === wanted; })) return wanted;
+    var q = s.session ? s.session.queue : [];
+    var inQ = cands.filter(function (c) { return q.indexOf(c.id) >= 0; });
+    var pool = inQ.length ? inQ : cands;
+    pool.sort(function (a, b) { return cardState(s, a.id).goodDays.length - cardState(s, b.id).goodDays.length; });
+    return pool[0].id;
+  }
+
+  /* ---------- 檢視（純函式，不改狀態） ---------- */
+  function view(state, env) {
+    var bank = env.bank, today = dayKey(env.now);
+    var s = clone(state);
+    var d = ensureDay(s, bank, today);
+    syncSession(s, bank, today);
+    var exitPending = 0, exitLater = 0;
+    Object.keys(s.exits).forEach(function (cid) {
+      var e = s.exits[cid];
+      if (!bank.concepts[cid] || !conceptOn(s, bank, cid) || e.status === "pass") return;
+      if (e.due <= today) exitPending++; else exitLater++;
+    });
+    var stages = {};
+    Object.keys(bank.concepts).forEach(function (cid) { stages[cid] = stageOf(s, bank, cid); });
+    return {
+      today: today, planIds: d.planIds.slice(), doneIds: d.doneIds.slice(), remainingIds: remainingOf(d),
+      completed: dayCompleted(d), session: s.session, stages: stages, day: d,
+      M: { cardProgress: { done: d.doneIds.length, planned: d.planIds.length }, exitPending: exitPending, extraDone: d.extraDone },
+      exitLater: exitLater,
+      needsHelp: Object.keys(s.help).filter(function (cid) { return s.help[cid].needsHelp && bank.concepts[cid] && conceptOn(s, bank, cid); })
+    };
+  }
+  // 植物階段完全由狀態派生（矩陣 26）：0 種子＝沒見過；1 發芽＝見過部分；2 長葉＝全部見過；3 開花＝出口題通過；4 結果＝出口通過且全部畢業
+  function stageOf(s, bank, cid) {
+    var cards = enabledCards(s, bank).filter(function (c) { return c.concept === cid; });
+    if (!cards.length) return 0;
+    var seen = cards.filter(function (c) { return cardState(s, c.id).seen > 0; }).length;
+    var e = s.exits[cid], pass = !!e && e.status === "pass";
+    if (pass && cards.every(function (c) { return retired(cardState(s, c.id)); })) return 4;
+    if (pass) return 3;
+    if (seen === cards.length) return 2;
+    return seen ? 1 : 0;
+  }
+  function endTitle(v) {
+    if (!v.planIds.length) return "今天沒有排定卡片";
+    if (v.completed) return "今天的卡片都做完了";
+    if (v.session && v.session.halted) return "這一輪先停在這裡";
+    if (v.session && !v.session.queue.length && v.session.answered.length) return "這一輪完成了";
+    return "";
+  }
+  function exitList(state, env) {
+    var bank = env.bank, today = dayKey(env.now);
+    return Object.keys(bank.concepts).filter(function (cid) { return state.exits[cid] && conceptOn(state, bank, cid); })
+      .map(function (cid) { var e = state.exits[cid]; return { cid: cid, status: e.status, due: e.due, last: e.last, ready: e.status !== "pass" && e.due <= today }; });
+  }
+
+  /* ---------- 嚴格 schema（矩陣 19） ---------- */
+  function dayList(a) { return Array.isArray(a) && a.every(isDay) && uniq(a).length === a.length; }
+  function strList(a) { return Array.isArray(a) && a.every(isStr); }
+  function checkState(o, bank) {
+    var errs = [];
+    function bad(m) { errs.push(m); }
+    if (!isObj(o) || o.v !== 3) { bad("v"); return errs; }
+    if (!isObj(o.cards)) bad("cards"); else Object.keys(o.cards).forEach(function (k) {
+      var c = o.cards[k];
+      if (!isObj(c) || !isNat(c.seen) || !dayList(c.goodDays) || c.goodDays.length > 3 ||
+          !(c.blockedDay === null || isDay(c.blockedDay)) || !(c.due === null || isDay(c.due)) ||
+          (c.needsRecheck !== undefined && c.needsRecheck !== true)) bad("card " + k);
+      else if (c.goodDays.length === 3 && c.due !== null) bad("card " + k + " retired with due");
+      else if (c.goodDays.slice().sort().join() !== c.goodDays.join()) bad("card " + k + " order");
+    });
+    if (!isObj(o.exits)) bad("exits"); else Object.keys(o.exits).forEach(function (k) {
+      var e = o.exits[k];
+      if (!bank.concepts[k] || !isObj(e) || ["pending", "fail", "pass"].indexOf(e.status) < 0 ||
+          !(e.due === null || isDay(e.due)) || !isDay(e.opened) || !(e.last === null || isDay(e.last)) ||
+          ((e.status === "pass") !== (e.due === null))) bad("exit " + k);
+    });
+    if (!isObj(o.days)) bad("days"); else Object.keys(o.days).forEach(function (k) {
+      var d = o.days[k];
+      if (!isDay(k) || !isObj(d) || !strList(d.planIds) || !strList(d.doneIds) || !strList(d.touched) ||
+          !isBool(d.extraDone) || !isNat(d.labRuns) || !isNat(d.teach) ||
+          !(d.mood === null || ["good", "ok", "tired"].indexOf(d.mood) >= 0)) { bad("day " + k); return; }
+      if (!d.doneIds.every(function (id) { return d.planIds.indexOf(id) >= 0; })) bad("day " + k + " done⊄plan");
+    });
+    if (!isObj(o.labRuns)) bad("labRuns"); else Object.keys(o.labRuns).forEach(function (k) {
+      var r = o.labRuns[k];
+      if (!isObj(r) || !isStr(r.lab) || !isDay(r.day) || ["predict", "observe", "complete"].indexOf(r.phase) < 0 ||
+          !(r.prediction === null || isNat(r.prediction)) || !(r.predictionCorrect === null || isBool(r.predictionCorrect)) ||
+          !isNat(r.answer) || !isNat(r.tasks) || !Array.isArray(r.tasksDone) || !r.tasksDone.every(isNat) ||
+          ["wrong", "menu"].indexOf(r.from) < 0 || !(r.card === null || isStr(r.card))) bad("run " + k);
+    });
+    if (o.session !== null) {
+      var se = o.session;
+      if (!isObj(se) || !isDay(se.day) || ["plan", "redo"].indexOf(se.kind) < 0 || !strList(se.queue) ||
+          !strList(se.answered) || !strList(se.wrong) || !isObj(se.kinds) ||
+          (se.size !== undefined && !isNat(se.size)) || (se.halted !== undefined && !isBool(se.halted)) ||
+          (se.focus !== undefined && !bank.concepts[se.focus])) bad("session");
+    }
+    if (!Array.isArray(o.log) || !o.log.every(function (e) {
+      return isObj(e) && isStr(e.op) && isDay(e.d) && isStr(e.card) && isStr(e.c) &&
+        isBool(e.ok) && isBool(e.hint) && isBool(e.unsure) && isBool(e.variation) && isBool(e.first);
+    })) bad("log");
+    if (!strList(o.ops)) bad("ops");
+    if (!isObj(o.help)) bad("help"); else Object.keys(o.help).forEach(function (k) {
+      var h = o.help[k];
+      if (!bank.concepts[k] || !isObj(h) || !isNat(h.count) || !(h.last === null || isDay(h.last)) || !isNat(h.way) || !isBool(h.needsHelp)) bad("help " + k);
+    });
+    if (!Array.isArray(o.extra) || !o.extra.every(function (c) { return validCard(c, bank); })) bad("extra");
+    if (!isObj(o.settings) || !isBool(o.settings.unit3) || !isBool(o.settings.sound)) bad("settings");
+    return errs;
+  }
+  function decode(text, bank) {
+    var o;
+    try { o = JSON.parse(text); } catch (e) { return { accepted: false, error: "SCHEMA", detail: ["json"] }; }
+    var errs = checkState(o, bank);
+    return errs.length ? { accepted: false, error: "SCHEMA", detail: errs } : { accepted: true, state: o };
+  }
+
+  /* ---------- 舊資料遷移（v1 → v3，矩陣 28） ---------- */
+  // v1 的連對次數可能是同一天累積的，不足以證明跨日掌握：一律不承認畢業、標「需重新確認」、最晚明天回來複習。
+  function migrateV1(text, now, bank) {
+    var o;
+    try { o = JSON.parse(text); } catch (e) { return null; }
+    if (!isObj(o) || o.v !== 1) return null;
+    var today = dayKey(now), tm = addDays(today, 1), s = blankState();
+    var ids = {}; bank.cards.forEach(function (c) { ids[c.id] = c; });
+    if (Array.isArray(o.extra)) o.extra.forEach(function (c) { if (validCard(c, bank) && !ids[c.id]) { s.extra.push(clone(c)); ids[c.id] = c; } });
+    if (isObj(o.cards)) Object.keys(o.cards).forEach(function (k) {
+      var c = o.cards[k];
+      if (!ids[k] || !isObj(c) || !isNat(c.seen) || c.seen === 0) return;
+      var due = isDay(c.due) && c.due < tm ? c.due : tm;
+      s.cards[k] = { seen: c.seen, goodDays: [], blockedDay: null, due: due, needsRecheck: true };
+      openExit(s, ids[k].concept, today);
+    });
+    if (isBool(o.unit3)) s.settings.unit3 = o.unit3;
+    if (isObj(o.prefs) && isBool(o.prefs.sound)) s.settings.sound = o.prefs.sound;
+    return s;
+  }
+
+  /* ---------- 儲存層：寫入成功才公布（矩陣 27） ---------- */
+  function createStore(opt) {
+    var storage = opt.storage, bank = opt.bank, clock = opt.clock;
+    var st = { state: blankState(), saveStatus: "ok", pendingAction: null, loadError: null, syncMode: "local", migrated: false };
+    function env() { return { now: clock(), bank: bank }; }
+    function write(next) {
+      var errs = checkState(next, bank);
+      if (errs.length) return "invalid";
+      if (st.loadError) return "blocked";             // 讀不出的舊存檔不覆蓋（矩陣 19）
+      try { storage.setItem(LS_KEY, JSON.stringify(next)); return "ok"; } catch (e) { return "failed"; }
+    }
+    function load() {
+      var raw = null;
+      try { raw = storage.getItem(LS_KEY); } catch (e) { st.saveStatus = "failed"; return st; }
+      if (raw !== null) {
+        var r = decode(raw, bank);
+        if (r.accepted) st.state = r.state; else { st.loadError = r.error; st.saveStatus = "blocked"; }
+        return st;
+      }
+      var old = null;
+      try { old = storage.getItem(LS_V1); } catch (e) { old = null; }
+      if (old !== null) {
+        var m = migrateV1(old, clock(), bank);
+        if (m) { st.state = m; st.migrated = true; st.saveStatus = write(m) === "ok" ? "ok" : "failed"; }
+      }
+      return st;
+    }
+    function dispatch(action) {
+      var r = reduce(st.state, action, env());
+      if (r.error || r.dup) return { ok: !r.error, error: r.error, dup: !!r.dup, info: r.info, state: st.state };
+      var w = write(r.state);
+      if (w !== "ok") {
+        st.saveStatus = w; st.pendingAction = action;
+        return { ok: false, error: w === "invalid" ? "INVARIANT" : "SAVE_" + w.toUpperCase(), state: st.state };
+      }
+      st.state = r.state; st.saveStatus = "ok"; st.pendingAction = null;
+      return { ok: true, info: r.info, state: st.state };
+    }
+    function retry() { return st.pendingAction ? dispatch(st.pendingAction) : { ok: true, state: st.state }; }
+    function discardBroken() {   // 家長明確按「清除並重新開始」才覆蓋壞存檔
+      st.loadError = null; var b = blankState();
+      if (write(b) === "ok") { st.state = b; st.saveStatus = "ok"; return true; }
+      st.saveStatus = "failed"; return false;
+    }
+    return { get: function () { return st; }, load: load, dispatch: dispatch, retry: retry, discardBroken: discardBroken,
+             view: function () { return view(st.state, env()); }, env: env };
+  }
+
+  /* ---------- 溶解帳本（矩陣 21–23）：重量由物質帳本算，溶解按經過時間，不按幀數 ---------- */
+  var DISSOLVE = { base: 210, cube: 10, spoon: 6, saltCap: 30, coldRate: 1, hotRate: 2, stirFactor: 2 };
+  function dissolveNew() {
+    return { base: DISSOLVE.base, sugarTotal: 0, sugarDissolved: 0, saltTotal: 0, hot: false, stir: false, last: null, sugarDoneAt: null, sugarStart: null };
+  }
+  function dissolveRate(m) { return (m.hot ? DISSOLVE.hotRate : DISSOLVE.coldRate) * (m.stir ? DISSOLVE.stirFactor : 1); }
+  function dissolveAddSugar(m, now) {
+    var n = clone(m); n.sugarTotal += DISSOLVE.cube; n.last = now; n.sugarStart = now; n.sugarDoneAt = null; return n;
+  }
+  function dissolveAddSalt(m) { var n = clone(m); n.saltTotal += DISSOLVE.spoon; return n; }
+  function dissolveStep(m, now) {
+    var n = clone(m);
+    if (n.last === null) { n.last = now; return n; }
+    var dt = Math.max(0, now - n.last) / 1000, left = n.sugarTotal - n.sugarDissolved, r = dissolveRate(n);
+    if (left > 0 && dt > 0) {
+      if (r * dt >= left - 1e-9) { n.sugarDissolved = n.sugarTotal; n.sugarDoneAt = n.last + left / r * 1000; }
+      else n.sugarDissolved += r * dt;
+    }
+    n.last = now;
+    return n;
+  }
+  function dissolveRead(m) {
+    var saltDissolved = Math.min(m.saltTotal, DISSOLVE.saltCap);
+    return { sugarSolid: round6(m.sugarTotal - m.sugarDissolved), sugarDissolved: round6(m.sugarDissolved),
+             saltDissolved: saltDissolved, saltSolid: m.saltTotal - saltDissolved,
+             scaleMass: m.base + m.sugarTotal + m.saltTotal, sugarTotal: m.sugarTotal, saltTotal: m.saltTotal };
+  }
+  function round6(x) { return Math.round(x * 1e6) / 1e6; }
+
+  /* ---------- 影子（矩陣 24） ---------- */
+  // 方位以北 0°、東 90° 順時針；影子在太陽的對面，長度＝竿高÷tan(高度角)；太陽在地平線下就沒有影子
+  function shadowFromSun(az, alt, h) {
+    h = h === undefined ? 1 : h;
+    if (!(alt > 0)) return { az: null, len: null };
+    var len = h / Math.tan(alt * Math.PI / 180);
+    return { az: ((az + 180) % 360 + 360) % 360, len: Math.abs(len) < 1e-12 ? 0 : len };
+  }
+  function dirName(az) { var D = ["北", "東北", "東", "東南", "南", "西南", "西", "西北"]; return D[Math.round((((az % 360) + 360) % 360) / 45) % 8]; }
+
+  var api = {
+    LS_KEY: LS_KEY, LS_V1: LS_V1, DISSOLVE: DISSOLVE,
+    dayKey: dayKey, isDay: isDay, addDays: addDays, diffDays: diffDays, weekday: weekday,
+    validCard: validCard, blankState: blankState, reduce: reduce, view: view, endTitle: endTitle, exitList: exitList,
+    checkState: checkState, decode: decode, migrateV1: migrateV1, createStore: createStore,
+    cardState: cardState, cardById: cardById, conceptOn: conceptOn, allCards: allCards,
+    dissolveNew: dissolveNew, dissolveAddSugar: dissolveAddSugar, dissolveAddSalt: dissolveAddSalt,
+    dissolveStep: dissolveStep, dissolveRead: dissolveRead, shadowFromSun: shadowFromSun, dirName: dirName
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = api; else root.G5Core = api;
+})(typeof window !== "undefined" ? window : this);
+
+</script>
+<script>
+(function(){
+"use strict";
+var C = window.G5Core;
+var EXAM = "2026-11-05", START = "2026-10-11";
+var TAICHUNG = {lat:24.15, lon:120.68, tz:8};
+var UNITS = {"1":"一、太陽與光","2":"二、植物世界","3":"三、水溶液"};
+var CONCEPTS = {
+  "1-1":{unit:"1",short:"太陽與影子",title:"太陽在天空中的位置變化",lab:"shadow",tone:"c1",
+         exit:"下午三點，太陽在西邊的天空。地上竿子的影子會朝哪個方向？為什麼？",
+         exitAns:"朝東邊。影子出現在物體背對太陽的那一邊。"},
+  "1-2":{unit:"1",short:"光的現象",title:"認識光的現象與特性",lab:"light",tone:"c2",
+         exit:"把一枝鉛筆斜斜放進裝水的透明杯子，畫出你看到的樣子，並寫出這是哪一種光的現象。",
+         exitAns:"鉛筆在水面的地方看起來像折斷、彎掉；這是光的折射。"},
+  "2-1":{unit:"2",short:"根莖葉",title:"植物根莖葉的功能",lab:"transport",tone:"c3",
+         exit:"如果把一株植物的根全部剪掉再種回土裡，可能會發生什麼事？用根的功能說明。",
+         exitAns:"可能會萎凋、站不穩（有些植物之後可能重新長根）；因為根負責吸收水分、也負責固定植物。"},
+  "2-2":{unit:"2",short:"繁殖",title:"植物的繁殖",lab:"grow",tone:"c3",
+         exit:"舉出一種「不用種子」也能長出新植株的植物，並說出它是用哪個部位繁殖。",
+         exitAns:"例如落地生根（用葉）、馬鈴薯（用莖）。植物和部位都要說對。"},
+  "2-3":{unit:"2",short:"植物與生活",title:"植物與人類生活",lab:"sort",tone:"c3",
+         exit:"說出早餐裡兩樣來自植物的食物，各是植物的哪個部位。",
+         exitAns:"依她的回答判斷，例如生菜（葉）、紅蘿蔔（根）。部位說對才算過。"},
+  "3-1":{unit:"3",short:"溶解",title:"溶解現象",lab:"dissolve",tone:"c2",
+         exit:"同學說：「糖放進水裡攪一攪就消失了。」你同意嗎？說出一個可以證明的方法。",
+         exitAns:"不同意，糖溶解在水裡還在。證明：把杯子、水和糖一起秤，溶解後（沒有灑出來）再秤，重量一樣。"}
+};
+var CIDS = Object.keys(CONCEPTS);
+var SAMPLE = "示範題・未對課本頁";
+var FIGS = {"sun-am":1,"sun-pm":1};
+var BASE_CARDS = [
+  {id:"s1",concept:"1-1",type:"choice",q:"一天之中，太陽從哪個方向升起、往哪個方向落下？",opts:["東邊升起、西邊落下","西邊升起、東邊落下","南邊升起、北邊落下","北邊升起、南邊落下"],a:0,hint:"想想早上太陽從哪裡出來",why:"太陽每天看起來都是東升西落。"},
+  {id:"s2",concept:"1-1",type:"choice",q:"一天之中，大約什麼時候太陽在天空中最高？",opts:["清晨","中午前後","傍晚","半夜"],a:1,hint:"太陽最高的時候，影子最短",why:"中午前後太陽最高，這時影子也最短。"},
+  {id:"s3",concept:"1-1",type:"figure",fig:"sun-am",q:"早上太陽在東邊（看圖），竿子的影子會在哪一邊？",opts:["東邊","西邊","沒有影子","竿子正下方"],a:1,hint:"影子在背對太陽的那一邊",why:"影子在物體背對太陽的那一邊。太陽在東，影子就在西。"},
+  {id:"s4",concept:"1-1",type:"recall",q:"太陽在天空中愈高，竿子的影子會愈＿＿？",hint:"想一想中午的影子",ans:"愈短",why:"太陽高度愈高，影子愈短；所以中午前後影子最短。"},
+  {id:"s5",concept:"1-1",type:"choice",q:"要說清楚太陽在天空中的位置，除了「方位」，還要說出什麼？",opts:["高度角","溫度","亮度","太陽的大小"],a:0,hint:"太陽離地面看起來有多高",why:"太陽的位置用方位和高度角來描述。"},
+  {id:"s23",concept:"1-1",type:"figure",fig:"sun-pm",q:"下午太陽在西邊（看圖），竿子的影子會在哪一邊？",opts:["東邊","西邊","南邊","沒有影子"],a:0,hint:"影子在背對太陽的那一邊",why:"太陽在西，影子就在東。"},
+  {id:"s24",concept:"1-1",type:"choice",q:"是非題：「一天之中，竿子影子的長度都一樣。」",opts:["對","錯"],a:1,hint:"比比看早上和中午的影子",why:"早上和傍晚太陽低、影子長；中午太陽高、影子短。"},
+  {id:"s6",concept:"1-2",type:"choice",q:"光在空氣中是怎麼前進的？",opts:["直線前進","彎彎曲曲地前進","會自己繞過物體","只會往上走"],a:0,hint:"想想影子為什麼會出現",why:"光直線前進，被物體擋住的地方就形成影子。"},
+  {id:"s7",concept:"1-2",type:"choice",q:"把筷子斜斜插進裝水的杯子，看起來像在水面折斷了。這是光的什麼現象？",opts:["反射","折射","直線前進","溶解"],a:1,hint:"光從水跑到空氣，方向有沒有改變？",why:"光斜斜通過水和空氣的交界時，前進方向會改變，這叫折射。"},
+  {id:"s8",concept:"1-2",type:"choice",q:"照鏡子能看到自己，是光的什麼現象？",opts:["折射","反射","溶解","蒸散"],a:1,hint:"光碰到鏡子會怎樣？",why:"光碰到鏡子會被反彈回來，這叫反射。"},
+  {id:"s9",concept:"1-2",type:"recall",q:"陽光通過三稜鏡，會分成好幾種顏色的光。這告訴我們陽光是由什麼組成的？",hint:"答案有「多種」兩個字",ans:"多種顏色的光（色光）組成",why:"白色的陽光其實混合了多種色光；彩虹也是同樣的道理。"},
+  {id:"s25",concept:"1-2",type:"choice",q:"下列哪一個是利用光的反射？",opts:["潛望鏡","放大鏡","雨後的彩虹","手電筒照出的影子"],a:0,hint:"哪一個裡面有鏡子？",why:"潛望鏡裡有鏡子，靠光的反射讓人看到高處的東西。"},
+  {id:"s26",concept:"1-2",type:"choice",q:"放大鏡可以讓字看起來變大，主要是因為光的什麼現象？",opts:["反射","折射","直線前進","溶解"],a:1,hint:"光穿過透明的鏡片，方向會改變",why:"光穿過放大鏡的鏡片時方向改變，這是折射。"},
+  {id:"s27",concept:"1-2",type:"choice",q:"是非題：「影子的形成，是因為光直線前進，被物體擋住了。」",opts:["對","錯"],a:0,hint:"光會不會轉彎繞過物體？",why:"光直線前進，被擋住的地方照不到光，就是影子。"},
+  {id:"s10",concept:"2-1",type:"map",center:"植物",q:"把概念圖空格補起來：先在心裡說出答案，再點開對答案。",branches:[{k:"根",show:"固定植物",blank:"吸收水分"},{k:"莖",show:"支持植物",blank:"運輸水分和養分"},{k:"葉",show:"散失水分（蒸散）",blank:"製造養分"}],why:"根、莖、葉各有工作，合起來植物才能活下去。"},
+  {id:"s11",concept:"2-1",type:"choice",q:"把一段帶葉子的植物枝條插在紅色的水裡，過一段時間枝條的莖變紅了。這個實驗說明莖可以做什麼？",opts:["製造養分","運輸水分","吸收陽光","長出種子"],a:1,hint:"紅色的水是怎麼跑上去的？",why:"紅色的水被莖往上運送，所以莖會變紅。"},
+  {id:"s12",concept:"2-1",type:"choice",q:"根的主要工作是什麼？",opts:["製造養分","吸收水分、固定植物","開花結果","散發香味"],a:1,hint:"根長在土裡",why:"根在土裡吸收水分，也把植物抓牢。養分是葉子製造的。"},
+  {id:"s28",concept:"2-1",type:"choice",q:"葉子主要的工作是什麼？",opts:["製造養分","吸收土裡的水","固定植物","長出種子"],a:0,hint:"葉子需要陽光來做什麼？",why:"葉子利用陽光製造養分。"},
+  {id:"s29",concept:"2-1",type:"choice",q:"是非題：「植物的水分從根吸收，經過莖運送到葉。」",opts:["對","錯"],a:0,hint:"想想紅色的水的實驗",why:"水從根進入，沿著莖往上送到葉子。"},
+  {id:"s30",concept:"2-1",type:"choice",q:"葉子讓水分散失到空氣中的現象叫做什麼？",opts:["蒸散作用","光合作用","溶解","折射"],a:0,hint:"水「散」掉了",why:"水從葉子散失到空氣中，叫做蒸散作用。"},
+  {id:"s13",concept:"2-2",type:"choice",q:"落地生根不用種子也能長出新的小植物，它是用哪個部位？",opts:["根","葉","花","果實"],a:1,hint:"新的小芽長在哪裡的邊緣？",why:"落地生根的葉子邊緣會長出小芽，用葉繁殖。"},
+  {id:"s14",concept:"2-2",type:"choice",q:"放久的馬鈴薯會發芽，種下去能長出新植株。馬鈴薯是植物的哪個部位？",opts:["根","莖","葉","種子"],a:1,hint:"馬鈴薯上面有會發芽的「芽眼」",why:"馬鈴薯是長在土裡的莖，所以是用莖繁殖。"},
+  {id:"s15",concept:"2-2",type:"recall",q:"大部分會開花的植物，最常用什麼來繁殖？",hint:"通常藏在果實裡，種下去能長成新植物",ans:"種子",why:"開花植物結果實，果實裡的種子可以長成新植物。"},
+  {id:"s31",concept:"2-2",type:"choice",q:"地瓜埋在土裡會長出新芽。我們吃的地瓜是植物的哪個部位？",opts:["根","莖","葉","種子"],a:0,hint:"地瓜沒有芽眼，是變胖的……",why:"地瓜是長在土裡、變胖的根。"},
+  {id:"s32",concept:"2-2",type:"choice",q:"是非題：「所有植物都一定要用種子才能繁殖。」",opts:["對","錯"],a:1,hint:"落地生根和馬鈴薯呢？",why:"落地生根可以用葉、馬鈴薯可以用莖繁殖，不一定要種子。"},
+  {id:"s16",concept:"2-3",type:"choice",q:"木頭桌椅的木材，來自樹的哪個部位？",opts:["根","莖","葉","花"],a:1,hint:"樹幹是什麼部位？",why:"木材是樹幹，也就是樹的莖。"},
+  {id:"s17",concept:"2-3",type:"choice",q:"我們吃的高麗菜，主要是植物的哪個部位？",opts:["根","莖","葉","果實"],a:2,hint:"一層一層的",why:"高麗菜一層一層的是葉子。"},
+  {id:"s18",concept:"2-3",type:"choice",q:"我們吃的蘿蔔，主要是植物的哪個部位？",opts:["根","莖","葉","花"],a:0,hint:"蘿蔔長在土裡，下面還有細細的鬚",why:"蘿蔔長在土裡、是根。"},
+  {id:"s33",concept:"2-3",type:"choice",q:"我們吃的花椰菜，主要是植物的哪個部位？",opts:["根","莖","葉","花"],a:3,hint:"名字裡就有答案",why:"花椰菜吃的是還沒開的花。"},
+  {id:"s34",concept:"2-3",type:"choice",q:"我們吃的花生仁、紅豆，是植物的哪個部位？",opts:["種子","根","葉","花"],a:0,hint:"種下去會發芽",why:"花生仁和紅豆都是種子，種下去可以長出新植物。"},
+  {id:"s19",concept:"3-1",type:"choice",q:"糖放進水裡攪一攪就看不見了，糖跑去哪裡？",opts:["消失了","溶解在水裡，還在水中","變成空氣跑掉","全部沉到杯底"],a:1,hint:"想一想：溶解前後一起秤重，會不會變輕？（實驗用的溶液不可以嚐）",why:"糖溶解了、還在水中。可以用溶解前後秤重量來證明（實驗用的溶液不可以嚐）。"},
+  {id:"s20",concept:"3-1",type:"choice",q:"想讓方糖在水裡溶解得快一點，可以怎麼做？",opts:["一直攪拌","把杯子放進冰箱","蓋上蓋子","什麼都不做"],a:0,hint:"讓水動起來",why:"攪拌可以讓溶解變快；把方糖弄碎也有幫助。"},
+  {id:"s21",concept:"3-1",type:"choice",q:"在同樣溫度、同樣多的水裡，可以一直加鹽、無限溶解下去嗎？",opts:["可以，加多少都會溶解","不行，能溶解的量有限度","只有熱水才不行","只有冷水才可以"],a:1,hint:"加到最後，杯底會出現什麼？",why:"同樣多的水、同樣溫度下，能溶解的量有上限，加太多就會沉在杯底。"},
+  {id:"s22",concept:"3-1",type:"recall",q:"用同一個杯子，把水和糖一起秤重；再把糖溶進水裡（沒有灑出來）秤一次。兩次的重量比起來會怎樣？",hint:"糖沒有消失",ans:"一樣重",why:"糖溶解後還在水中，所以總重量不變。"},
+  {id:"s35",concept:"3-1",type:"choice",q:"同樣多的水，熱水和冷水，哪一個能讓方糖溶解得比較快？",opts:["熱水","冷水","一樣快","都不會溶解"],a:0,hint:"在實驗室試試看冷水和熱水",why:"水溫比較高，糖通常溶解得比較快。"},
+  {id:"s36",concept:"3-1",type:"choice",q:"是非題：「糖攪拌溶解以後，糖水的總重量會變輕。」",opts:["對","錯"],a:1,hint:"糖還在不在水裡？",why:"糖還在水裡，總重量不變。"}
+];
+var BANK = {cards:BASE_CARDS, concepts:{}, figs:FIGS};
+CIDS.forEach(function(k){BANK.concepts[k]={unit:CONCEPTS[k].unit};});
+
+var ERRS = {concept:"還不懂這個觀念", reading:"看錯題目", slip:"知道但選錯了"};
+var STAGE = ["種子","發芽了","長葉了","開花了","結果了"];
+
+/* ---------- 線條圖示（禁 emoji） ---------- */
+var ICON = {
+  "1-1":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><circle cx="17" cy="15" r="8" fill="none" stroke="var(--sun)" stroke-width="2.5"/><path d="M17 2v4M17 24v4M4 15h4M26 15h4" stroke="var(--sun)" stroke-width="2.5" stroke-linecap="round"/><line x1="30" y1="40" x2="30" y2="26" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><line x1="30" y1="40" x2="42" y2="42" stroke="var(--ink)" stroke-width="4" stroke-linecap="round" opacity=".4"/></svg>',
+  "1-2":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><path d="M23 6L40 38H6Z" fill="none" stroke="var(--pri)" stroke-width="2.5" stroke-linejoin="round"/><path d="M2 24h12" stroke="var(--sun)" stroke-width="3" stroke-linecap="round"/><path d="M32 26l12-6M33 30l12 0M32 34l12 6" stroke="var(--leaf)" stroke-width="2.5" stroke-linecap="round"/></svg>',
+  "2-1":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><path d="M23 30V10" stroke="var(--leaf)" stroke-width="3" stroke-linecap="round"/><path d="M23 16c-8-6-14-2-14 2 6 4 10 2 14-2zM23 20c8-6 14-2 14 2-6 4-10 2-14-2z" fill="var(--leaf)"/><path d="M23 30l-8 10M23 30l0 12M23 30l8 10" stroke="var(--soil)" stroke-width="2.5" stroke-linecap="round"/><path d="M6 30h34" stroke="var(--soil)" stroke-width="2"/></svg>',
+  "2-2":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><ellipse cx="23" cy="34" rx="12" ry="7" fill="none" stroke="var(--soil)" stroke-width="2.5"/><path d="M23 30c0-10 4-16 12-18" stroke="var(--leaf)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M35 12c-2 6-8 6-10 4 2-4 6-6 10-4z" fill="var(--leaf)"/></svg>',
+  "2-3":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><path d="M8 20h30l-4 20H12Z" fill="none" stroke="var(--soil)" stroke-width="2.5" stroke-linejoin="round"/><path d="M16 20c0-8 14-8 14 0" fill="none" stroke="var(--soil)" stroke-width="2.5"/><path d="M18 30l4 4 7-8" stroke="var(--leaf)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  "3-1":'<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><path d="M14 6h18M17 6v12L8 38c-1 3 1 4 4 4h22c3 0 5-1 4-4L29 18V6" fill="none" stroke="var(--pri)" stroke-width="2.5" stroke-linejoin="round"/><circle cx="20" cy="32" r="2" fill="var(--pri)"/><circle cx="27" cy="35" r="2" fill="var(--pri)"/></svg>'
+};
+function checkIcon(done){return done?'<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="var(--leaf)"/><path d="M6 11l3.5 3.5L16 8" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':'<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9" fill="none" stroke="var(--muted)" stroke-width="2"/></svg>';}
+var FACES = {
+  good:'<svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="var(--sunball)"/><circle cx="14" cy="16" r="2.2" fill="var(--ink)"/><circle cx="26" cy="16" r="2.2" fill="var(--ink)"/><path d="M12 23q8 8 16 0" stroke="var(--ink)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>',
+  ok:'<svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="var(--sky2)"/><circle cx="14" cy="16" r="2.2" fill="var(--ink)"/><circle cx="26" cy="16" r="2.2" fill="var(--ink)"/><path d="M13 25h14" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/></svg>',
+  tired:'<svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="var(--line)"/><path d="M11 17q3 2 6 0M23 17q3 2 6 0" stroke="var(--ink)" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M14 27q6-4 12 0" stroke="var(--ink)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>'
+};
+var MOOD_NAME = {good:"很好玩",ok:"還好",tired:"有點累"};
+
+/* ---------- 補救：每個觀念兩種說法（第一次看說法一＋做觀察任務；再卡住換另一種） ---------- */
+function svgWrap(w,h,label,inner){return '<svg class="fig" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+label+'">'+inner+'</svg>';}
+var EXPLAIN = {
+  "1-1":[
+    {name:"看圖：影子在背對太陽的那一邊",
+     svg:function(){return svgWrap(690,236,"面向南方看：早上太陽低在東邊，影子長、在西邊；中午太陽高，影子短",
+       '<rect width="690" height="236" rx="14" fill="var(--sky1)"/><line x1="345" y1="16" x2="345" y2="220" stroke="var(--line)" stroke-width="2"/>'+
+       // 早上：高度角約 25°，光線經過竿頂 (120,130) 落到影子尖端 (248.7,190)
+       '<line x1="14" y1="190" x2="332" y2="190" stroke="var(--muted)" stroke-width="2"/>'+
+       '<line x1="42.8" y1="94" x2="248.7" y2="190" stroke="var(--sun)" stroke-width="2" stroke-dasharray="8 6"/>'+
+       '<circle cx="42.8" cy="94" r="16" fill="var(--sunball)"/><text x="70" y="62" font-size="15" fill="var(--ink)">早上：太陽低</text>'+
+       '<line x1="120" y1="190" x2="248.7" y2="190" stroke="var(--ink)" stroke-width="12" stroke-linecap="round" opacity=".3"/>'+
+       '<line x1="120" y1="190" x2="120" y2="130" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/>'+
+       '<text x="185" y="216" text-anchor="middle" font-size="15" fill="var(--ink)">影子長</text>'+
+       '<text x="16" y="214" font-size="16" fill="var(--ink)">東</text><text x="330" y="214" text-anchor="end" font-size="16" fill="var(--ink)">西</text>'+
+       // 中午：高度角約 60°，光線經過竿頂 (520,130) 落到影子尖端 (554.6,190)
+       '<line x1="358" y1="190" x2="676" y2="190" stroke="var(--muted)" stroke-width="2"/>'+
+       '<line x1="464.6" y1="34" x2="554.6" y2="190" stroke="var(--sun)" stroke-width="2" stroke-dasharray="8 6"/>'+
+       '<circle cx="464.6" cy="34" r="16" fill="var(--sunball)"/><text x="490" y="40" font-size="15" fill="var(--ink)">中午：太陽高</text>'+
+       '<line x1="520" y1="190" x2="554.6" y2="190" stroke="var(--ink)" stroke-width="12" stroke-linecap="round" opacity=".45"/>'+
+       '<line x1="520" y1="190" x2="520" y2="130" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/>'+
+       '<text x="548" y="216" text-anchor="middle" font-size="15" fill="var(--ink)">影子短</text>'+
+       '<text x="360" y="214" font-size="16" fill="var(--ink)">東</text><text x="674" y="214" text-anchor="end" font-size="16" fill="var(--ink)">西</text>'+
+       '<text x="676" y="16" text-anchor="end" font-size="11" fill="var(--muted)">面向南方看</text>');},
+     lines:["影子一定在竿子「背對太陽」的那一邊：太陽在東，影子在西；太陽在西，影子在東。","太陽愈高，影子愈短。中午前後太陽最高，所以影子最短。"],
+     task:"做做看：在實驗室把時間從早上拉到下午，盯著影子轉向哪一邊。"},
+    {name:"換個說法：手電筒照鉛筆",
+     svg:function(){return svgWrap(690,200,"手電筒從左邊斜斜照鉛筆，光線擦過鉛筆頂端，影子落在右邊",
+       '<rect width="690" height="200" rx="14" fill="var(--pri-soft)"/><line x1="30" y1="160" x2="660" y2="160" stroke="var(--muted)" stroke-width="2"/>'+
+       // 光線經過鉛筆頂 (330,110) 落到影子尖端 (475,160)
+       '<line x1="156" y1="50" x2="475" y2="160" stroke="var(--sun)" stroke-width="2" stroke-dasharray="8 6"/>'+
+       '<rect x="86" y="37" width="64" height="26" rx="6" fill="var(--muted)" transform="rotate(19 156 50)"/><circle cx="156" cy="50" r="13" fill="var(--sunball)"/>'+
+       '<line x1="330" y1="160" x2="475" y2="160" stroke="var(--ink)" stroke-width="12" stroke-linecap="round" opacity=".3"/>'+
+       '<line x1="330" y1="160" x2="330" y2="110" stroke="var(--soil)" stroke-width="8" stroke-linecap="round"/>'+
+       '<text x="156" y="24" text-anchor="middle" font-size="15" fill="var(--ink)">手電筒＝太陽</text><text x="402" y="186" text-anchor="middle" font-size="15" fill="var(--ink)">影子</text><text x="330" y="186" text-anchor="middle" font-size="13" fill="var(--muted)">鉛筆</text>');},
+     lines:["把手電筒當太陽：手電筒從左邊照，鉛筆的影子就跑到右邊。","手電筒舉高（像中午的太陽），影子變短；放低（像早上、傍晚），影子變長。","一天裡太陽從東邊升起、經過南方的天空、從西邊落下，所以影子會從西邊慢慢轉到北邊、再到東邊。"],
+     task:"做做看：在實驗室看中午 12 點時，太陽在哪一方、影子朝哪一方。"}
+  ],
+  "1-2":[
+    {name:"看圖：光碰到東西的四種情形",
+     svg:function(){return svgWrap(690,250,"四格圖：擋住變影子、鏡子反射、水中折射、三稜鏡分出色光",
+       '<rect width="690" height="250" rx="14" fill="var(--pri-soft)"/>'+
+       '<g><circle cx="40" cy="70" r="12" fill="var(--sunball)"/><line x1="52" y1="70" x2="110" y2="70" stroke="var(--sun)" stroke-width="4"/><rect x="110" y="48" width="14" height="44" fill="var(--soil)"/><rect x="124" y="56" width="40" height="28" fill="var(--ink)" opacity=".2"/><text x="100" y="118" text-anchor="middle" font-size="15" fill="var(--ink)">擋住→影子</text></g>'+
+       '<g><rect x="200" y="96" width="120" height="8" fill="var(--pri)"/><line x1="210" y1="40" x2="260" y2="96" stroke="var(--red)" stroke-width="4"/><line x1="260" y1="96" x2="310" y2="40" stroke="var(--red)" stroke-width="4" stroke-dasharray="8 5"/><text x="260" y="128" text-anchor="middle" font-size="15" fill="var(--ink)">鏡子→反射</text></g>'+
+       '<g><rect x="370" y="30" width="110" height="100" rx="6" fill="none" stroke="var(--ink)" stroke-width="2"/><rect x="372" y="72" width="106" height="56" fill="var(--waterfill)"/><line x1="385" y1="20" x2="416.2" y2="72" stroke="var(--soil)" stroke-width="6" stroke-linecap="round"/><line x1="416.2" y1="72" x2="448.6" y2="112.6" stroke="var(--soil)" stroke-width="6" stroke-linecap="round"/><text x="425" y="156" text-anchor="middle" font-size="15" fill="var(--ink)">水→折射</text></g>'+
+       '<g><polygon points="590,40 640,130 540,130" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/><line x1="500" y1="96" x2="565" y2="90" stroke="var(--sunball)" stroke-width="5"/>'+
+       ['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa'].map(function(c,i){return '<line x1="612" y1="92" x2="680" y2="'+(70+i*12)+'" stroke="'+c+'" stroke-width="4"/>';}).join("")+
+       '<text x="595" y="160" text-anchor="middle" font-size="15" fill="var(--ink)">三稜鏡→多種色光</text></g>'+
+       '<text x="345" y="214" text-anchor="middle" font-size="16" fill="var(--ink)">光直線前進；碰到鏡子會反射；斜斜穿過水或玻璃會折射</text>');},
+     lines:["光直線前進，被擋住的地方照不到光，就是影子。","光碰到鏡子會彈回來：反射（照鏡子、潛望鏡）。","光斜斜穿過水、玻璃時方向會改變：折射（筷子在水面像折斷、放大鏡）。","陽光穿過三稜鏡會分成多種顏色：陽光是由多種色光組成的。"],
+     task:"做做看：在實驗室四個分頁各玩一次，看光怎麼走。"},
+    {name:"換個說法：問自己三個問題",
+     svg:function(){return svgWrap(690,150,"判斷光的現象三個問題",
+       '<rect width="690" height="150" rx="14" fill="var(--sun-soft)"/>'+
+       '<text x="30" y="44" font-size="18" fill="var(--ink)">1. 光被擋住了嗎？ → 影子（光直線前進）</text>'+
+       '<text x="30" y="84" font-size="18" fill="var(--ink)">2. 光彈回來了嗎？ → 反射（鏡子、光滑的金屬）</text>'+
+       '<text x="30" y="124" font-size="18" fill="var(--ink)">3. 光穿過去又轉彎了嗎？ → 折射（水、玻璃、鏡片）</text>');},
+     lines:["先看題目裡有沒有「鏡子」：有鏡子、光彈回來，就是反射。","題目裡有水、玻璃、鏡片，光穿過去看起來彎掉、放大，就是折射。","白光變成彩色（三稜鏡、彩虹），是因為陽光由多種色光組成。"],
+     task:"做做看：在實驗室「反射」和「折射」兩頁各玩一次，比比看光有沒有穿過去。"}
+  ],
+  "2-1":[
+    {name:"看圖：水從根走到葉",
+     svg:function(){return svgWrap(690,240,"植物的根吸水，莖往上運送，葉子製造養分並蒸散水分",
+       '<rect width="690" height="240" rx="14" fill="var(--leaf-soft)"/><rect x="0" y="170" width="690" height="70" fill="var(--soil)" opacity=".25"/>'+
+       '<line x1="345" y1="60" x2="345" y2="172" stroke="var(--leaf)" stroke-width="10" stroke-linecap="round"/>'+
+       '<path d="M345 90 q-60 -40 -110 -6 q50 30 110 6" fill="var(--leaf)"/><path d="M345 120 q60 -40 110 -6 q-50 30 -110 6" fill="var(--leaf)"/>'+
+       '<path d="M345 172 l-40 46 M345 172 l0 56 M345 172 l40 46" stroke="var(--soil)" stroke-width="5" stroke-linecap="round"/>'+
+       '<path d="M368 214 L368 80" stroke="var(--pri)" stroke-width="3" stroke-dasharray="6 5"/><path d="M362 88 l6 -10 l6 10" fill="var(--pri)"/>'+
+       '<text x="420" y="214" font-size="16" fill="var(--ink)">根：吸收水分、固定植物</text><text x="420" y="150" font-size="16" fill="var(--ink)">莖：運送水分和養分、支持植物</text>'+
+       '<text x="60" y="60" font-size="16" fill="var(--ink)">葉：製造養分、蒸散水分</text>');},
+     lines:["根：在土裡吸收水分，也把植物抓牢（固定）。","莖：把水分和養分運送到各處，也支持植物站起來。","葉：利用陽光製造養分；水分會從葉子散失到空氣中（蒸散作用）。"],
+     task:"做做看：在實驗室把時間拉到 6 小時，看紅色的水先到哪裡。"},
+    {name:"換個說法：植物的身體像一棟房子",
+     svg:function(){return svgWrap(690,150,"根像吸管加地基，莖像水管加柱子，葉像廚房",
+       '<rect width="690" height="150" rx="14" fill="var(--sun-soft)"/>'+
+       '<text x="30" y="44" font-size="18" fill="var(--ink)">根 ＝ 吸管＋地基（吸水、把植物固定住）</text>'+
+       '<text x="30" y="84" font-size="18" fill="var(--ink)">莖 ＝ 水管＋柱子（運送水和養分、撐住植物）</text>'+
+       '<text x="30" y="124" font-size="18" fill="var(--ink)">葉 ＝ 廚房（用陽光做出養分）</text>');},
+     lines:["根像吸管＋地基：吸水，也把植物固定住。","莖像水管＋柱子：運送水和養分，也撐住整棵植物。","葉像廚房：用陽光做出養分。","紅色的水實驗裡，莖會先變紅，因為水是從莖往上送的。"],
+     task:"做做看：在實驗室點根、莖、葉，把三個工作各看一次。"}
+  ],
+  "2-2":[
+    {name:"看圖：新芽從哪裡長出來",
+     svg:function(){return svgWrap(690,200,"種子、馬鈴薯的莖、落地生根的葉、地瓜的根都能長出新植物",
+       '<rect width="690" height="200" rx="14" fill="var(--leaf-soft)"/>'+
+       '<ellipse cx="90" cy="120" rx="18" ry="12" fill="var(--soil)"/><path d="M90 110 q0 -30 14 -42" stroke="var(--leaf)" stroke-width="4" fill="none"/><text x="90" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">種子</text>'+
+       '<ellipse cx="260" cy="120" rx="40" ry="26" fill="var(--soil)"/><circle cx="246" cy="112" r="3" fill="var(--ink)"/><path d="M246 108 q-6 -26 -16 -36" stroke="var(--leaf)" stroke-width="4" fill="none"/><text x="260" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">馬鈴薯（莖，有芽眼）</text>'+
+       '<path d="M380 120 q50 -46 100 0 q-50 30 -100 0" fill="var(--leaf)"/>'+[392,412,432,452,470].map(function(x){return '<path d="M'+x+' '+(108-Math.abs(431-x)*0.3)+' l0 -12" stroke="var(--leaf)" stroke-width="3"/>';}).join("")+'<text x="430" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">落地生根（葉）</text>'+
+       '<path d="M560 106 q40 -10 80 6 q-30 30 -80 -6" fill="var(--soil)"/><path d="M600 104 q2 -24 12 -34" stroke="var(--leaf)" stroke-width="4" fill="none"/><text x="600" y="170" text-anchor="middle" font-size="15" fill="var(--ink)">地瓜（根）</text>');},
+     lines:["大部分開花的植物用種子繁殖。","有些植物不用種子也能長出新植物：落地生根用葉、馬鈴薯用莖、地瓜用根。"],
+     task:"做做看：在實驗室點三種植物，看新芽長在哪裡。"},
+    {name:"換個說法：先找「新芽長在哪個部位上」",
+     svg:function(){return svgWrap(690,150,"判斷繁殖部位：看新芽從哪裡長出來",
+       '<rect width="690" height="150" rx="14" fill="var(--sun-soft)"/>'+
+       '<text x="30" y="44" font-size="18" fill="var(--ink)">新芽從哪裡長出來 → 那個部位就是它用來繁殖的部位</text>'+
+       '<text x="30" y="84" font-size="18" fill="var(--ink)">馬鈴薯有芽眼、是長在土裡的莖 → 用莖繁殖</text>'+
+       '<text x="30" y="124" font-size="18" fill="var(--ink)">落地生根的葉子邊緣長小芽 → 用葉繁殖</text>');},
+     lines:["看新芽從哪裡長出來，那個部位就是它用來繁殖的部位。","馬鈴薯有芽眼，是長在土裡的莖 → 用莖繁殖。","地瓜是變胖的根，埋在土裡也會長出新芽 → 用根繁殖。","落地生根的葉子邊緣長小芽 → 用葉繁殖。"],
+     task:"做做看：在實驗室再點一次馬鈴薯和落地生根，說出各是哪個部位。"}
+  ],
+  "2-3":[
+    {name:"看圖：我們吃的是植物的哪個部位",
+     svg:function(){var rows=[["根","蘿蔔、地瓜"],["莖","馬鈴薯、薑、甘蔗、蓮藕、木材"],["葉","高麗菜、菠菜"],["花","花椰菜、金針花"],["果實","番茄、蘋果"],["種子","花生仁、紅豆"]];
+       return svgWrap(690,250,"植物部位與食物對照表",'<rect width="690" height="250" rx="14" fill="var(--leaf-soft)"/>'+rows.map(function(r,i){return '<text x="40" y="'+(42+i*36)+'" font-size="19" fill="var(--leaf)">'+r[0]+'</text><text x="130" y="'+(42+i*36)+'" font-size="18" fill="var(--ink)">'+r[1]+'</text>';}).join(""));},
+     lines:["我們吃的、用的東西，很多來自植物的不同部位。","同一個問題要先想：它是植物的根、莖、葉、花、果實，還是種子？"],
+     task:"做做看：在實驗室把 16 樣東西放進正確的籃子。"},
+    {name:"換個說法：判斷小撇步",
+     svg:function(){return svgWrap(690,190,"判斷植物部位的小撇步",
+       '<rect width="690" height="190" rx="14" fill="var(--sun-soft)"/>'+
+       '<text x="30" y="40" font-size="17" fill="var(--ink)">有節、有芽眼，或用來站直、運送水分 → 莖</text>'+
+       '<text x="30" y="76" font-size="17" fill="var(--ink)">長在土裡、沒有節和芽眼 → 根</text>'+
+       '<text x="30" y="112" font-size="17" fill="var(--ink)">一片一片、一層一層 → 葉</text>'+
+       '<text x="30" y="148" font-size="17" fill="var(--ink)">裡面有種子 → 果實；種下去會發芽 → 種子</text>');},
+     lines:["有節、有芽眼，或是用來站直、運送水分的 → 莖（馬鈴薯、薑、甘蔗、蓮藕、樹幹）。","長在土裡、沒有節和芽眼 → 根（蘿蔔、地瓜）。","一片一片、一層一層 → 葉（高麗菜、菠菜）。","裡面有種子 → 果實（番茄、蘋果）；種下去會發芽 → 種子（花生仁、紅豆）。"],
+     task:"做做看：在實驗室分類時，每放一樣先說出你用了哪一個撇步。"}
+  ],
+  "3-1":[
+    {name:"看圖：糖去哪裡了",
+     svg:function(){return svgWrap(690,220,"糖溶解後分散成看不見的小粒子，溶解前後一起秤重量一樣",
+       '<rect width="690" height="220" rx="14" fill="var(--pri-soft)"/>'+
+       '<rect x="60" y="50" width="120" height="130" rx="8" fill="none" stroke="var(--ink)" stroke-width="2"/><rect x="62" y="80" width="116" height="98" fill="var(--waterfill)"/><rect x="105" y="150" width="26" height="26" fill="#fff" stroke="var(--muted)"/>'+
+       '<text x="120" y="206" text-anchor="middle" font-size="15" fill="var(--ink)">溶解前</text>'+
+       '<path d="M220 115 h60" stroke="var(--ink)" stroke-width="3"/><path d="M272 107 l10 8 l-10 8" fill="var(--ink)"/>'+
+       '<rect x="320" y="50" width="120" height="130" rx="8" fill="none" stroke="var(--ink)" stroke-width="2"/><rect x="322" y="80" width="116" height="98" fill="var(--waterfill)"/>'+
+       Array.from({length:40},function(_,i){return '<circle cx="'+(332+(i*37)%100)+'" cy="'+(90+(i*23)%84)+'" r="1.8" fill="var(--ink)" opacity=".5"/>';}).join("")+
+       '<text x="380" y="206" text-anchor="middle" font-size="15" fill="var(--ink)">溶解後：看不見，但還在</text>'+
+       '<rect x="500" y="110" width="140" height="70" rx="8" fill="var(--card)" stroke="var(--line)"/><text x="570" y="152" text-anchor="middle" font-size="22" fill="var(--ink)">220 g</text><text x="570" y="96" text-anchor="middle" font-size="15" fill="var(--ink)">前後一起秤都一樣</text>');},
+     lines:["糖溶解後分散成很小很小、眼睛看不見的粒子，還在水裡，沒有消失。","證明：溶解前後一起秤（沒有灑出來），重量一樣。","攪拌、用熱水、把糖弄碎，都能讓溶解變快。","同樣多的水、同樣溫度，能溶解的量有限度，加太多會沉在杯底。"],
+     task:"做做看：在實驗室放入方糖，看秤上的數字有沒有變。"},
+    {name:"換個說法：用「秤」和「蒸發」證明",
+     svg:function(){return svgWrap(690,150,"證明溶解的東西還在：秤重不變、蒸發後留下鹽",
+       '<rect width="690" height="150" rx="14" fill="var(--sun-soft)"/>'+
+       '<text x="30" y="44" font-size="18" fill="var(--ink)">證據一：溶解前後一起秤，總重量一樣</text>'+
+       '<text x="30" y="84" font-size="18" fill="var(--ink)">證據二：鹽水放著讓水慢慢蒸發，杯底會留下鹽</text>'+
+       '<text x="30" y="124" font-size="18" fill="var(--ink)">提醒：實驗用的溶液不可以嚐</text>');},
+     lines:["證據一：溶解前後一起秤，總重量一樣，表示糖沒有不見。","證據二：把鹽水放著讓水慢慢蒸發，杯底會留下鹽，表示鹽一直在水裡。","加到溶不下的時候，多的會沉在杯底：同樣多的水，能溶解的量有限度。"],
+     task:"做做看：在實驗室一直加鹽，看什麼時候杯底開始留下鹽。"}
+  ]
+};
+
+/* ---------- 實驗室的預測題 ---------- */
+var PREDICT={
+  shadow:{q:"先猜猜看：下午 4 點，竿子的影子會朝哪一邊？",opts:["東邊","西邊","南邊","沒有影子"],a:0,why:"下午太陽在西邊，影子在相反的東邊（這個季節偏東北）。"},
+  light:{q:"先猜猜看：杯子裡加水以後，斜插的筷子看起來會怎樣？",opts:["還是直的","在水面好像折斷了","整枝不見了"],a:1,why:"光從水斜斜跑到空氣時方向改變（折射），筷子看起來在水面折了一下。"},
+  transport:{q:"先猜猜看：枝條插在紅色的水裡，過幾個小時，紅色會先出現在哪裡？",opts:["葉子先變紅","莖先變紅，再到葉子","都不會變紅"],a:1,why:"水從下面被莖往上運送，所以莖先變紅，最後才到葉子。"},
+  grow:{q:"先猜猜看：落地生根的新芽會從哪裡長出來？",opts:["葉子的邊緣","花","種子"],a:0,why:"落地生根是用葉繁殖，小芽長在葉子邊緣。"},
+  sort:{q:"先猜猜看：薑是植物的哪個部位？",opts:["根","莖","葉"],a:1,why:"薑有一節一節的，還會發芽，是長在土裡的莖。"},
+  dissolve:{q:"先猜猜看：熱水和冷水，哪一杯的方糖溶解得比較快？",opts:["熱水","冷水","一樣快"],a:0,why:"水溫比較高，糖通常溶解得比較快。"}
+};
+
+/* ---------- 儲存 ---------- */
+var memoryOnly = false;
+function makeStorage(){
+  try{var k="g5sci.probe";window.localStorage.setItem(k,"1");window.localStorage.removeItem(k);return window.localStorage;}
+  catch(e){memoryOnly=true;var m={};return {getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null;},setItem:function(k,v){m[k]=String(v);}};}
+}
+var store = C.createStore({storage:makeStorage(), bank:BANK, clock:function(){return Date.now();}});
+store.load();
+var seq = 0;
+function newId(p){seq++;return (p||"a")+Date.now().toString(36)+seq.toString(36)+Math.floor(Math.random()*1e6).toString(36);}
+function S(){return store.get().state;}
+function V(){return store.view();}
+function act(a){if(a.type!=="tick"&&!a.id)a.id=newId();var r=store.dispatch(a);banners();return r;}
+
+/* ---------- 小工具 ---------- */
+function $(s){return document.querySelector(s);}
+function esc(t){return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function md(k){return k?(+k.slice(5,7))+"/"+(+k.slice(8,10)):"";}
+function card(id){return C.cardById(S(),BANK,id);}
+function conceptOn(cid){return C.conceptOn(S(),BANK,cid);}
+function srcLine(c){return '<div class="src">'+esc(c.page?("出處："+c.page):SAMPLE)+"</div>";}
+function on(sel,fn){var el=typeof sel==="string"?$(sel):sel;if(el)el.onclick=fn;}
+var actx=null;
+function chime(){
+  if(!S().settings.sound) return;
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    [660,880].forEach(function(f,i){var o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime+i*0.12;o.frequency.value=f;o.type="sine";
+      g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.12,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+0.3);});
+  }catch(e){}
+}
+
+/* ---------- 天空場景：太陽放在今天台中的實際位置 ---------- */
+// 天空場景帶：面向南方看（左東、右西），太陽畫在今天台中此刻的位置（晚上換成月亮）
+function drawSky(){
+  var el=$("#sky"), W=Math.max(300,Math.round(el.getBoundingClientRect().width||820)), H=132, base=104, x0=40, x1=W-40;
+  var now=new Date(), hour=now.getHours()+now.getMinutes()/60;
+  var st=sunTimes(now,TAICHUNG.lat,TAICHUNG.lon,TAICHUNG.tz), rise=st.rise||6, set=st.set||18;
+  var f=(hour-rise)/(set-rise), up=f>=0&&f<=1, ff=Math.max(0,Math.min(1,f)), peak=86;
+  var x=x0+(x1-x0)*ff, y=base-Math.sin(Math.PI*ff)*peak;
+  el.setAttribute("viewBox","0 0 "+W+" "+H);
+  var s='<rect width="'+W+'" height="'+H+'" fill="var(--sky1)"/><rect y="'+base+'" width="'+W+'" height="'+(H-base)+'" fill="var(--grass)"/>'+
+    '<path d="M'+x0+' '+base+' C'+(x0+(x1-x0)*0.12)+' '+(base-peak*1.33)+' '+(x1-(x1-x0)*0.12)+' '+(base-peak*1.33)+' '+x1+' '+base+'" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="10 9" opacity=".9"/>';
+  if(up) s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="26" fill="var(--sunball)" opacity=".25"/><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="17" fill="var(--sunball)"/>';
+  else s+='<circle cx="'+(W-70)+'" cy="34" r="15" fill="#f4f1dc"/><circle cx="'+(W-62)+'" cy="29" r="13" fill="var(--sky1)"/>';
+  s+='<text x="'+(x0-8)+'" y="'+(base+21)+'" font-size="16" fill="var(--ink)">東</text><text x="'+(x1+8)+'" y="'+(base+21)+'" font-size="16" text-anchor="end" fill="var(--ink)">西</text>'+
+    '<text x="'+(W/2)+'" y="'+(base+21)+'" font-size="13" text-anchor="middle" fill="var(--ink)" opacity=".75">'+(W>=620?'面向南方看：太陽從東邊升起、經過南方天空、從西邊落下':'面向南方看')+'</text>';
+  el.innerHTML=s;
+}
+window.addEventListener("resize",function(){drawSky();});
+
+/* ---------- 頂部：倒數、提示列 ---------- */
+var shownDay=null;   // 畫面上目前顯示的是哪一天；跨午夜時拿它比，不拿事件當下的日期比
+function header(){
+  var v=V(); shownDay=v.today;
+  $("#days").textContent=Math.max(0,C.diffDays(v.today,EXAM));
+  drawSky();
+}
+function banners(){
+  var st=store.get(), h="";
+  if(st.loadError) h+='<div class="banner"><strong>存檔讀不出來（可能被改壞了）</strong><span class="small">為了不蓋掉原本的紀錄，現在不會存任何作答。請爸媽到「設定與題庫」決定要不要清除重來。</span></div>';
+  else if(memoryOnly) h+='<div class="banner"><strong>這台裝置存不了作答紀錄</strong><span class="small">可能是無痕模式或關閉了網站資料。請改用一般瀏覽模式開啟，否則關掉頁面紀錄就會不見。</span></div>';
+  else if(st.saveStatus==="failed") h+='<div class="banner"><strong>剛剛那一步沒有存到這台裝置</strong><div class="row"><button class="btn sm" type="button" id="retrySave">再存一次</button></div></div>';
+  var v=V();
+  if(v.needsHelp.length) h+='<div class="banner info"><strong>需要爸媽陪著看的觀念：'+v.needsHelp.map(function(c){return esc(CONCEPTS[c].short);}).join("、")+'</strong><span class="small">換了題目還是卡住，這很正常。請陪她看一次圖解，再到「家長摘要」按「已經陪她看過」。</span></div>';
+  $("#banners").innerHTML=h;
+  on("#retrySave",retrySave);
+}
+
+/* ---------- 首頁 ---------- */
+var screen="home";
+function route(){
+  var v=V(), se=v.session;
+  if(screen==="practice"&&se&&se.queue.length&&!se.halted) return renderPractice();
+  if(screen==="practice"||screen==="end") return renderEnd();
+  return renderHome();
+}
+function renderHome(){
+  screen="home";
+  var v=V(), se=v.session, left=v.remainingIds.length, el=$("#main"), h;
+  var inRound=se&&se.day===v.today&&se.queue.length&&!se.halted&&se.answered.length>0;
+  if(!v.planIds.length){
+    h='<div class="done"><b class="t">今天沒有排定卡片</b><p class="muted" style="margin:0">可以點下面的觀念看圖解、去實驗室玩，或「考考爸媽」。</p><div class="row" style="justify-content:center"><button class="btn ghost" type="button" id="goTeach">考考爸媽</button></div></div>';
+  }else if(v.completed){
+    h='<div class="done"><b class="t">今天的卡片都做完了</b><p class="muted" style="margin:0">今天 '+v.M.cardProgress.planned+' 張全部完成。想加碼可以去實驗室、考考爸媽'+(se&&se.wrong.length?'，或再練答錯的卡':'')+'。</p>'+
+      '<div class="row" style="justify-content:center">'+(se&&se.wrong.length?'<button class="btn ghost" type="button" id="goRedo">再練答錯的 '+se.wrong.length+' 張</button>':'')+'<button class="btn ghost" type="button" id="goTeach">考考爸媽</button></div></div>';
+  }else{
+    var due=v.planIds.filter(function(id){return C.cardState(S(),id).seen>0;}).length, fresh=v.planIds.length-due;
+    var parts=[]; if(due) parts.push("到期複習 "+due+" 張"); if(fresh) parts.push("新卡 "+fresh+" 張"); if(v.doneIds.length) parts.push("已做 "+v.doneIds.length+" 張");
+    h='<div class="today"><div class="big"><b>'+Math.max(0,C.diffDays(v.today,EXAM))+'</b><span class="muted small">天後考試</span></div><div style="display:grid;gap:10px">'+
+      '<div style="font-size:23px;font-weight:700">'+(v.doneIds.length?'今天還有 '+left+' 張':'今天要練 '+left+' 張')+'</div>'+
+      '<div class="muted">'+parts.join("、")+'。答錯可以看圖解、進實驗室弄懂。</div>'+
+      '<div class="row">'+(inRound?'<button class="btn" type="button" id="goOn">繼續這一輪（還有 '+se.queue.length+' 張）</button>':'<button class="btn" type="button" id="goAll">開始今天的練習</button>')+
+      (!inRound&&left>3?'<button class="btn ghost" type="button" id="goLight">今天有點累，只做 3 張</button>':'')+'</div></div></div>';
+  }
+  el.innerHTML=h;
+  on("#goAll",function(){act({type:"sessionStart"});startRound();});
+  on("#goLight",function(){act({type:"sessionStart",size:3});startRound();});
+  on("#goOn",startRound);
+  on("#goTeach",function(){renderTeach();});
+  on("#goRedo",function(){var w=V().session.wrong.slice();act({type:"sessionStart",kind:"redo",ids:w});startRound();});
+  renderSide();
+}
+function startRound(){screen="practice";route();window.scrollTo({top:$("#main").offsetTop-8,behavior:"smooth"});}
+function renderConcepts(){
+  var v=V();
+  $("#concepts").innerHTML=CIDS.map(function(cid){
+    var c=CONCEPTS[cid], ok=conceptOn(cid), st=v.stages[cid];
+    var dueN=v.remainingIds.filter(function(id){var k=card(id);return k&&k.concept===cid;}).length;
+    var help=v.needsHelp.indexOf(cid)>=0;
+    return '<button type="button" class="ccard '+c.tone+(ok?'':' off')+(help?' help':'')+'" data-cid="'+cid+'"'+(ok?'':' aria-disabled="true"')+'>'+ICON[cid]+'<b>'+esc(c.short)+'</b>'+
+      (ok?'<span class="st">'+(st?STAGE[st]:'種子・還沒練')+'</span><span class="due">'+(help?'等爸媽陪著看':dueN?'今天有 '+dueN+' 張':'今天沒有排到')+'</span>':'<span class="due">老師教完再開放</span>')+'</button>';
+  }).join("");
+  document.querySelectorAll("#concepts .ccard").forEach(function(b){b.onclick=function(){
+    var cid=b.dataset.cid;
+    if(!conceptOn(cid)){toast("老師教完溶解以後，到「設定與題庫」打勾，隔天就會開放。");return;}
+    renderConcept(cid);
+  };});
+}
+function renderCal(){
+  var s=S(), v=V(), cells=[], k=START;
+  while(k<=EXAM){
+    var d=s.days[k], cls=(d&&d.touched.length)?"on":"";
+    if(k===v.today) cls+=" today"; if(k===EXAM) cls+=" exam";
+    cells.push('<i class="'+cls+'" title="'+md(k)+'">'+(k===EXAM?"考":(+k.slice(8,10)))+'</i>');
+    k=C.addDays(k,1);
+  }
+  $("#cal").innerHTML=cells.join("");
+  var n=0; k=v.today;
+  if(!(s.days[k]&&s.days[k].touched.length)) k=C.addDays(k,-1);
+  while(s.days[k]&&s.days[k].touched.length){n++;k=C.addDays(k,-1);}
+  $("#streak").textContent=n?("連續練習 "+n+" 天"):"今天做 1 張就開始累積天數";
+}
+function toast(t){var el=$("#main"),d=document.createElement("div");d.className="hint";d.textContent=t;el.prepend(d);setTimeout(function(){d.remove();},3500);}
+
+/* ---------- 觀念頁（概念入口） ---------- */
+function renderConcept(cid){
+  screen="concept";
+  var c=CONCEPTS[cid], v=V(), ex=EXPLAIN[cid][0];
+  var mine=v.remainingIds.filter(function(id){var k=card(id);return k&&k.concept===cid;}).length;
+  var el=$("#main");
+  el.innerHTML='<div style="display:grid;gap:14px"><div class="qhead"><span>'+esc(UNITS[c.unit])+'</span><span>'+STAGE[v.stages[cid]]+'</span></div><h2>'+esc(c.title)+'</h2>'+
+    explainBlock(ex)+
+    '<div class="row"><button class="btn" type="button" id="cLab">去實驗室動手做</button>'+(mine&&!v.completed?'<button class="btn ghost" type="button" id="cFocus">先練這個觀念（今天 '+mine+' 張）</button>':'')+
+    '<button class="btn ghost" type="button" id="cMore">換另一種說法</button><button class="btn ghost sm" type="button" id="cBack">回首頁</button></div></div>';
+  on("#cLab",function(){openLab(cid,{from:"menu"});});
+  on("#cFocus",function(){act({type:"sessionStart",focus:cid});startRound();});
+  on("#cMore",function(){var b=$("#main .remedy");if(b)b.outerHTML=explainBlock(EXPLAIN[cid][1]);$("#cMore").hidden=true;});
+  on("#cBack",renderHome);
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function explainBlock(ex){
+  return '<div class="remedy"><strong style="font-size:19px">'+esc(ex.name)+'</strong>'+ex.svg()+'<ul>'+ex.lines.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ul></div>';
+}
+
+/* ---------- 題目（練習與考考爸媽共用同一個 renderer） ---------- */
+function figureSvg(kind,annotated){
+  var am=kind==="sun-am", sunX=am?70:290, sunY=24, topY=90, baseY=130;   // 面向南方：東在左、西在右
+  var tipX=180+(180-sunX)*(baseY-topY)/(topY-sunY);
+  var s='<figure style="margin:0"><svg class="fig" data-fig="'+kind+'" viewBox="0 0 360 170" role="img" aria-label="'+(am?"早上太陽在東邊":"下午太陽在西邊")+'，地上有一根竿子">'+
+    '<rect width="360" height="170" rx="12" fill="var(--sky1)"/><line x1="10" y1="'+baseY+'" x2="350" y2="'+baseY+'" stroke="var(--muted)" stroke-width="2"/>'+
+    '<circle cx="'+sunX+'" cy="'+sunY+'" r="18" fill="var(--sunball)"/><text x="'+sunX+'" y="'+(sunY+36)+'" text-anchor="middle" font-size="14" fill="var(--ink)">太陽</text>';
+  if(annotated){
+    s+='<line x1="'+sunX+'" y1="'+sunY+'" x2="'+tipX.toFixed(1)+'" y2="'+baseY+'" stroke="var(--sun)" stroke-width="2" stroke-dasharray="6 4"/>'+
+      '<line x1="180" y1="'+baseY+'" x2="'+tipX.toFixed(1)+'" y2="'+baseY+'" stroke="var(--ink)" stroke-width="8" stroke-linecap="round" opacity=".5"/>'+
+      '<text class="ans-mark" x="'+((180+tipX)/2).toFixed(1)+'" y="'+(baseY-10)+'" text-anchor="middle" font-size="14" fill="var(--ink)">影子</text>';
+  }
+  s+='<line x1="180" y1="'+baseY+'" x2="180" y2="'+topY+'" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>'+
+    '<text x="20" y="155" font-size="16" fill="var(--ink)">東</text><text x="340" y="155" text-anchor="end" font-size="16" fill="var(--ink)">西</text>'+
+    '<text x="180" y="155" text-anchor="middle" font-size="14" fill="var(--muted)">竿子</text><text x="350" y="18" text-anchor="end" font-size="11" fill="var(--muted)">面向南方看</text></svg>'+
+    (annotated?'<figcaption class="small">太陽在'+(am?"東":"西")+'，光直直照過來被竿子擋住，影子就落在相反的'+(am?"西":"東")+'邊。</figcaption>':'')+'</figure>';
+  return s;
+}
+// mode: practice｜teach。teach 只畫題目與選項，不畫作答鈕；兩者的題圖完全相同（作答前不畫影子，免得洩題）
+function questionHtml(c,mode){
+  var h="";
+  if(c.type==="figure") h+=figureSvg(c.fig,false);
+  if(c.type==="map"){
+    h+='<div class="q">'+esc(c.q)+'</div><div class="map"><div class="center">'+esc(c.center)+'</div><div class="branches">'+
+      c.branches.map(function(b,i){return '<div class="branch"><b>'+esc(b.k)+'</b><span>'+esc(b.show)+'</span>'+(mode==="teach"?'<span class="muted">？</span>':'<button class="blank" type="button" data-i="'+i+'">？ 點我看答案</button>')+'</div>';}).join("")+'</div></div>';
+    return h;
+  }
+  h+='<div class="q">'+esc(c.q)+'</div>';
+  if(c.type==="choice"||c.type==="figure"){
+    if(mode==="teach") h+='<ol style="margin:0;font-size:19px">'+c.opts.map(function(o){return '<li>'+esc(o)+'</li>';}).join("")+'</ol>';
+    else h+='<div class="opts">'+c.opts.map(function(o,i){return '<button class="opt" type="button" data-i="'+i+'">'+esc(o)+'</button>';}).join("")+'</div>';
+  }
+  return h;
+}
+function answerText(c){return c.type==="recall"?c.ans:c.type==="map"?c.branches.map(function(b){return b.k+"："+b.blank;}).join("、"):c.opts[c.a];}
+
+/* ---------- 練習 ---------- */
+var ui={hint:false,cardId:null};
+function renderPractice(){
+  screen="practice";
+  var v=V(), se=v.session, el=$("#main");
+  if(!se||!se.queue.length||se.halted) return renderEnd();
+  var id=se.queue[0], c=card(id);
+  if(!c) return renderEnd();
+  ui={hint:false,cardId:id,variation:se.kinds[id]==="variation"};
+  var con=CONCEPTS[c.concept], total=se.answered.length+se.queue.length, pos=se.answered.length+1;
+  var h='<div class="qhead"><span>'+esc(UNITS[con.unit])+'・'+esc(con.title)+(ui.variation?'<span class="tag">同觀念換一題確認</span>':'')+'</span><span>'+pos+' / '+total+'</span></div><div class="bar"><i style="width:'+Math.round((pos-1)/total*100)+'%"></i></div>';
+  h+=questionHtml(c,"practice");
+  var tools='<div class="tools"><label><input type="checkbox" id="unsure"> 我不太確定</label>'+(c.hint?'<button class="btn ghost sm" type="button" id="hintBtn">給我一點提示</button>':'')+'</div><div class="hint" id="hintBox" hidden></div>';
+  if(c.type==="map"){
+    h+='<div id="ansBox"><div class="row" id="grade" hidden><button class="btn" type="button" data-g="1">我全部想出來了</button><button class="btn ghost" type="button" data-g="0">有想不出來的</button></div></div>';
+    el.innerHTML=h;
+    var shown=0;
+    el.querySelectorAll(".blank").forEach(function(b){b.onclick=function(){if(b.classList.contains("shown"))return;b.classList.add("shown");b.textContent=c.branches[+b.dataset.i].blank;shown++;if(shown===c.branches.length)$("#grade").hidden=false;};});
+    el.querySelectorAll("#grade button").forEach(function(b){b.onclick=function(){el.querySelectorAll("#grade button").forEach(function(x){x.disabled=true;});submit(c,b.dataset.g==="1",{});};});
+    return;
+  }
+  if(c.type==="recall"){
+    h+='<p class="muted" style="margin:0">先在心裡（或說出來）回答，再看答案。</p>'+tools+'<div class="row" id="revealRow"><button class="btn" id="reveal" type="button">想好了，看答案</button></div><div id="ansBox"></div>';
+    el.innerHTML=h; wireTools(c);
+    on("#reveal",function(){
+      $("#revealRow").hidden=true;
+      $("#ansBox").innerHTML='<div class="fb ok"><strong>答案：'+esc(c.ans)+'</strong><span>'+esc(c.why||"")+'</span>'+srcLine(c)+'</div><div class="row" id="selfGrade" style="margin-top:10px"><button class="btn" type="button" data-g="1">我答對了</button><button class="btn ghost" type="button" data-g="0">我答錯了</button></div>';
+      $("#selfGrade").querySelectorAll("button").forEach(function(b){b.onclick=function(){$("#selfGrade").querySelectorAll("button").forEach(function(x){x.disabled=true;});submit(c,b.dataset.g==="1",meta(),true);};});
+    });
+    return;
+  }
+  h+=tools+'<div id="ansBox"></div>';
+  el.innerHTML=h; wireTools(c);
+  el.querySelectorAll(".opt").forEach(function(b){b.onclick=function(){
+    var i=+b.dataset.i, ok=i===c.a;
+    el.querySelectorAll(".opt").forEach(function(x){x.disabled=true;if(+x.dataset.i===c.a)x.classList.add("right");});
+    if(!ok) b.classList.add("wrong");
+    submit(c,ok,meta());
+  };});
+}
+function wireTools(c){
+  on("#hintBtn",function(){ui.hint=true;this.disabled=true;var box=$("#hintBox");box.hidden=false;box.textContent="提示："+c.hint;});
+}
+function meta(){var u=$("#unsure");return {unsure:!!(u&&u.checked),hint:ui.hint};}
+var pending=null;
+function submit(c,ok,m,selfGraded){
+  var a={type:"answer",id:newId(),cardId:c.id,ok:ok,hint:!!m.hint,unsure:!!m.unsure,variation:!!ui.variation};
+  pending={a:a,c:c,ok:ok,m:m,selfGraded:selfGraded};
+  var r=act(a);
+  if(!r.ok&&!r.dup){
+    $("#ansBox").insertAdjacentHTML("beforeend",'<div class="fb no" id="saveFail"><strong>這一題還沒存到這台裝置</strong><div class="row"><button class="btn sm" type="button" id="saveAgain">再存一次</button></div></div>');
+    on("#saveAgain",retrySave);
+    return;
+  }
+  feedback(pending,r.info||{});
+}
+// 兩個「再存一次」（上方提示列、題目下方）走同一條路：存成功才公布回饋
+function retrySave(){
+  var rr=store.retry(); banners();
+  if(!rr.ok) return;
+  var f=$("#saveFail");
+  if(f&&pending){f.remove();feedback(pending,rr.info||{});} else route();
+}
+function feedback(p,info){
+  var c=p.c, ok=p.ok, shaky=ok&&(p.m.unsure||p.m.hint), box=$("#ansBox");
+  if(ok){
+    var msg=shaky?"答對了！你有勾「不太確定」或用了提示，明天再確認一次。":info.graduated?"答對了！這張卡在 3 個不同的日子都答對，畢業了。":info.variation?"答對了！換了題目也會，觀念弄懂了。":"答對了！";
+    if(!shaky) chime();
+    if(!p.selfGraded) box.insertAdjacentHTML("beforeend",'<div class="fb ok"><strong>'+esc(msg)+'</strong><span>'+esc(c.why||"")+'</span>'+(c.type==="figure"?figureSvg(c.fig,true):"")+srcLine(c)+'</div>');
+    else box.insertAdjacentHTML("beforeend",'<div class="fb ok"><strong>'+esc(msg)+'</strong></div>');
+    box.insertAdjacentHTML("beforeend",'<div class="row"><button class="btn" id="next" type="button">下一題</button></div>');
+    on("#next",renderPractice); $("#next").focus();
+    return;
+  }
+  if(info.halted) return renderHalted(c,p.selfGraded);
+  if(!p.selfGraded&&c.type!=="map") box.insertAdjacentHTML("beforeend",'<div class="fb no"><strong>正確答案是「'+esc(answerText(c))+'」</strong><span>'+esc(c.why||"")+'</span>'+(c.type==="figure"?figureSvg(c.fig,true):"")+srcLine(c)+'</div>');
+  if(c.type==="map") box.insertAdjacentHTML("beforeend",'<div class="fb no"><span>'+esc(c.why||"")+'</span></div>');
+  box.insertAdjacentHTML("beforeend",'<div class="fb" id="errq" style="background:var(--bg)"><strong>你覺得錯在哪裡？<span class="muted" style="font-weight:400">（自己選，沒有標準答案）</span></strong><div class="chips">'+
+    Object.keys(ERRS).map(function(k){return '<button class="chip'+(k==="concept"?' pri':'')+'" type="button" data-k="'+k+'">'+ERRS[k]+'</button>';}).join("")+'<button class="chip" type="button" data-k="">先跳過</button></div></div>');
+  $("#errq").querySelectorAll("button").forEach(function(b){b.onclick=function(){
+    $("#errq").querySelectorAll("button").forEach(function(x){x.disabled=true;});
+    b.classList.add("picked");
+    var k=b.dataset.k;
+    if(k==="concept") return remedy(c);
+    var tip={reading:"下次先把題目的關鍵字圈起來，再看選項。",slip:"知道答案很棒！下次選之前再對一次題目。","":"沒關係，這張卡明天會再出現。"}[k];
+    box.insertAdjacentHTML("beforeend",'<div class="fb ok"><span>'+esc(tip)+'</span><div class="row"><button class="btn" type="button" id="next">下一題</button></div></div>');
+    on("#next",renderPractice); $("#next").focus();
+  };});
+}
+// 補救：第一次＝說法一＋觀察任務；同觀念再卡住＝帶出上次紀錄、換另一種說法；做完任務換一題確認
+function remedy(c){
+  var ways=EXPLAIN[c.concept].length;
+  var r=act({type:"help",cid:c.concept,ways:ways});
+  if(!r.ok) return;
+  var ex=EXPLAIN[c.concept][r.info.way], prev=r.info.previous;
+  var h='<div class="remedy" id="remedy">'+
+    (prev?'<div class="prev">上次 '+md(prev.last)+' 你也在這個觀念卡住，那次看的是「'+esc(EXPLAIN[c.concept][prev.way].name)+'」。這次換一種說法：</div>':'')+
+    '<strong style="font-size:19px">'+esc(ex.name)+'</strong>'+ex.svg()+'<ul>'+ex.lines.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ul>'+
+    '<div class="task"><strong>觀察任務</strong><span>'+esc(ex.task)+'</span></div>'+
+    '<div class="row"><button class="btn" type="button" id="toLab">做觀察任務，再換一題確認</button><button class="btn ghost sm" type="button" id="skipRemedy">先跳過，下一題</button></div></div>';
+  $("#ansBox").insertAdjacentHTML("beforeend",h);
+  on("#toLab",function(){openLab(c.concept,{from:"wrong",card:c.id});});
+  on("#skipRemedy",renderPractice);
+  $("#remedy").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function renderHalted(c,selfGraded){
+  screen="end";
+  var con=CONCEPTS[c.concept];
+  $("#main").innerHTML='<div class="done"><b class="t">這一輪先停在這裡</b>'+
+    (selfGraded?'':'<div class="fb no" style="text-align:left;justify-self:stretch"><strong>這題的正確答案是「'+esc(answerText(c))+'」</strong><span>'+esc(c.why||"")+'</span></div>')+
+    '<p style="margin:0">「'+esc(con.short)+'」看了圖解、做了實驗，換一題還是卡住——這很正常，不用一直刷題。</p>'+
+    '<p class="muted" style="margin:0">請爸媽陪你一起看一次圖解，或明天再試。這張卡明天會再出現。</p>'+
+    '<div class="row" style="justify-content:center"><button class="btn" type="button" id="hView">現在和爸媽一起看圖解</button><button class="btn ghost" type="button" id="hHome">回首頁</button></div></div>';
+  on("#hView",function(){renderConcept(c.concept);});
+  on("#hHome",renderHome);
+  renderSide();
+}
+function renderEnd(){
+  screen="end";
+  var v=V(), se=v.session, el=$("#main");
+  if(!se) return renderHome();
+  var title=C.endTitle(v)||"這一輪完成了", right=se.answered.length-se.wrong.length;
+  el.innerHTML='<div class="done"><b class="t">'+esc(title)+'</b>'+
+    '<p style="margin:0">這一輪做了 '+se.answered.length+' 張'+(se.answered.length?'，第一次就答對 '+Math.max(0,right)+' 張':'')+'。</p>'+
+    (v.completed?'':v.planIds.length?'<p class="muted" style="margin:0">今天的卡片完成 '+v.M.cardProgress.done+' / '+v.M.cardProgress.planned+' 張，還有 '+v.remainingIds.length+' 張，等一下想做再按開始。</p>':'')+
+    '<div class="row" style="justify-content:center">'+(!v.completed&&v.remainingIds.length?'<button class="btn" type="button" id="goMore">繼續做剩下的 '+v.remainingIds.length+' 張</button>':'')+
+    (se.wrong.length?'<button class="btn ghost" type="button" id="goRedo">再練答錯的 '+se.wrong.length+' 張</button>':'')+
+    '<button class="btn ghost" type="button" id="goTeach">考考爸媽</button><button class="btn ghost" type="button" id="goHome">回首頁</button></div>'+
+    '<div style="display:grid;gap:8px;justify-items:center"><span class="small muted">今天練習的感覺？（可以不選）</span><div class="moods" id="moods">'+
+    ["good","ok","tired"].map(function(m){return '<button type="button" data-m="'+m+'" aria-label="'+MOOD_NAME[m]+'"'+(v.day.mood===m?' class="on"':'')+'>'+FACES[m]+'</button>';}).join("")+'</div></div></div>';
+  on("#goMore",function(){act({type:"sessionStart"});startRound();});
+  on("#goRedo",function(){var w=V().session.wrong.slice();act({type:"sessionStart",kind:"redo",ids:w});startRound();});
+  on("#goTeach",function(){renderTeach();});
+  on("#goHome",renderHome);
+  el.querySelectorAll("#moods button").forEach(function(b){b.onclick=function(){act({type:"mood",value:b.dataset.m});el.querySelectorAll("#moods button").forEach(function(x){x.classList.toggle("on",x===b);});};});
+  renderSide();
+}
+
+/* ---------- 考考爸媽 ---------- */
+function renderTeach(){
+  screen="teach";
+  var s=S(), today=V().today;
+  var okToday=s.log.filter(function(e){return e.d===today&&e.ok;}).map(function(e){return e.card;});
+  var pool=okToday.length?okToday:s.log.filter(function(e){return e.ok;}).map(function(e){return e.card;});
+  pool=pool.filter(function(id){return !!card(id);});
+  var el=$("#main");
+  if(!pool.length){el.innerHTML='<p style="margin:0">先練幾張卡，答對的題目就可以拿來考爸媽。</p><div class="row"><button class="btn ghost" type="button" id="back">回首頁</button></div>';on("#back",renderHome);return;}
+  var c=card(pool[Math.floor(Math.random()*pool.length)]);
+  el.innerHTML='<div style="display:grid;gap:14px" id="teachBox"><h2>換你當小老師</h2><p class="muted" style="margin:0">唸題目考爸爸或媽媽。聽完他的答案，說說看哪裡對、哪裡要改，再用自己的話講「為什麼」。</p>'+
+    questionHtml(c,"teach")+
+    '<details><summary>老師的答案卡（先別給爸媽看）</summary><div><strong>'+esc(answerText(c))+'</strong><br>'+esc(c.why||"")+(c.type==="figure"?figureSvg(c.fig,true):"")+'</div></details>'+
+    '<div class="row"><button class="btn" type="button" id="taught">我考完也講解了</button><button class="btn ghost" type="button" id="another">換一題</button><button class="btn ghost" type="button" id="back">先不要</button></div></div>';
+  on("#taught",function(){var r=act({type:"teach",cardId:c.id});if(!r.ok)return;el.innerHTML='<div class="done"><b class="t">謝謝小老師</b><p class="muted" style="margin:0">把觀念講給別人聽，自己會記得更牢。</p><button class="btn ghost" type="button" id="back2">回首頁</button></div>';on("#back2",renderHome);renderSide();});
+  on("#another",renderTeach);
+  on("#back",renderHome);
+}
+
+/* ---------- 實驗室：先預測才能操作；完成才算數 ---------- */
+var labTimer=null;
+function stopAnim(){if(labTimer){cancelAnimationFrame(labTimer);labTimer=null;}}
+var LAB_TASKS={
+  shadow:["把時間拉到早上 8 點左右，看影子朝哪邊","拉到中午 12 點左右，看影子變長還是變短","拉到下午 4 點左右，看影子朝哪邊"],
+  light:["看光怎麼被擋住變成影子","看鏡子怎麼把光反射回來","在杯子裡加水，看筷子怎麼「折斷」","讓陽光穿過三稜鏡"],
+  transport:["把時間拉到 6 小時，看紅色的水跑到哪裡","點「根」看它的工作","點「莖」看它的工作","點「葉」看它的工作"],
+  grow:["點落地生根的葉子","點馬鈴薯","點果實"],
+  sort:["把 16 樣東西全部放進正確的籃子"],
+  dissolve:["讓方糖在冷水裡溶解完","換成熱水再溶解一次，比比看哪個快","看秤：溶解前後的重量","一直加鹽，加到杯底留下鹽"]
+};
+var lab=null;
+function openLab(cid,ctx){
+  stopAnim(); screen="lab";
+  var con=CONCEPTS[cid], key=con.lab, pr=PREDICT[key], tasks=LAB_TASKS[key], runId=newId("r");
+  var r=act({type:"labStart",runId:runId,lab:key,tasks:tasks.length,answer:pr.a,from:ctx.from,card:ctx.card||undefined});
+  if(!r.ok) return;
+  lab={runId:runId,cid:cid,key:key,ctx:ctx,pr:pr,tasks:tasks};
+  var el=$("#main");
+  el.innerHTML='<div class="lab"><h2>實驗室：'+esc(con.title)+'</h2><div class="task" id="labPredict"></div><div id="labBody" hidden></div><div class="task" id="labTask" hidden></div><div class="row" id="labNav"></div></div>';
+  drawPredict(); drawNav();
+  LABS[key]($("#labBody"));
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function run(){return S().labRuns[lab.runId];}
+function drawPredict(){
+  var rr=run(), pr=lab.pr, all=rr.tasksDone.length>=rr.tasks;
+  var h='<strong>'+esc(pr.q)+'</strong><div class="chips">'+pr.opts.map(function(o,i){return '<button class="chip'+(rr.prediction===i?' sel':'')+'" type="button" data-g="'+i+'"'+(rr.prediction!==null?' disabled':'')+'>'+esc(o)+'</button>';}).join("")+'</div>';
+  if(rr.prediction===null) h+='<span class="small muted">先猜一個，實驗才會打開。猜錯也沒關係。</span>';
+  else if(!all) h+='<span class="small">好，現在動手做下面的任務，看看你猜得對不對！</span>';
+  else h+='<span>'+(rr.predictionCorrect?'你猜對了！':'你猜「'+esc(pr.opts[rr.prediction])+'」，實際是「'+esc(pr.opts[pr.a])+'」。')+esc(pr.why)+'</span>';
+  $("#labPredict").innerHTML=h;
+  $("#labPredict").querySelectorAll("button[data-g]").forEach(function(b){b.onclick=function(){
+    var r=act({type:"labPredict",runId:lab.runId,choice:+b.dataset.g});
+    if(!r.ok) return;
+    $("#labBody").hidden=false; $("#labTask").hidden=false;
+    drawPredict(); drawTasks(); drawNav();
+    if(LABS[lab.key].after) LABS[lab.key].after();
+  };});
+  if(rr.prediction!==null){$("#labBody").hidden=false;$("#labTask").hidden=false;drawTasks();}
+}
+function drawTasks(){
+  var rr=run();
+  $("#labTask").innerHTML='<strong>任務</strong>'+lab.tasks.map(function(t,i){var d=rr.tasksDone.indexOf(i)>=0;return '<div class="ck'+(d?' got':'')+'">'+checkIcon(d)+'<span>'+esc(t)+'</span></div>';}).join("");
+}
+function check(i){
+  if(!lab) return;
+  var rr=run();
+  if(!rr||rr.phase==="predict"||rr.tasksDone.indexOf(i)>=0) return;
+  var r=act({type:"labTask",runId:lab.runId,task:i});
+  if(r.ok){drawTasks();drawNav();if(run().tasksDone.length>=run().tasks)drawPredict();}
+}
+function drawNav(){
+  var rr=run(), all=rr.prediction!==null&&rr.tasksDone.length>=rr.tasks, nav=$("#labNav");
+  if(lab.ctx.from==="wrong"){
+    nav.innerHTML='<button class="btn" type="button" id="labDone"'+(all?'':' disabled')+'>'+(all?'我看懂了，換一題確認':(rr.prediction===null?'先猜猜看，再完成任務':'完成任務後就能換一題確認'))+'</button><button class="btn ghost sm" type="button" id="labSkip">先回到練習</button>';
+    on("#labDone",function(){stopAnim();var r=act({type:"labComplete",runId:lab.runId});if(!r.ok&&!r.dup)return;lab=null;screen="practice";route();});
+    on("#labSkip",function(){stopAnim();lab=null;screen="practice";route();});
+  }else{
+    nav.innerHTML='<button class="btn" type="button" id="labDone"'+(all?'':' disabled')+'>'+(all?'完成實驗':'完成任務後按這裡')+'</button><button class="btn ghost sm" type="button" id="labHome">回首頁</button>';
+    on("#labDone",function(){stopAnim();var r=act({type:"labComplete",runId:lab.runId});if(!r.ok&&!r.dup)return;lab=null;
+      $("#main").innerHTML='<div class="done"><b class="t">實驗完成</b><p class="muted" style="margin:0">做完實驗，再回去練卡片或考考爸媽。</p><div class="row" style="justify-content:center"><button class="btn ghost" type="button" id="back3">回首頁</button></div></div>';on("#back3",renderHome);renderSide();});
+    on("#labHome",function(){stopAnim();lab=null;renderHome();});
+  }
+}
+
+var LABS={};
+/* 1-1 影子：台中今天的真實太陽位置（NOAA 簡化公式，約略計算）；從上往下看的方位盤＋高度角條 */
+LABS.shadow=function(box){
+  var today=new Date(), st=sunTimes(today,TAICHUNG.lat,TAICHUNG.lon,TAICHUNG.tz);
+  box.innerHTML='<p class="small muted" style="margin:0">台中・今天（約略計算）。從上往下看，像地圖：上北、下南、右東、左西。太陽在圓圈外面繞，中間是竿子。</p>'+
+    '<svg class="labsvg" viewBox="0 0 360 270" id="shSvg"></svg>'+
+    '<label for="shT" class="small">時間：<b id="shTl"></b></label><input type="range" id="shT" min="'+Math.ceil((st.rise||6)*4)/4+'" max="'+Math.floor((st.set||18)*4)/4+'" step="0.25" value="10">'+
+    '<div class="readout" id="shRo"></div>';
+  function draw(){
+    var t=+$("#shT").value, p=sunPosition(today,t,TAICHUNG.lat,TAICHUNG.lon,TAICHUNG.tz), sh=C.shadowFromSun(p.az,p.alt,1);
+    var cx=180,cy=135,R=95, sx=cx+R*Math.sin(p.az*Math.PI/180), sy=cy-R*Math.cos(p.az*Math.PI/180);
+    var L=sh.len===null?0:Math.min(110,34*sh.len), ex=cx+L*Math.sin((sh.az||0)*Math.PI/180), ey=cy-L*Math.cos((sh.az||0)*Math.PI/180);
+    var hh=Math.floor(t), mm=Math.round((t-hh)*60);
+    $("#shTl").textContent=(hh<12?"上午 ":hh===12?"中午 ":"下午 ")+(hh>12?hh-12:hh)+":"+(mm<10?"0":"")+mm;
+    var alt=Math.max(0,p.alt);
+    $("#shSvg").innerHTML='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/>'+
+      '<text x="'+cx+'" y="26" text-anchor="middle" font-size="15" fill="var(--ink)">北</text><text x="'+cx+'" y="258" text-anchor="middle" font-size="15" fill="var(--ink)">南</text>'+
+      '<text x="296" y="'+(cy+5)+'" font-size="15" fill="var(--ink)">東</text><text x="54" y="'+(cy+5)+'" text-anchor="end" font-size="15" fill="var(--ink)">西</text>'+
+      (L?'<line x1="'+cx+'" y1="'+cy+'" x2="'+ex.toFixed(1)+'" y2="'+ey.toFixed(1)+'" stroke="var(--ink)" stroke-width="8" stroke-linecap="round" opacity=".5"/>':'')+
+      '<circle cx="'+cx+'" cy="'+cy+'" r="6" fill="var(--soil)"/><circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="15" fill="var(--sunball)"/>'+
+      '<rect x="330" y="40" width="14" height="180" rx="7" fill="var(--line)"/><rect x="330" y="'+(220-180*alt/90).toFixed(1)+'" width="14" height="'+(180*alt/90).toFixed(1)+'" rx="7" fill="var(--sun)"/>'+
+      '<text x="337" y="236" text-anchor="middle" font-size="11" fill="var(--muted)">高度</text>';
+    $("#shRo").innerHTML=p.alt>0?'太陽在<b>'+C.dirName(p.az)+'</b>方的天空，高度角約 <b>'+Math.round(p.alt)+'°</b>　→　影子朝<b>'+C.dirName(sh.az)+'</b>方，'+(sh.len>2?'很長':sh.len>0.9?'中等':'很短'):'太陽在地平線附近，影子非常長。';
+    if(t<=9) check(0); if(t>=11.5&&t<=12.5) check(1); if(t>=15.5&&t<=16.5) check(2);
+  }
+  $("#shT").oninput=draw; draw();
+};
+/* 1-2 光：四個小實驗 */
+LABS.light=function(box){
+  box.innerHTML='<div class="tabs" id="lgTabs"><button type="button" data-k="0">影子</button><button type="button" data-k="1">反射</button><button type="button" data-k="2">折射</button><button type="button" data-k="3">三稜鏡</button></div><svg class="labsvg" viewBox="0 0 360 220" id="lgSvg"></svg><div id="lgCtl" class="row"></div><div class="readout" id="lgRo"></div>';
+  var st={k:0,block:true,ang:40,water:false,shine:false};
+  function draw(){
+    var s="",ctl="",ro="";
+    if(st.k===0){
+      s+='<circle cx="40" cy="110" r="14" fill="var(--sunball)"/><text x="40" y="146" text-anchor="middle" font-size="13" fill="var(--ink)">手電筒</text><rect x="330" y="20" width="12" height="180" fill="var(--line)"/><text x="336" y="214" text-anchor="middle" font-size="12" fill="var(--muted)">牆</text>';
+      if(st.block){s+='<polygon points="54,104 180,80 180,140 54,116" fill="var(--sunball)" opacity=".35"/><rect x="180" y="80" width="18" height="60" fill="var(--soil)"/><polygon points="198,80 330,56 330,164 198,140" fill="var(--ink)" opacity=".12"/><rect x="330" y="56" width="12" height="108" fill="var(--ink)" opacity=".5"/>';ro="光直線前進，被方塊擋住，牆上照不到光的地方就是影子。";}
+      else{s+='<polygon points="54,104 330,40 330,180 54,116" fill="var(--sunball)" opacity=".35"/>';ro="沒有東西擋住，光直直照到牆上。";}
+      ctl='<button class="btn ghost sm" type="button" id="lgB">'+(st.block?"拿走方塊":"放回方塊")+'</button>';
+    }else if(st.k===1){
+      var a=st.ang*Math.PI/180,mx=180,my=180,L=150,ix=mx-L*Math.sin(a),iy=my-L*Math.cos(a),rx=mx+L*Math.sin(a),ry=my-L*Math.cos(a);
+      s+='<rect x="90" y="180" width="180" height="10" fill="var(--pri)"/><text x="180" y="208" text-anchor="middle" font-size="13" fill="var(--ink)">鏡子</text><line x1="180" y1="180" x2="180" y2="40" stroke="var(--muted)" stroke-dasharray="4 4"/>'+
+        '<line x1="'+ix.toFixed(1)+'" y1="'+iy.toFixed(1)+'" x2="'+mx+'" y2="'+my+'" stroke="var(--red)" stroke-width="4"/><line x1="'+mx+'" y1="'+my+'" x2="'+rx.toFixed(1)+'" y2="'+ry.toFixed(1)+'" stroke="var(--red)" stroke-width="4" stroke-dasharray="10 5"/><circle cx="'+ix.toFixed(1)+'" cy="'+iy.toFixed(1)+'" r="10" fill="var(--sunball)"/>';
+      ctl='<label for="lgA" class="small" style="flex:1">移動手電筒<input type="range" id="lgA" min="10" max="70" value="'+st.ang+'"></label>';
+      ro="光碰到鏡子會反彈回來，這叫反射。射進去斜多少，反彈出去就斜多少。";
+    }else if(st.k===2){
+      s+='<rect x="120" y="40" width="120" height="160" rx="8" fill="none" stroke="var(--ink)" stroke-width="3"/>';
+      // 從上方斜看：水下那段的視深度＝實際深度÷1.33，所以看起來往水面翹、在水面「折」一下
+      if(st.water) s+='<rect x="122" y="100" width="116" height="98" fill="var(--waterfill)" opacity=".8"/><line x1="122" y1="100" x2="238" y2="100" stroke="var(--pri)" stroke-width="2"/><line x1="150" y1="20" x2="185.3" y2="100" stroke="var(--soil)" stroke-width="7" stroke-linecap="round"/><line x1="185.3" y1="100" x2="225" y2="167.7" stroke="var(--soil)" stroke-width="7" stroke-linecap="round"/><line x1="185.3" y1="100" x2="225" y2="190" stroke="var(--soil)" stroke-width="3" stroke-dasharray="4 4" opacity=".45"/><text x="232" y="196" text-anchor="end" font-size="11" fill="var(--muted)">虛線＝筷子真正的位置</text>';
+      else s+='<line x1="150" y1="20" x2="225" y2="190" stroke="var(--soil)" stroke-width="7" stroke-linecap="round"/>';
+      ctl='<button class="btn sm" type="button" id="lgW">'+(st.water?"把水倒掉":"倒水進杯子")+'</button>';
+      ro=st.water?"有水以後，水下的筷子看起來在水面「折」了一下：光從水斜斜跑到空氣，方向改變，這叫折射。":"杯子沒水時，筷子看起來是直的。按「倒水進杯子」看看。";
+    }else{
+      s+='<polygon points="180,50 240,170 120,170" fill="var(--pri-soft)" stroke="var(--ink)" stroke-width="2"/><line x1="20" y1="120" x2="152" y2="112" stroke="var(--sunball)" stroke-width="6"/>';
+      if(st.shine) ["#e53935","#fb8c00","#fdd835","#43a047","#1e88e5","#3949ab","#8e24aa"].forEach(function(c,i){s+='<line x1="212" y1="118" x2="350" y2="'+(70+i*18)+'" stroke="'+c+'" stroke-width="5"/>';});
+      ctl='<button class="btn sun sm" type="button" id="lgP">'+(st.shine?"再照一次":"讓陽光穿過三稜鏡")+'</button>';
+      ro=st.shine?"白色的陽光被分成好多顏色：陽光是由多種色光組成的。彩虹也是同樣的道理。":"按按鈕，讓陽光照進三稜鏡。";
+    }
+    $("#lgSvg").innerHTML=s; $("#lgCtl").innerHTML=ctl; $("#lgRo").textContent=ro;
+    document.querySelectorAll("#lgTabs button").forEach(function(b){b.classList.toggle("on",+b.dataset.k===st.k);});
+    on("#lgB",function(){st.block=!st.block;check(0);draw();});
+    var ra=$("#lgA"); if(ra) ra.oninput=function(e){st.ang=+e.target.value;check(1);draw();};
+    on("#lgW",function(){st.water=!st.water;if(st.water)check(2);draw();});
+    on("#lgP",function(){st.shine=true;check(3);draw();});
+  }
+  document.querySelectorAll("#lgTabs button").forEach(function(b){b.onclick=function(){st.k=+b.dataset.k;draw();};});
+  LABS.light.after=function(){check(0);};
+  draw();
+};
+/* 2-1 根莖葉 */
+LABS.transport=function(box){
+  box.innerHTML='<p class="small muted" style="margin:0">把帶葉的枝條插在紅色的水裡，時間慢慢過去……</p><svg class="labsvg" viewBox="0 0 360 260" id="trSvg"></svg>'+
+    '<label for="trT" class="small">經過時間：<b id="trTl">0</b> 小時</label><input type="range" id="trT" min="0" max="6" step="0.1" value="0">'+
+    '<div class="row" id="trBtns"><button class="btn ghost sm" type="button" data-p="root">根</button><button class="btn ghost sm" type="button" data-p="stem">莖</button><button class="btn ghost sm" type="button" data-p="leaf">葉</button></div><div class="readout" id="trRo">點上面的按鈕看根、莖、葉各做什麼。</div>';
+  var FN={root:"根：在土裡吸收水分，也把植物抓牢（固定）。",stem:"莖：把水分和養分運送到各處，也支持植物站起來。",leaf:"葉：利用陽光製造養分；水分也會從葉子散失到空氣中（蒸散作用）。"};
+  function draw(){
+    var t=+$("#trT").value; $("#trTl").textContent=t.toFixed(1);
+    var stemFill=Math.min(1,t/4), leafRed=t>4?Math.min(1,(t-4)/2):0, h=172*stemFill;
+    var s='<rect x="100" y="170" width="160" height="80" rx="10" fill="var(--waterfill)" opacity=".5"/><rect x="100" y="170" width="160" height="80" rx="10" fill="var(--red)" opacity=".35"/><text x="250" y="242" text-anchor="end" font-size="12" fill="var(--ink)">紅色的水</text>'+
+      '<path d="M180 240 l-14 14 M180 240 l12 14 M180 240 l0 16" stroke="var(--soil)" stroke-width="3"/><rect x="174" y="70" width="12" height="172" rx="5" fill="var(--leaf)"/><rect x="174" y="'+(242-h).toFixed(1)+'" width="12" height="'+h.toFixed(1)+'" rx="5" fill="var(--red)" opacity=".8"/>';
+    [[180,90,-1],[180,120,1],[180,150,-1]].forEach(function(p){var d=p[2];s+='<path d="M'+p[0]+' '+p[1]+' q'+(40*d)+' -30 '+(70*d)+' -6 q'+(-30*d)+' 26 '+(-70*d)+' 6" fill="var(--leaf)"/>';if(leafRed>0)s+='<path d="M'+p[0]+' '+p[1]+' q'+(40*d)+' -30 '+(70*d)+' -6" stroke="var(--red)" stroke-width="3" fill="none" opacity="'+leafRed.toFixed(2)+'"/>';});
+    $("#trSvg").innerHTML=s+'<circle cx="320" cy="40" r="18" fill="var(--sunball)"/>';
+    if(t>=6) check(0);
+  }
+  $("#trT").oninput=draw; draw();
+  box.querySelectorAll("#trBtns button").forEach(function(b){b.onclick=function(){$("#trRo").textContent=FN[b.dataset.p];check({root:1,stem:2,leaf:3}[b.dataset.p]);};});
+};
+/* 2-2 繁殖 */
+LABS.grow=function(box){
+  box.innerHTML='<p class="small muted" style="margin:0">點一下，看新的小植物從哪個部位長出來。</p><div class="pots">'+
+    ['落地生根','馬鈴薯','果實與種子'].map(function(n,i){return '<button class="pot" type="button" id="gr'+i+'"><svg viewBox="0 0 100 100" id="g'+i+'" aria-hidden="true"></svg><span class="small">'+n+'</span></button>';}).join("")+'</div><div class="readout" id="grRo">點上面的植物。</div>';
+  var st=[0,0,0];
+  function draw(){
+    $("#g0").innerHTML='<path d="M15 60 q35 -40 70 0 q-35 25 -70 0" fill="var(--leaf)"/>'+(st[0]?[20,35,50,65,80].map(function(x){return '<path d="M'+x+' '+(60-Math.abs(50-x)*0.5)+' l0 -10" stroke="var(--leaf)" stroke-width="3"/><circle cx="'+x+'" cy="'+(48-Math.abs(50-x)*0.5)+'" r="4" fill="var(--leaf)"/>';}).join(""):"");
+    $("#g1").innerHTML='<ellipse cx="50" cy="62" rx="32" ry="22" fill="var(--soil)"/><circle cx="38" cy="56" r="3" fill="var(--ink)"/><circle cx="60" cy="66" r="3" fill="var(--ink)"/>'+(st[1]?'<path d="M38 54 q-4 -20 -12 -28" stroke="var(--leaf)" stroke-width="4" fill="none"/><path d="M60 64 q6 -24 14 -34" stroke="var(--leaf)" stroke-width="4" fill="none"/>':'');
+    $("#g2").innerHTML=st[2]?'<path d="M30 70 q20 -40 40 0" fill="var(--red)" opacity=".4"/><ellipse cx="50" cy="76" rx="8" ry="5" fill="var(--soil)"/><path d="M50 72 q0 -18 8 -26" stroke="var(--leaf)" stroke-width="4" fill="none"/>':'<circle cx="50" cy="56" r="26" fill="var(--red)"/><ellipse cx="44" cy="58" rx="4" ry="3" fill="var(--soil)"/><ellipse cx="56" cy="54" rx="4" ry="3" fill="var(--soil)"/>';
+  }
+  var MSG=["落地生根的葉子邊緣長出小芽 → 用「葉」繁殖。","馬鈴薯的芽眼長出新芽 → 馬鈴薯是「莖」，用莖繁殖。","果實裡的種子種下去發芽 → 用「種子」繁殖。"];
+  [0,1,2].forEach(function(i){on("#gr"+i,function(){st[i]=1;draw();$("#grRo").textContent=MSG[i];check(i);});});
+  draw();
+};
+/* 2-3 分類遊戲 */
+LABS.sort=function(box){
+  var ITEMS=[["胡蘿蔔","根"],["地瓜","根"],["白蘿蔔","根"],["馬鈴薯","莖"],["薑","莖"],["甘蔗","莖"],["蓮藕","莖"],["木材","莖"],["高麗菜","葉"],["菠菜","葉"],["花椰菜","花"],["金針花","花"],["番茄","果實"],["蘋果","果實"],["花生仁","種子"],["紅豆","種子"]];
+  var HINT={"根":"它長在土裡，沒有節和芽眼。","莖":"它有節、芽眼，或是植物用來站直、運送水分的部分。","葉":"它是一片一片、一層一層的。","花":"它是植物開花的部分。","果實":"它是花謝了以後長出來、裡面常有種子的部分。","種子":"種下去會發芽長出新植物。"};
+  var BINS=["根","莖","葉","花","果實","種子"], placed={}, sel=null;
+  box.innerHTML='<p class="small muted" style="margin:0">先點一樣東西，再點它屬於植物的哪個部位。</p><div class="chips" id="soItems"></div><div class="bins" id="soBins"></div><div class="readout" id="soRo"></div>';
+  function draw(){
+    $("#soItems").innerHTML=ITEMS.map(function(it,i){return placed[i]?'':'<button class="chip'+(sel===i?' sel':'')+'" type="button" data-i="'+i+'">'+it[0]+'</button>';}).join("")||'<span class="small">全部放好了！</span>';
+    $("#soBins").innerHTML=BINS.map(function(b){return '<button class="bin" type="button" data-b="'+b+'"><b>'+b+'</b><span>'+ITEMS.filter(function(it,i){return placed[i]&&it[1]===b;}).map(function(it){return it[0];}).join("、")+'</span></button>';}).join("");
+    $("#soRo").textContent="放對 "+Object.keys(placed).length+" / "+ITEMS.length;
+    document.querySelectorAll("#soItems button").forEach(function(b){b.onclick=function(){sel=+b.dataset.i;draw();};});
+    document.querySelectorAll("#soBins button").forEach(function(b){b.onclick=function(){
+      if(sel===null){$("#soRo").textContent="先點上面的一樣東西。";return;}
+      if(ITEMS[sel][1]===b.dataset.b){placed[sel]=1;sel=null;chime();draw();if(Object.keys(placed).length===ITEMS.length)check(0);}
+      else{var name=ITEMS[sel][0],chip=document.querySelector('#soItems button[data-i="'+sel+'"]');if(chip){chip.classList.remove("shake");void chip.offsetWidth;chip.classList.add("shake");}$("#soRo").textContent="「"+name+"」不是"+b.dataset.b+"。提示："+HINT[ITEMS[sel][1]];}
+    };});
+  }
+  draw();
+};
+/* 3-1 溶解：重量由物質帳本算，溶解按經過時間（與幀率、減少動態效果無關） */
+LABS.dissolve=function(box){
+  box.innerHTML='<svg class="labsvg" viewBox="0 0 360 240" id="dsSvg"></svg><div class="row"><button class="btn sm" type="button" id="dsGo">放入方糖（10 g）</button><label class="toggle small"><input type="checkbox" id="dsStir"> 攪拌</label><label class="toggle small"><input type="checkbox" id="dsHot"> 熱水</label><button class="btn sun sm" type="button" id="dsSalt">加一匙鹽（6 g）</button><button class="btn ghost sm" type="button" id="dsNew">換一杯清水</button></div><div class="readout" id="dsRo">按「放入方糖」開始。溶解快慢是示意，不是真實測量。</div>';
+  var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var m=C.dissolveNew(), P=[], sugarStart=null, coldDone=false, hotDone=false;
+  function now(){return performance.now();}
+  function sync(){m=C.dissolveStep(m,now());}
+  function draw(){
+    var r=C.dissolveRead(m);
+    var s='<rect x="90" y="60" width="180" height="160" rx="10" fill="none" stroke="var(--ink)" stroke-width="3"/><rect x="92" y="78" width="176" height="140" fill="var(--waterfill)" opacity=".7"/>';
+    if(r.sugarSolid>0){var w=26*Math.sqrt(r.sugarSolid/10);s+='<rect x="'+(180-w/2).toFixed(1)+'" y="'+(214-w).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+w.toFixed(1)+'" fill="#fff" stroke="var(--muted)"/>';}
+    if(!reduce) P.forEach(function(p){s+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="1.6" fill="var(--ink)" opacity=".45"/>';});
+    else if(r.sugarDissolved>0||r.saltDissolved>0) s+='<text x="180" y="150" text-anchor="middle" font-size="13" fill="var(--ink)">（溶解的粒子小到看不見）</text>';
+    for(var i=0;i<Math.round(r.saltSolid);i++) s+='<rect x="'+(110+(i*13)%140)+'" y="'+(210-Math.floor(i/11)*4)+'" width="5" height="4" fill="#fff" stroke="var(--muted)"/>';
+    s+='<rect x="292" y="150" width="60" height="70" rx="6" fill="var(--card)" stroke="var(--line)"/><text x="322" y="190" text-anchor="middle" font-size="16" fill="var(--ink)">'+r.scaleMass+' g</text><text x="322" y="210" text-anchor="middle" font-size="11" fill="var(--muted)">秤</text>';
+    $("#dsSvg").innerHTML=s;
+  }
+  function tick(){
+    sync(); var r=C.dissolveRead(m);
+    if(!reduce){var rate=(m.hot?2:1)*(m.stir?2:1);if(r.sugarSolid>0)for(var i=0;i<rate;i++)if(P.length<260)P.push({x:180+(Math.random()-.5)*20,y:200,vx:(Math.random()-.5)*(m.stir?3:1),vy:-Math.random()*(m.stir?2.5:1)});
+      P.forEach(function(p){p.x+=p.vx;p.y+=p.vy;if(p.x<95||p.x>265)p.vx*=-1;if(p.y<80||p.y>212)p.vy*=-1;p.vx+=(Math.random()-.5)*.3;p.vy+=(Math.random()-.5)*.3;});}
+    draw();
+    if(r.sugarTotal>0&&r.sugarSolid===0&&m.sugarDoneAt!==null&&sugarStart!==null){
+      var sec=((m.sugarDoneAt-sugarStart)/1000).toFixed(1), label=(m.hot?"熱水":"冷水")+(m.stir?"＋攪拌":"");
+      $("#dsRo").innerHTML='方糖不見了，可是糖還在水裡（分散成看不見的小粒子）。'+label+'：花了 '+sec+' 秒（示意）。<br>秤重：杯子＋水 '+m.base+' g、糖 '+r.sugarTotal+' g；溶解後一起秤 <b>'+r.scaleMass+' g</b>，重量一樣。';
+      if(!m.hot) coldDone=true; else hotDone=true;
+      if(coldDone) check(0); if(hotDone) check(1); check(2);
+      sugarStart=null;
+    }
+    if(r.sugarSolid>0||(!reduce&&P.length)) labTimer=requestAnimationFrame(tick); else labTimer=null;
+  }
+  function start(){if(!labTimer) labTimer=requestAnimationFrame(tick);}
+  on("#dsGo",function(){sync();if(C.dissolveRead(m).sugarSolid>0){$("#dsRo").textContent="上一顆方糖還在溶解，等它溶完再放。";return;}
+    m=C.dissolveAddSugar(m,now()); sugarStart=now(); $("#dsRo").textContent="糖正在溶解……"; start();});
+  $("#dsStir").onchange=function(e){sync();m.stir=e.target.checked;};
+  $("#dsHot").onchange=function(e){sync();m.hot=e.target.checked;};
+  on("#dsSalt",function(){sync();m=C.dissolveAddSalt(m);var r=C.dissolveRead(m);
+    if(!reduce&&r.saltSolid===0)for(var i=0;i<20;i++)P.push({x:180+(Math.random()-.5)*60,y:90+Math.random()*120,vx:(Math.random()-.5),vy:(Math.random()-.5)});
+    $("#dsRo").innerHTML=r.saltSolid===0?'加了 '+(r.saltTotal/6)+' 匙鹽（'+r.saltTotal+' g），攪一攪都溶解了。秤：'+r.scaleMass+' g。':'加到第 '+(r.saltTotal/6)+' 匙，杯底的鹽<b>溶不下了</b>（留下 '+r.saltSolid+' g）：同樣多的水、同樣溫度，能溶解的量有限度。秤：'+r.scaleMass+' g。（數量是示意）';
+    if(r.saltSolid>0) check(3); draw(); start();});
+  on("#dsNew",function(){stopAnim();m=C.dissolveNew();m.hot=$("#dsHot").checked;m.stir=$("#dsStir").checked;P=[];sugarStart=null;draw();$("#dsRo").textContent="換了一杯清水：秤 "+m.base+" g。";});
+  draw();
+};
+
+/* ---------- 出口題 ---------- */
+function renderExit(){
+  var list=C.exitList(S(),{bank:BANK,now:Date.now()}), el=$("#exitList");
+  if(!list.length){el.innerHTML='<p class="muted" style="margin:0">練過的觀念會出現在這裡。隔天不看提示、用說的或寫在紙上回答，答得出來才算真的學會。</p>';return;}
+  var ready=list.filter(function(x){return x.ready;}), later=list.filter(function(x){return !x.ready&&x.status!=="pass";}), passed=list.filter(function(x){return x.status==="pass";});
+  var h='<p class="small muted" style="margin:0 0 10px">不給提示、不給選項，請她用說的或寫在紙上。這些題目在練習裡沒出現過。答得出來，植物就會開花。</p>';
+  if(ready.length) h+='<ol class="exits">'+ready.map(function(x){var c=CONCEPTS[x.cid];
+    return '<li><div><strong>'+esc(c.title)+'</strong>'+(x.status==="fail"?' <span class="small muted">上次（'+md(x.last)+'）還不行，再問一次</span>':'')+'</div><div>'+esc(c.exit)+'</div>'+
+      '<details><summary>參考答案</summary><div class="small">'+esc(c.exitAns)+'</div></details>'+
+      '<div class="row" style="margin-top:6px"><button class="btn ghost sm" type="button" data-c="'+x.cid+'" data-r="pass">答得出來</button><button class="btn ghost sm" type="button" data-c="'+x.cid+'" data-r="fail">還不行</button></div></li>';}).join("")+'</ol>';
+  else h+='<p style="margin:0">今天沒有要問的出口題。</p>';
+  if(later.length) h+='<p class="small muted">明天以後再問：'+later.map(function(x){return esc(CONCEPTS[x.cid].short)+'（'+md(x.due)+'）';}).join("、")+'</p>';
+  if(passed.length) h+='<div class="small" style="display:grid;gap:6px">'+passed.map(function(x){return '<div class="row">已答得出來：'+esc(CONCEPTS[x.cid].short)+'（'+md(x.last)+'）<button class="btn ghost sm" type="button" data-retest="'+x.cid+'">再考一次</button></div>';}).join("")+'</div>';
+  el.innerHTML=h;
+  el.querySelectorAll("button[data-c]").forEach(function(b){b.onclick=function(){act({type:"exit",cid:b.dataset.c,result:b.dataset.r});renderSide();renderConcepts();};});
+  el.querySelectorAll("button[data-retest]").forEach(function(b){b.onclick=function(){act({type:"exitRetest",cid:b.dataset.retest});renderSide();};});
+}
+
+/* ---------- 家長摘要：只留三個數 ---------- */
+function renderSummary(){
+  var v=V(), cp=v.M.cardProgress;
+  var lines=["五上自然複習 "+md(v.today)+"（距考試 "+Math.max(0,C.diffDays(v.today,EXAM))+" 天）",
+    "今天卡片："+(cp.planned?cp.done+" / "+cp.planned+" 張"+(v.completed?"（完成）":""):"今天沒有排定卡片"),
+    "出口題待辦："+v.M.exitPending+" 題"+(v.exitLater?"（另有 "+v.exitLater+" 題明天以後再問）":""),
+    "今天加碼："+(v.M.extraDone?"有（做完卡片後又自己多做）":"還沒有")];
+  if(v.needsHelp.length) lines.push("需要爸媽陪著看："+v.needsHelp.map(function(c){return CONCEPTS[c].short;}).join("、"));
+  $("#summary").innerHTML='<div style="display:grid;gap:14px"><div class="three"><div><span class="small muted">今天卡片</span><b>'+cp.done+' / '+cp.planned+'</b></div><div><span class="small muted">出口題待辦</span><b>'+v.M.exitPending+'</b></div><div><span class="small muted">今天加碼</span><b>'+(v.M.extraDone?"有":"還沒")+'</b></div></div>'+
+    (v.needsHelp.length?'<div class="banner info"><strong>需要爸媽陪著看：'+v.needsHelp.map(function(c){return esc(CONCEPTS[c].short);}).join("、")+'</strong><div class="row">'+v.needsHelp.map(function(c){return '<button class="btn ghost sm" type="button" data-helped="'+c+'">已經陪她看過「'+esc(CONCEPTS[c].short)+'」</button>';}).join("")+'</div></div>':'')+
+    '<pre id="sumText" style="white-space:pre-wrap;margin:0;font-family:var(--f-body)">'+esc(lines.join("\n"))+'</pre>'+
+    '<div class="row"><button class="btn ghost sm" id="copySum" type="button">複製摘要（貼到 LINE）</button><span class="small muted" id="copyMsg"></span></div>'+
+    '<p class="small" style="margin:0;background:var(--sun-soft);border-radius:12px;padding:10px 14px">給爸媽：請不要用「做完就給獎品」。研究（Deci, Koestner & Ryan 1999，128 個實驗）發現，事先說好的實質獎勵會降低孩子自己想做的意願；具體說出她哪裡進步（例如「上次錯的影子題，今天你自己講出原因了」）效果比較好。</p></div>';
+  $("#summary").querySelectorAll("button[data-helped]").forEach(function(b){b.onclick=function(){act({type:"helped",cid:b.dataset.helped});renderSide();renderConcepts();};});
+  on("#copySum",function(){
+    var t=lines.join("\n");
+    function done(){$("#copyMsg").textContent="已複製";}
+    function fail(){var r=document.createRange();r.selectNodeContents($("#sumText"));var s=getSelection();s.removeAllRanges();s.addRange(r);$("#copyMsg").textContent="已選取文字，請按複製";}
+    try{navigator.clipboard.writeText(t).then(done,fail);}catch(e){fail();}
+  });
+}
+function renderSide(){header();banners();renderConcepts();renderCal();renderExit();renderSummary();renderSettings();}
+
+/* ---------- 設定 ---------- */
+function renderSettings(){
+  var s=S(), st=store.get();
+  $("#u3").checked=!!s.settings.unit3; $("#snd").checked=!!s.settings.sound;
+  $("#storeMsg").textContent=st.loadError?"存檔讀不出來，目前不會存檔。":memoryOnly?"這台裝置存不了作答紀錄。":"作答紀錄只存在這台裝置的瀏覽器（不上傳）。"+(st.migrated?"已把舊版紀錄搬過來；舊版的「畢業」要重新確認一次。":"");
+  var rr=$("#resetRow");
+  if(st.loadError){rr.innerHTML='<button class="btn warn sm" id="discard" type="button">清除壞掉的存檔，重新開始</button>';on("#discard",function(){rr.innerHTML='<span>確定要清除？舊存檔會被覆蓋。</span><button class="btn warn sm" id="discardYes" type="button">清除</button><button class="btn ghost sm" id="discardNo" type="button">取消</button>';on("#discardNo",renderSettings);on("#discardYes",function(){store.discardBroken();renderHome();});});return;}
+  if(!rr.dataset.state){rr.innerHTML='<button class="btn ghost sm" id="resetBtn" type="button">清除全部作答紀錄</button>';
+    on("#resetBtn",function(){rr.dataset.state="ask";rr.innerHTML='<span>確定要清除所有作答紀錄？</span><button class="btn warn sm" id="resetYes" type="button">清除</button><button class="btn ghost sm" id="resetNo" type="button">取消</button>';
+      on("#resetNo",function(){delete rr.dataset.state;renderSettings();});
+      on("#resetYes",function(){delete rr.dataset.state;act({type:"reset"});renderHome();});});}
+}
+$("#u3").onchange=function(e){act({type:"settings",unit3:e.target.checked});renderSide();};
+$("#snd").onchange=function(e){act({type:"settings",sound:e.target.checked});};
+on("#importBtn",function(){
+  var msg=$("#importMsg");
+  try{
+    var arr=JSON.parse($("#importBox").value);
+    if(!Array.isArray(arr)) throw new Error("最外層要是 [ … ]");
+    var r=act({type:"import",cards:arr});
+    if(!r.ok){msg.textContent="沒有存到，請再按一次加入。";return;}
+    msg.textContent="加入 "+r.info.acceptedIds.length+" 張（明天開始出）"+(r.info.rejectedIds.length?"，略過 "+r.info.rejectedIds.length+" 張（重複、缺欄位、答案編號或圖片代號不對）":"");
+    if(r.info.acceptedIds.length)$("#importBox").value="";
+  }catch(e){msg.textContent="格式不對："+e.message;}
+});
+
+/* ---------- 啟動與跨午夜 ---------- */
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState!=="visible") return;
+  var changed=V().today!==shownDay; act({type:"tick"});
+  if(changed){ if(screen==="practice") route(); else renderHome(); renderSide(); }
+  else if(screen==="home") renderHome();
+  else renderSide();
+});
+renderHome();
+})();
+</script>
+</body></html>

@@ -4,6 +4,7 @@
 為什麼分兩份：同一份內容可以發成 claude.ai Artifact，也可以放 GitHub Pages
 讓孩子的 iPad 不登入就能開；Pages 需要自己帶 viewport 與 noindex。
 """
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -15,8 +16,24 @@ HEAD = ('<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'
         '</head><body>')
 
 
+INLINE = re.compile(r"<!--@INLINE (src/[A-Za-z0-9_.-]+\.js)-->")
+
+
+def inline(body: str) -> str:
+    """把 <!--@INLINE src/x.js--> 換成 <script> 內容；核心邏輯（src/core.js）與 node 測試共用同一份檔。"""
+    def sub(m: re.Match) -> str:
+        js = (ROOT / m.group(1)).read_text(encoding="utf-8")
+        if "</script" in js.lower():
+            raise SystemExit(f"{m.group(1)} 含 </script，不能內嵌")
+        return "<script>\n" + js + "\n</script>"
+    out = INLINE.sub(sub, body)
+    if "<!--@INLINE" in out:
+        raise SystemExit("還有沒換掉的 @INLINE 標記")
+    return out
+
+
 def main() -> None:
-    body = (ROOT / "src" / "app.html").read_text(encoding="utf-8")
+    body = inline((ROOT / "src" / "app.html").read_text(encoding="utf-8"))
     (ROOT / "index.html").write_text(HEAD + body + "</body></html>", encoding="utf-8")
     print(f"built index.html ({len(body)} chars)")
 

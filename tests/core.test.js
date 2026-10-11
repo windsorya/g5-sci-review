@@ -1,0 +1,492 @@
+// v3 驗收矩陣 30 條（Codex 設計者規格 g5-v3-design-spec-20261011.md §4）。執行：node --test tests/
+"use strict";
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const C = require("../src/core.js");
+
+const T = (iso) => Date.parse(iso);
+const D = "2026-10-20";
+const NOON = (d) => T(d + "T12:00:00+08:00");
+const CONCEPTS = { "1-1": { unit: "1" }, "1-2": { unit: "1" }, "3-1": { unit: "3" } };
+const FIGS = { "sun-am": 1, "sun-pm": 1 };
+function card(id, concept, extra) {
+  return Object.assign({ id, concept: concept || "1-1", type: "choice", q: "題目 " + id, opts: ["甲", "乙"], a: 0 }, extra || {});
+}
+function bank(ids, concept) { return { cards: ids.map((id) => card(id, concept)), concepts: CONCEPTS, figs: FIGS }; }
+function env(b, iso) { return { bank: b, now: typeof iso === "number" ? iso : T(iso) }; }
+let opn = 0;
+function op(type, extra) { return Object.assign({ type, id: "op" + (++opn) }, extra || {}); }
+function run(state, b, now, action) {
+  const r = C.reduce(state, action, { bank: b, now });
+  assert.ok(!r.error, "unexpected error " + r.error + " for " + action.type);
+  return r.state;
+}
+function learned(seen, goodDays, due, extra) { return Object.assign({ seen, goodDays, blockedDay: null, due }, extra || {}); }
+function memStorage(init) {
+  const m = Object.assign({}, init || {}); let fail = false; let writes = 0;
+  return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { if (fail) throw new Error("QuotaExceeded"); writes++; m[k] = v; },
+           setFail: (f) => { fail = f; }, raw: m, writes: () => writes };
+}
+
+test("01 同日重複答對不畢業", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  for (let i = 0; i < 3; i++) s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  assert.deepEqual(s.cards.s1, { seen: 3, goodDays: [D], blockedDay: null, due: "2026-10-21" });
+  assert.equal(s.cards.s1.goodDays.length, 1);
+});
+
+test("02 不同日期有效作答才畢業", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  ["2026-10-19", "2026-10-20", "2026-10-22"].forEach((d) => { s = run(s, b, NOON(d), op("answer", { cardId: "s1", ok: true })); });
+  assert.deepEqual(s.cards.s1.goodDays, ["2026-10-19", "2026-10-20", "2026-10-22"]);
+  assert.equal(s.cards.s1.due, null);
+  assert.equal(s.cards.s1.goodDays.length >= 3, true);
+});
+
+test("03 提示／不確定答對撤銷畢業", () => {
+  const b = bank(["s1"]);
+  for (const flag of ["hint", "unsure"]) {
+    let s = C.blankState();
+    s.cards.s1 = learned(3, ["2026-10-15", "2026-10-16", "2026-10-18"], null);
+    s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true, [flag]: true }));
+    assert.deepEqual(s.cards.s1, { seen: 4, goodDays: [], blockedDay: D, due: "2026-10-21" }, flag);
+  }
+});
+
+test("04 同日失敗後補答不算有效日", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: false }));
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  assert.deepEqual(s.cards.s1, { seen: 2, goodDays: [], blockedDay: D, due: "2026-10-21" });
+  assert.deepEqual(s.days[D].doneIds, ["s1"]);
+});
+
+test("05 同一操作 ID 重送只處理一次", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  const a = { type: "answer", id: "a1", cardId: "s1", ok: true };
+  s = run(s, b, NOON(D), a);
+  const r = C.reduce(s, a, env(b, NOON(D)));
+  assert.equal(r.dup, true); s = r.state;
+  assert.equal(s.cards.s1.seen, 1); assert.equal(s.cards.s1.goodDays.length, 1);
+  assert.deepEqual(s.days[D].doneIds, ["s1"]);
+  assert.equal(s.ops.filter((x) => x === "a1").length, 1);
+});
+
+test("06 變式移到前方、不複製；同一實驗完成兩次只處理一次", () => {
+  const b = bank(["s1", "s2", "s3", "s4"]); let s = C.blankState();
+  ["s1", "s2", "s3", "s4"].forEach((id) => { s.cards[id] = learned(1, [], "2026-10-20"); });
+  s = run(s, b, NOON(D), op("sessionStart", {}));
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: false }));
+  s.session.queue = ["s3", "s2", "s4"];
+  s = run(s, b, NOON(D), op("labStart", { runId: "r1", lab: "shadow", tasks: 1, answer: 0, from: "wrong", card: "s1" }));
+  s = run(s, b, NOON(D), op("labPredict", { runId: "r1", choice: 0 }));
+  s = run(s, b, NOON(D), op("labTask", { runId: "r1", task: 0 }));
+  s = run(s, b, NOON(D), op("labComplete", { runId: "r1", variationId: "s2" }));
+  const again = C.reduce(s, op("labComplete", { runId: "r1", variationId: "s2" }), env(b, NOON(D)));
+  assert.equal(again.dup, true); s = again.state;
+  assert.deepEqual(s.session.queue, ["s2", "s3", "s4"]);
+  assert.equal(s.session.kinds.s2, "variation");
+  assert.equal(s.days[D].labRuns, 1);
+});
+
+test("07 變式答對不增加有效日、同日再答也不畢業", () => {
+  const b = bank(["s2"]); let s = C.blankState();
+  s.cards.s2 = learned(2, ["2026-10-18", "2026-10-19"], "2026-10-21");
+  s = run(s, b, NOON(D), op("answer", { cardId: "s2", ok: true, variation: true }));
+  s = run(s, b, NOON(D), op("answer", { cardId: "s2", ok: true }));
+  assert.equal(s.cards.s2.seen, 4); assert.equal(s.cards.s2.goodDays.length, 2);
+  assert.equal(s.cards.s2.due, "2026-10-21");
+});
+
+function sixPlan() {
+  const b = bank(["s1", "s2", "s3", "s4", "s5", "s23"]); const s = C.blankState();
+  s.days[D] = { planIds: ["s1", "s2", "s3", "s4", "s5", "s23"], doneIds: [], touched: [], extraDone: false, labRuns: 0, teach: 0, mood: null };
+  return { b, s };
+}
+test("08 短回合完成≠當日完成", () => {
+  let { b, s } = sixPlan();
+  s = run(s, b, NOON(D), op("sessionStart", { size: 3 }));
+  ["s1", "s2", "s3"].forEach((id) => { s = run(s, b, NOON(D), op("answer", { cardId: id, ok: true })); });
+  const v = C.view(s, env(b, NOON(D)));
+  assert.equal(v.session.queue.length, 0); assert.equal(v.completed, false);
+  assert.deepEqual(v.M.cardProgress, { done: 3, planned: 6 });
+  assert.equal(C.endTitle(v), "這一輪完成了");
+});
+
+test("09 短回合後接續做完，最後一張不算加碼", () => {
+  let { b, s } = sixPlan();
+  s = run(s, b, NOON(D), op("sessionStart", { size: 3 }));
+  ["s1", "s2", "s3"].forEach((id) => { s = run(s, b, NOON(D), op("answer", { cardId: id, ok: true })); });
+  s = JSON.parse(JSON.stringify(s));   // 重載
+  s = run(s, b, NOON(D), op("sessionStart", {}));
+  assert.deepEqual(s.session.queue, ["s4", "s5", "s23"]);
+  ["s4", "s5", "s23"].forEach((id) => { s = run(s, b, NOON(D), op("answer", { cardId: id, ok: true })); });
+  const v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual(v.remainingIds, []); assert.equal(v.completed, true);
+  assert.deepEqual(v.M.cardProgress, { done: 6, planned: 6 }); assert.equal(v.M.extraDone, false);
+  assert.equal(C.endTitle(v), "今天的卡片都做完了");
+});
+
+function donePlan() {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  assert.equal(C.view(s, env(b, NOON(D))).completed, true);
+  return { b, s };
+}
+test("10 只開實驗室、沒完成不算加碼", () => {
+  let { b, s } = donePlan();
+  for (let i = 0; i < 2; i++) s = run(s, b, NOON(D), op("labStart", { runId: "m" + i, lab: "light", tasks: 3, answer: 1, from: "menu" }));
+  const v = C.view(s, env(b, NOON(D)));
+  assert.equal(v.M.extraDone, false); assert.equal(s.days[D].labRuns, 0);
+});
+
+test("11 預測前不能操作或觀察", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("labStart", { runId: "r1", lab: "shadow", tasks: 3, answer: 0, from: "menu" }));
+  const before = JSON.stringify(s.labRuns.r1);
+  for (const a of [op("labTask", { runId: "r1", task: 0 }), op("labComplete", { runId: "r1" })]) {
+    const r = C.reduce(s, a, env(b, NOON(D)));
+    assert.equal(r.error, "PREDICTION_REQUIRED"); assert.equal(r.state, s);
+  }
+  assert.equal(JSON.stringify(s.labRuns.r1), before);
+  assert.equal(s.labRuns.r1.phase, "predict"); assert.equal(s.labRuns.r1.prediction, null);
+});
+
+test("12 真正完成實驗才算加碼，重送不重算", () => {
+  let { b, s } = donePlan();
+  s = run(s, b, NOON(D), op("labStart", { runId: "r1", lab: "shadow", tasks: 3, answer: 0, from: "menu" }));
+  s = run(s, b, NOON(D), op("labPredict", { runId: "r1", choice: 2 }));
+  [0, 1, 2].forEach((t) => { s = run(s, b, NOON(D), op("labTask", { runId: "r1", task: t })); });
+  s = run(s, b, NOON(D), op("labComplete", { runId: "r1" }));
+  s = C.reduce(s, op("labComplete", { runId: "r1" }), env(b, NOON(D))).state;
+  assert.equal(s.labRuns.r1.phase, "complete"); assert.equal(s.labRuns.r1.predictionCorrect, false);
+  assert.equal(s.days[D].labRuns, 1); assert.equal(C.view(s, env(b, NOON(D))).M.extraDone, true);
+});
+
+test("13 漏做的出口題持久待辦", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON("2026-10-19"), op("answer", { cardId: "s1", ok: true }));
+  s = JSON.parse(JSON.stringify(s));
+  const v = C.view(s, env(b, NOON("2026-10-22")));
+  assert.deepEqual([s.exits["1-1"].status, s.exits["1-1"].due], ["pending", "2026-10-20"]);
+  assert.equal(v.M.exitPending, 1);
+  assert.ok(C.exitList(s, env(b, NOON("2026-10-22"))).some((x) => x.cid === "1-1" && x.ready));
+});
+
+test("14 出口失敗只動已學卡，三類分流", () => {
+  const b = bank(["s1", "s2", "s3", "s4", "s5"]); let s = C.blankState();
+  s.cards.s1 = learned(2, ["2026-10-18"], "2026-10-25");
+  s.cards.s3 = learned(2, ["2026-10-16"], "2026-10-18");
+  s.cards.s4 = learned(2, ["2026-10-18"], "2026-10-20");
+  s.cards.s5 = learned(5, ["2026-10-10", "2026-10-12", "2026-10-15"], null);
+  s.exits["1-1"] = { status: "pending", due: "2026-10-19", opened: "2026-10-18", last: null };
+  s = run(s, b, NOON(D), op("exit", { cid: "1-1", result: "fail" }));
+  const dues = ["s1", "s2", "s3", "s4", "s5"].map((id) => C.cardState(s, id).due);
+  assert.deepEqual(dues, ["2026-10-21", null, "2026-10-18", "2026-10-20", "2026-10-21"]);
+  ["s1", "s3", "s4", "s5"].forEach((id) => assert.equal(s.cards[id].goodDays.length, 0));
+  assert.equal(C.cardState(s, "s2").seen, 0);
+  const dueToday = ["s1", "s2", "s3", "s4", "s5"].filter((id) => { const c = C.cardState(s, id); return c.seen > 0 && c.due && c.due <= D; });
+  assert.deepEqual(dueToday, ["s3", "s4"]);
+  // 隔天的計畫含未學 s2（仍是新卡）
+  assert.ok(C.view(s, env(b, NOON("2026-10-21"))).planIds.includes("s2"));
+});
+
+test("15 出口失敗票保留到通過；通過不取消卡片複習", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s.cards.s1 = learned(1, ["2026-10-19"], "2026-10-20");
+  s.exits["1-1"] = { status: "pending", due: "2026-10-20", opened: "2026-10-19", last: null };
+  s = run(s, b, NOON(D), op("exit", { cid: "1-1", result: "fail" }));
+  assert.deepEqual([s.exits["1-1"].status, s.exits["1-1"].due, s.cards.s1.due], ["fail", "2026-10-21", "2026-10-20"]);
+  s.cards.s1.due = "2026-10-21";   // 依規格前置狀態
+  s = JSON.parse(JSON.stringify(s));
+  assert.equal(C.view(s, env(b, NOON("2026-10-23"))).M.exitPending, 1);
+  s = run(s, b, NOON("2026-10-23"), op("exit", { cid: "1-1", result: "pass" }));
+  assert.deepEqual([s.exits["1-1"].status, s.exits["1-1"].due], ["pass", null]);
+  assert.equal(C.view(s, env(b, NOON("2026-10-23"))).M.exitPending, 0);
+  assert.equal(s.cards.s1.due, "2026-10-21");
+  assert.equal(C.reduce(s, op("exit", { cid: "1-1", result: "fail" }), env(b, NOON("2026-10-23"))).error, "EXIT_CLOSED");
+});
+
+function midnight() {
+  const b = bank(["s1", "s2", "s3"]); let s = C.blankState();
+  s.cards.s3 = learned(1, ["2026-10-19"], "2026-10-20");
+  s.days["2026-10-19"] = { planIds: ["s1", "s2"], doneIds: [], touched: [], extraDone: false, labRuns: 0, teach: 0, mood: null };
+  s.session = { day: "2026-10-19", kind: "plan", queue: ["s1", "s2"], answered: [], wrong: [], kinds: {} };
+  return { b, s };
+}
+test("16 跨午夜作答記到新日並重建當日任務", () => {
+  let { b, s } = midnight();
+  s = run(s, b, T("2026-10-20T00:00:01+08:00"), op("answer", { cardId: "s1", ok: true }));
+  assert.equal(s.log[s.log.length - 1].d, "2026-10-20");
+  const v = C.view(s, env(b, T("2026-10-20T00:00:02+08:00")));
+  assert.deepEqual(v.planIds, ["s1", "s2", "s3"]); assert.deepEqual(v.doneIds, ["s1"]);
+  assert.deepEqual(v.session.queue, ["s2", "s3"]);
+  assert.deepEqual(s.days["2026-10-19"].doneIds, []);
+});
+
+test("17 跨午夜恢復畫面＝任務也換新", () => {
+  let { b, s } = midnight();
+  s = run(s, b, T("2026-10-20T08:00:00+08:00"), { type: "tick" });
+  assert.equal(s.session.day, "2026-10-20");                 // 狀態本身要換新，不能只靠畫面重算
+  assert.deepEqual(s.session.queue, ["s1", "s2", "s3"]);
+  const v = C.view(s, env(b, T("2026-10-20T08:00:00+08:00")));
+  assert.equal(v.session.day, "2026-10-20");
+  assert.deepEqual(v.remainingIds, ["s1", "s2", "s3"]); assert.deepEqual(v.session.queue, ["s1", "s2", "s3"]);
+  assert.deepEqual(v.doneIds, []); assert.equal(v.completed, false);
+});
+
+test("18 沒有雲端合併：store 不碰 window.claude", () => {
+  const b = bank(["s1"]); let calls = 0;
+  const g = global; g.window = { claude: { use: () => { calls++; return Promise.resolve(null); } } };
+  const st = memStorage(); const store = C.createStore({ storage: st, bank: b, clock: () => NOON(D) });
+  store.load();
+  store.dispatch(op("answer", { cardId: "s1", ok: false }));
+  store.dispatch(op("exit", { cid: "1-1", result: "fail" }));
+  delete g.window;
+  assert.equal(calls, 0); assert.equal(store.get().syncMode, "local");
+  assert.equal(store.get().state.exits["1-1"].status, "fail");
+  assert.equal(store.get().state.cards.s1.due, "2026-10-21");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../src/core.js"), "utf8");
+  assert.ok(!/claude\s*\.\s*use|\.doc\(|merge\(/.test(src));
+});
+
+test("19 嚴格 schema：型別錯不轉成假成功、不寫入", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  const good = JSON.stringify(s);
+  assert.equal(C.decode(good, b).accepted, true);
+  const muts = [(o) => { o.cards.s1.seen = "2"; }, (o) => { o.cards.s1.seen = 1.5; }, (o) => { o.settings.unit3 = "false"; },
+                (o) => { o.log[0].ok = "false"; }, (o) => { o.cards.s1.due = "2026-02-30"; }];
+  for (const m of muts) {
+    const o = JSON.parse(good); m(o); const raw = JSON.stringify(o);
+    const r = C.decode(raw, b);
+    assert.deepEqual([r.accepted, r.error], [false, "SCHEMA"]);
+    const st = memStorage({ "g5sci.v3": raw });
+    const store = C.createStore({ storage: st, bank: b, clock: () => NOON(D) });
+    store.load(); store.dispatch(op("answer", { cardId: "s1", ok: true }));
+    assert.equal(st.writes(), 0); assert.equal(st.raw["g5sci.v3"], raw);
+    assert.equal(store.get().saveStatus, "blocked");
+  }
+});
+
+test("20 題卡匯入邊界", () => {
+  const b = { cards: [card("s1")], concepts: CONCEPTS, figs: FIGS }; let s = C.blankState();
+  const r = C.reduce(s, op("import", { cards: [card("s1", "1-1", { a: 1 }), card("x1"), card("x2", "1-1", { type: "figure", fig: "no-such" })] }), env(b, NOON(D)));
+  assert.deepEqual(r.info.acceptedIds, ["x1"]); assert.deepEqual(r.info.rejectedIds, ["s1", "x2"]);
+  assert.equal(C.cardById(r.state, b, "s1").a, 0);
+  assert.deepEqual([C.cardState(r.state, "x1").seen, C.cardState(r.state, "x1").due], [0, null]);
+});
+
+test("21 溶解：秤值由帳本算，冷水 10 秒溶完", () => {
+  let m = C.dissolveNew(); const reads = [C.dissolveRead(m).scaleMass];
+  m = C.dissolveAddSugar(m, 0); reads.push(C.dissolveRead(m).scaleMass);
+  for (let t = 0; t <= 10000; t += 16) m = C.dissolveStep(m, t);
+  m = C.dissolveStep(m, 10000);
+  const r = C.dissolveRead(m); reads.push(r.scaleMass);
+  assert.deepEqual(reads, [210, 220, 220]);
+  assert.deepEqual([r.sugarSolid, r.sugarDissolved], [0, 10]);
+});
+
+test("22 糖鹽同杯守恆，換一杯清水歸零", () => {
+  let m = C.dissolveAddSugar(C.dissolveNew(), 0); m = C.dissolveStep(m, 10000);
+  for (let i = 0; i < 6; i++) m = C.dissolveAddSalt(m);
+  const r = C.dissolveRead(m);
+  assert.deepEqual([r.sugarTotal, r.saltTotal, r.saltDissolved, r.saltSolid, r.scaleMass], [10, 36, 30, 6, 256]);
+  assert.equal(C.dissolveRead(C.dissolveNew()).scaleMass, 210);
+});
+
+test("23 溶解速度與幀率、減少動態效果無關", () => {
+  for (const fps of [30, 60, 120]) for (const reduced of [false, true]) {
+    void reduced;   // 減少動態效果只關粒子動畫，不進帳本
+    let m = C.dissolveAddSugar(C.dissolveNew(), 0);
+    for (let k = 1; k * 1000 / fps <= 4000 + 1e-9; k++) m = C.dissolveStep(m, k * 1000 / fps);
+    m = C.dissolveStep(m, 4000);
+    const r = C.dissolveRead(m);
+    assert.deepEqual([r.sugarSolid, r.sugarDissolved, r.scaleMass], [6, 4, 220], fps + "fps");
+    for (const hot of [false, true]) {
+      let n = C.dissolveAddSugar(Object.assign(C.dissolveNew(), { hot }), 0);
+      for (let k = 1; k * 1000 / fps <= 12000; k++) n = C.dissolveStep(n, k * 1000 / fps);
+      assert.ok(Math.abs(n.sugarDoneAt - (hot ? 5000 : 10000)) < 1e-6, fps + " hot=" + hot + " " + n.sugarDoneAt);
+    }
+  }
+});
+
+test("24 影子方位：太陽對面、長度＝竿高÷tan(高度角)", () => {
+  const cases = [[90, 45, 270, 1], [270, 45, 90, 1], [180, 60, 0, 0.577350269]];
+  for (const [az, alt, eaz, elen] of cases) {
+    const s = C.shadowFromSun(az, alt, 1);
+    assert.equal(s.az, eaz); assert.ok(Math.abs(s.len - elen) < 1e-6);
+  }
+  assert.deepEqual(C.shadowFromSun(100, -2, 1), { az: null, len: null });
+  // 偏離設計者：太陽位置用 src/sun.js 真實公式（台中、今天），畫面註明約略計算；見 tests/sun.test.js
+});
+
+test("26 植物階段由狀態派生", () => {
+  const b = bank(["s1", "s2"]); let s = C.blankState();
+  s.cards.s1 = learned(3, ["2026-10-14", "2026-10-15", "2026-10-17"], null);
+  s.cards.s2 = learned(3, ["2026-10-14", "2026-10-15", "2026-10-17"], null);
+  s.exits["1-1"] = { status: "pass", due: null, opened: "2026-10-14", last: "2026-10-18" };
+  assert.equal(C.view(s, env(b, NOON(D))).stages["1-1"], 4);
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true, hint: true }));
+  assert.equal(s.cards.s1.goodDays.length, 0);
+  assert.equal(C.view(s, env(b, NOON(D))).stages["1-1"], 3);
+  s = run(s, b, NOON(D), op("exitRetest", { cid: "1-1" }));
+  s = run(s, b, NOON(D), op("exit", { cid: "1-1", result: "fail" }));
+  assert.equal(s.exits["1-1"].status, "fail");
+  assert.equal(C.view(s, env(b, NOON(D))).stages["1-1"], 2);
+});
+
+test("27 寫入失敗不宣告完成，恢復後重試只算一次", () => {
+  const b = bank(["s1"]); const st = memStorage();
+  const store = C.createStore({ storage: st, bank: b, clock: () => NOON(D) }); store.load();
+  st.setFail(true);
+  const r = store.dispatch({ type: "answer", id: "a1", cardId: "s1", ok: true });
+  assert.equal(r.ok, false);
+  assert.equal(C.cardState(store.get().state, "s1").seen, 0);
+  assert.equal(store.view().completed, false);
+  assert.deepEqual([store.get().saveStatus, store.get().pendingAction.id], ["failed", "a1"]);
+  st.setFail(false); store.retry(); store.retry();
+  assert.equal(store.get().state.cards.s1.seen, 1); assert.equal(store.view().completed, true);
+  assert.equal(store.get().saveStatus, "ok");
+});
+
+test("28 舊資料遷移：不承認未證實畢業、保留 v1 原文", () => {
+  const b = bank(["s1"]);
+  const v1 = JSON.stringify({ v: 1, cards: { s1: { box: 3, streak: 3, due: "2026-10-25", seen: 8, right: 8, wrong: 0, retired: true } }, unit3: false, extra: [], prefs: { sound: true } });
+  const st = memStorage({ "g5sci.v1": v1 });
+  const store = C.createStore({ storage: st, bank: b, clock: () => NOON(D) }); store.load();
+  const s = store.get().state;
+  assert.deepEqual(s.cards.s1, { seen: 8, goodDays: [], blockedDay: null, due: "2026-10-21", needsRecheck: true });
+  assert.deepEqual([s.exits["1-1"].status, s.exits["1-1"].due], ["pending", "2026-10-21"]);
+  assert.equal(st.raw["g5sci.v1"], v1); assert.ok(st.raw["g5sci.v3"]);
+  assert.equal(C.decode(st.raw["g5sci.v3"], b).accepted, true);
+});
+
+test("29 當日計畫不因匯入／重載變動，隔天才納入", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  s = run(s, b, NOON(D), op("import", { cards: [card("x1")] }));
+  s = JSON.parse(JSON.stringify(s));
+  let v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual(v.planIds, ["s1"]); assert.equal(v.completed, true);
+  v = C.view(s, env(b, NOON("2026-10-21")));
+  assert.ok(v.planIds.includes("x1")); assert.equal(C.cardState(s, "x1").seen, 0);
+});
+
+test("30 空計畫不能假完成", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s.cards.s1 = learned(3, ["2026-10-14", "2026-10-15", "2026-10-17"], null);
+  s = run(s, b, NOON(D), op("sessionStart", {}));
+  const v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual(v.planIds, []); assert.equal(v.completed, false);
+  assert.deepEqual(v.M, { cardProgress: { done: 0, planned: 0 }, exitPending: 0, extraDone: false });
+  assert.equal(C.endTitle(v), "今天沒有排定卡片");
+});
+
+test("不變量：reducer 不改輸入、每個成功狀態都過 schema", () => {
+  const b = bank(["s1", "s2"]); let s = C.blankState();
+  const acts = [op("answer", { cardId: "s1", ok: false }), op("answer", { cardId: "s2", ok: true }), op("exit", { cid: "1-1", result: "fail" }),
+                op("teach", { cardId: "s1" }), op("mood", { value: "good" }), op("settings", { unit3: true })];
+  for (const a of acts) {
+    const snap = JSON.stringify(s);
+    const r = C.reduce(s, a, env(b, NOON(D)));
+    assert.equal(JSON.stringify(s), snap);
+    assert.deepEqual(C.checkState(r.state, b), []);
+    s = r.state;
+  }
+});
+
+test("10b 計畫完成前的實驗、教學、非計畫卡都不算加碼；完成後才算", () => {
+  const b = bank(["s1", "s2"]); let s = C.blankState();
+  s.cards.s2 = learned(1, ["2026-10-19"], "2026-10-25");          // s2 不在今天計畫
+  s = run(s, b, NOON(D), op("teach", { cardId: "s1" }));
+  s = run(s, b, NOON(D), op("labStart", { runId: "r1", lab: "light", tasks: 1, answer: 0, from: "menu" }));
+  s = run(s, b, NOON(D), op("labPredict", { runId: "r1", choice: 0 }));
+  s = run(s, b, NOON(D), op("labTask", { runId: "r1", task: 0 }));
+  s = run(s, b, NOON(D), op("labComplete", { runId: "r1" }));
+  s = run(s, b, NOON(D), op("answer", { cardId: "s2", ok: true }));
+  assert.equal(C.view(s, env(b, NOON(D))).M.extraDone, false);
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  assert.deepEqual([C.view(s, env(b, NOON(D))).completed, C.view(s, env(b, NOON(D))).M.extraDone], [true, false]);
+  s = run(s, b, NOON(D), op("teach", { cardId: "s1" }));
+  assert.equal(C.view(s, env(b, NOON(D))).M.extraDone, true);
+});
+
+test("13b 出口題當天建立、隔天才算待辦（隔天問才是延遲提取）", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  const v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual([v.M.exitPending, v.exitLater], [0, 1]);
+  assert.equal(C.view(s, env(b, NOON("2026-10-21"))).M.exitPending, 1);
+});
+
+test("19b schema 其他欄位也嚴格", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("sessionStart", { size: 2 }));
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  const good = JSON.stringify(s);
+  const muts = [(o) => { o.session.size = -1; }, (o) => { o.exits["1-1"].status = "passed"; }, (o) => { o.exits["1-1"].due = null; },
+                (o) => { o.days[D].doneIds.push("zz"); }, (o) => { o.cards.s1.goodDays = [D, D]; }, (o) => { o.days[D].extraDone = 0; }];
+  for (const m of muts) { const o = JSON.parse(good); m(o); assert.equal(C.decode(JSON.stringify(o), b).accepted, false, m.toString()); }
+});
+
+/* ---------- 補救流程三分支（律師 2026-10-11 依 Codex 建議：概念不懂→有效協助→獨立驗證） ---------- */
+test("R1 第一次求助＝第一種解釋（圖解＋觀察任務）；不動卡片掌握度", () => {
+  const b = bank(["s1", "s2"]); let s = C.blankState();
+  s.cards.s1 = learned(1, ["2026-10-19"], "2026-10-20");
+  const before = JSON.stringify(s.cards);
+  const r = C.reduce(s, op("help", { cid: "1-1", ways: 2 }), env(b, NOON(D)));
+  assert.equal(r.info.way, 0); assert.equal(r.info.previous, null);
+  assert.deepEqual(r.state.help["1-1"], { count: 1, last: D, way: 0, needsHelp: false });
+  assert.equal(JSON.stringify(r.state.cards), before);
+});
+
+test("R2 同概念再次求助＝帶出前次紀錄、換另一種解釋", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON("2026-10-18"), op("help", { cid: "1-1", ways: 2 }));
+  const r = C.reduce(s, op("help", { cid: "1-1", ways: 2 }), env(b, NOON(D)));
+  assert.deepEqual(r.info.previous, { last: "2026-10-18", way: 0 });
+  assert.equal(r.info.way, 1);
+  const r3 = C.reduce(r.state, op("help", { cid: "1-1", ways: 2 }), env(b, NOON(D)));
+  assert.equal(r3.info.way, 0);   // 輪流，不會永遠卡在同一種說法
+});
+
+test("R3 補救後變式仍錯＝停止本輪、標待協助；下一輪把它排到最後", () => {
+  const b = bank(["s1", "s2", "s3"]); let s = C.blankState();
+  ["s1", "s2", "s3"].forEach((id) => { s.cards[id] = learned(1, [], "2026-10-20"); });
+  s = run(s, b, NOON(D), op("sessionStart", {}));
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: false }));
+  s = run(s, b, NOON(D), op("help", { cid: "1-1", ways: 2 }));
+  s = run(s, b, NOON(D), op("labStart", { runId: "r1", lab: "shadow", tasks: 1, answer: 0, from: "wrong", card: "s1" }));
+  s = run(s, b, NOON(D), op("labPredict", { runId: "r1", choice: 0 }));
+  s = run(s, b, NOON(D), op("labTask", { runId: "r1", task: 0 }));
+  s = run(s, b, NOON(D), op("labComplete", { runId: "r1", variationId: "s2" }));
+  const r = C.reduce(s, op("answer", { cardId: "s2", ok: false }), env(b, NOON(D)));
+  assert.equal(r.info.halted, true); s = r.state;
+  assert.equal(s.session.halted, true); assert.equal(s.help["1-1"].needsHelp, true);
+  const v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual(v.needsHelp, ["1-1"]); assert.equal(C.endTitle(v), "這一輪先停在這裡");
+  const b2 = { cards: [card("s1"), card("s2"), card("s3"), card("t1", "1-2")], concepts: CONCEPTS, figs: FIGS };
+  let s2 = JSON.parse(JSON.stringify(s));
+  s2.days[D].planIds = ["s3", "t1"];
+  s2 = run(s2, b2, NOON(D), op("sessionStart", {}));
+  assert.deepEqual(s2.session.queue, ["t1", "s3"]);
+  s2 = run(s2, b2, NOON(D), op("helped", { cid: "1-1" }));
+  assert.equal(s2.help["1-1"].needsHelp, false);
+});
+
+test("R4 普通題答錯不會停本輪；只有補救後的變式答錯才會", () => {
+  const b = bank(["s1", "s2"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("sessionStart", {}));
+  const r = C.reduce(s, op("answer", { cardId: "s1", ok: false }), env(b, NOON(D)));
+  assert.equal(r.info.halted, undefined); assert.equal(r.state.session.halted, undefined);
+});
+
+test("F1 概念入口：選的觀念先練，計畫與到期日不變", () => {
+  const b = { cards: [card("s1"), card("t1", "1-2"), card("s2"), card("t2", "1-2")], concepts: CONCEPTS, figs: FIGS };
+  let s = C.blankState();
+  s = run(s, b, NOON(D), op("sessionStart", { focus: "1-2" }));
+  assert.deepEqual(s.session.queue, ["t1", "t2", "s1", "s2"]);
+  assert.deepEqual(s.days[D].planIds, ["s1", "t1", "s2", "t2"]);
+  assert.deepEqual(C.checkState(s, b), []);
+});
