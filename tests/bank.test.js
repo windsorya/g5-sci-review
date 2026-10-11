@@ -64,6 +64,19 @@ test("依考古卷改寫的題（id 以 k 開頭）一定標出處，且不是�
   });
 });
 
+test("第二批考古卷改寫題（k21 起）：至少 45 題、七份卷都有、不收範圍外內容、不被算進安親班卷", () => {
+  const k2 = extra.filter((c) => /^k\d+$/.test(c.id) && Number(c.id.slice(1)) >= 21);
+  assert.ok(k2.length >= 45, "第二批只有 " + k2.length);
+  const refs = new Set(k2.map((c) => c.page));
+  assert.equal(refs.size, 7, "出處卷數 " + refs.size);
+  k2.forEach((c) => {
+    assert.ok(/^題型參考：.*（學習方舟）$/.test(c.page), c.id);
+    assert.equal(c.set, undefined, c.id + " 被標成安親班卷");
+    assert.ok(!/太陽能|蕨類|孢子|植物分類|能量轉換/.test(c.q + c.why + (c.opts || []).join("")), c.id + " 含範圍外內容");
+  });
+  assert.equal(extra.filter((c) => c.set === "anqin").length, 153);
+});
+
 test("選擇題的正解不能永遠在同一個位置（避免靠位置猜）", () => {
   const choice = cards.filter((c) => c.type === "choice" || c.type === "figure");
   const firstShare = choice.filter((c) => c.a === 0).length / choice.length;
