@@ -405,7 +405,7 @@
           function kid(x, legBottom, dash) {
             return '<circle cx="' + x + '" cy="26" r="11" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/>' + L(x, 37, x, 84, "var(--ink)", 4) + L(x, 84, x - 10, legBottom, "var(--ink)", 4, dash) + L(x, 84, x + 10, legBottom, "var(--ink)", 4, dash);
           }
-          s += kid(90, 186) + T(90, 198, "真正的腳", 12) + kid(230, 140) + L(200, 186, 260, 186, "var(--muted)", 2, "4 4") + T(230, 160, "看起來變短", 13, "middle", "var(--ink)", true);
+          s += kid(90, 186) + T(106, 194, "真正的腳", 12, "start") + kid(230, 140) + L(200, 186, 260, 186, "var(--muted)", 2, "4 4") + T(230, 160, "看起來變短", 13, "middle", "var(--ink)", true);
           return svg("左邊是真正的腳，右邊是從岸上看起來的樣子：腳變短", s); } },
         { say: "空碗底的硬幣本來看不到，加水以後光在水面轉彎越過碗邊，硬幣就「浮」出來被看到了。", fig: function () { return svg("加水後，硬幣的光在水面轉彎越過碗邊進入眼睛", coinScene()); } }
       ],
