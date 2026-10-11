@@ -135,7 +135,9 @@
   }
   function planSession(state, bank, day) {
     var d = ensureDay(state, bank, day);
-    var ids = remainingOf(d).filter(function (id) { return !!cardById(state, bank, id); });   // 題庫改版後消失的卡不排進回合
+    // 題庫改版後消失的卡不排進回合。R7（4agent N6）：reduce／view 都先跑 pruneVanished，這個過濾目前是防禦性冗餘
+    // （拿掉它的突變 N6 是等價突變、測不出來，屬預期）；留著是為了 planSession 將來被別處直接呼叫時仍安全
+    var ids = remainingOf(d).filter(function (id) { return !!cardById(state, bank, id); });
     return { day: day, kind: "plan", queue: stuckLast(state, bank, sessionOrder(state, bank, day, ids)), answered: [], wrong: [], kinds: {} };
   }
   function pruneVanished(state, bank, day) {
@@ -438,9 +440,10 @@
     return seen ? 1 : 0;
   }
   function endTitle(v) {
+    // R9（4agent）：停輪是要爸媽陪看的訊號，優先於每日完成／空計畫，不能被蓋掉
+    if (v.session && v.session.halted) return "這一輪先停在這裡";
     if (!v.planIds.length) return "今天沒有排定卡片";
     if (v.completed) return "今天的卡片都做完了";
-    if (v.session && v.session.halted) return "這一輪先停在這裡";
     if (v.session && !v.session.queue.length && v.session.answered.length) return "這一輪完成了";
     return "";
   }
@@ -518,10 +521,22 @@
 
   /* ---------- 舊資料遷移（v1 → v3，矩陣 28） ---------- */
   // v1 的連對次數可能是同一天累積的，不足以證明跨日掌握：一律不承認畢業、標「需重新確認」、最晚明天回來複習。
-  function migrateV1(text, now, bank) {
+  // R5/R8（4agent）：搬之前先驗 v1 已知容器與欄位型別；型別不對就封鎖並記原因，不得靜默略過後寫出空白 v3
+  function v1Problem(text) {
     var o;
-    try { o = JSON.parse(text); } catch (e) { return null; }
-    if (!isObj(o) || o.v !== 1) return null;
+    try { o = JSON.parse(text); } catch (e) { return "PARSE"; }
+    if (!isObj(o) || o.v !== 1) return "VERSION";
+    if (!isObj(o.cards) || (o.extra !== undefined && !Array.isArray(o.extra)) ||
+        (o.unit3 !== undefined && !isBool(o.unit3)) || (o.prefs !== undefined && !isObj(o.prefs))) return "BAD_V1";
+    var badCard = Object.keys(o.cards).some(function (k) {
+      var c = o.cards[k];
+      return !isObj(c) || !isNat(c.seen) || !(c.due === undefined || c.due === null || isStr(c.due));
+    });
+    return badCard ? "BAD_V1" : null;
+  }
+  function migrateV1(text, now, bank) {
+    if (v1Problem(text)) return null;
+    var o = JSON.parse(text);
     var today = dayKey(now), tm = addDays(today, 1), s = blankState();
     var ids = {}; bank.cards.forEach(function (c) { ids[c.id] = c; });
     if (Array.isArray(o.extra)) o.extra.forEach(function (c) { if (validCard(c, bank) && !ids[c.id]) { s.extra.push(clone(c)); ids[c.id] = c; } });
@@ -541,7 +556,8 @@
   function createStore(opt) {
     var storage = opt.storage, bank = opt.bank, clock = opt.clock;
     // loadError：SCHEMA（存檔讀得到但不合法）／READ（讀不到）／MIGRATE（舊資料搬不進去）——三種都封鎖寫入，絕不拿空白蓋掉看不到的資料
-    var st = { state: blankState(), saveStatus: "ok", pendingAction: null, loadError: null, syncMode: "local", migrated: false };
+    // migrateReason（只在 loadError=MIGRATE 時有值）：PARSE 解析失敗／VERSION 版本不支援／BAD_V1 結構不合法／WRITE 寫不進去
+    var st = { state: blankState(), saveStatus: "ok", pendingAction: null, loadError: null, migrateReason: null, syncMode: "local", migrated: false };
     function env() { return { now: clock(), bank: bank }; }
     function write(next) {
       var errs = checkState(next, bank);
@@ -559,13 +575,11 @@
       }
       try { old = storage.getItem(LS_V1); } catch (e) { st.loadError = "READ"; st.saveStatus = "blocked"; return st; }
       if (old !== null) {
-        var m = migrateV1(old, clock(), bank);
-        if (!m) { st.loadError = "MIGRATE"; st.saveStatus = "blocked"; return st; }
-        if (m) {
-          var w = write(m);   // 寫入成功才公布；寫不進去就封鎖，下次開啟再搬（v1 原文始終不動）
-          if (w === "ok") { st.state = m; st.migrated = true; st.saveStatus = "ok"; }
-          else { st.loadError = "MIGRATE"; st.saveStatus = "blocked"; }
-        }
+        var why = v1Problem(old), m = why ? null : migrateV1(old, clock(), bank);
+        if (!m) { st.loadError = "MIGRATE"; st.migrateReason = why || "BAD_V1"; st.saveStatus = "blocked"; return st; }
+        var w = write(m);   // 寫入成功才公布；寫不進去就封鎖，下次開啟再搬（v1 原文始終不動）
+        if (w === "ok") { st.state = m; st.migrated = true; st.saveStatus = "ok"; }
+        else { st.loadError = "MIGRATE"; st.migrateReason = "WRITE"; st.saveStatus = "blocked"; }
       }
       return st;
     }
@@ -604,7 +618,7 @@
       var b0 = blankState();
       if (checkState(b0, bank).length) return false;
       try { storage.setItem(LS_KEY, JSON.stringify(b0)); } catch (e) { st.saveStatus = "failed"; return false; }
-      st.loadError = null; st.state = b0; st.saveStatus = "ok"; st.pendingAction = null;
+      st.loadError = null; st.migrateReason = null; st.state = b0; st.saveStatus = "ok"; st.pendingAction = null;
       return true;
     }
     return { get: function () { return st; }, load: load, dispatch: dispatch, retry: retry, accepted: accepted, discardBroken: discardBroken,

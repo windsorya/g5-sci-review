@@ -198,9 +198,12 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
       <label class="toggle"><input type="checkbox" id="u3"> 老師已經教完「水溶液 1. 溶解現象」（打勾後隔天開始出這單元的題）</label>
       <label class="toggle"><input type="checkbox" id="snd"> 答對時播放提示音</label>
       <p class="small muted" style="margin:0">題庫來源：目前是<strong>示範題</strong>，依學校公布的五年級課程計畫進度（南一版第 1–10 週）出的，還沒有逐題對過課本頁碼。</p>
+      <!-- scope-cut（4agent 2026-10-11）：貼 JSON 加題卡的入口先藏起來（加題改由程式碼題庫）；已存的 extra 照常讀取與驗證 -->
+      <div id="importArea" hidden>
       <label for="importBox" class="small">加入新題卡（貼上 JSON；隔天開始出）</label>
       <textarea id="importBox" placeholder='[{"id":"x1","concept":"1-1","type":"choice","q":"…","opts":["…","…"],"a":0,"why":"…","page":"課本 p.12"}]'></textarea>
       <div class="row"><button class="btn ghost sm" id="importBtn" type="button">加入</button><span class="small muted" id="importMsg"></span></div>
+      </div>
       <div class="row" id="resetRow"></div>
       <p class="small muted" id="storeMsg" style="margin:0"></p>
     </div>
@@ -210,7 +213,8 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 <script>
 // 太陽位置（NOAA 簡化公式）：給日期、當地時間（小時，可帶小數）、緯度、經度、時區，
 // 回傳 {alt: 高度角°, az: 方位角°（正北為 0，順時針）}。影子實驗室用台中（24.15N, 120.68E, UTC+8）。
-// 精度約 ±0.5°，對五年級的「方位＋高度角」教學足夠；日出日落用 alt=0 求。
+// 精度契約（M31，不宣稱一般星曆精度）：只保證 tests/sun.test.js 的取樣點——台中夏至／春分／秋分／冬至正午高度
+// 與參考值差 <0.3°／0.5°／0.5°／0.3°、日出方位差 <0.6°／1°／1°／0.6°；這對五年級的「方位＋高度角」教學足夠。日出日落用 alt=0 求。
 function sunPosition(date, hour, lat, lon, tz) {
   var rad = Math.PI / 180;
   var start = Date.UTC(date.getFullYear(), 0, 1);
@@ -1759,7 +1763,9 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   }
   function planSession(state, bank, day) {
     var d = ensureDay(state, bank, day);
-    var ids = remainingOf(d).filter(function (id) { return !!cardById(state, bank, id); });   // 題庫改版後消失的卡不排進回合
+    // 題庫改版後消失的卡不排進回合。R7（4agent N6）：reduce／view 都先跑 pruneVanished，這個過濾目前是防禦性冗餘
+    // （拿掉它的突變 N6 是等價突變、測不出來，屬預期）；留著是為了 planSession 將來被別處直接呼叫時仍安全
+    var ids = remainingOf(d).filter(function (id) { return !!cardById(state, bank, id); });
     return { day: day, kind: "plan", queue: stuckLast(state, bank, sessionOrder(state, bank, day, ids)), answered: [], wrong: [], kinds: {} };
   }
   function pruneVanished(state, bank, day) {
@@ -2062,9 +2068,10 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     return seen ? 1 : 0;
   }
   function endTitle(v) {
+    // R9（4agent）：停輪是要爸媽陪看的訊號，優先於每日完成／空計畫，不能被蓋掉
+    if (v.session && v.session.halted) return "這一輪先停在這裡";
     if (!v.planIds.length) return "今天沒有排定卡片";
     if (v.completed) return "今天的卡片都做完了";
-    if (v.session && v.session.halted) return "這一輪先停在這裡";
     if (v.session && !v.session.queue.length && v.session.answered.length) return "這一輪完成了";
     return "";
   }
@@ -2142,10 +2149,22 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
 
   /* ---------- 舊資料遷移（v1 → v3，矩陣 28） ---------- */
   // v1 的連對次數可能是同一天累積的，不足以證明跨日掌握：一律不承認畢業、標「需重新確認」、最晚明天回來複習。
-  function migrateV1(text, now, bank) {
+  // R5/R8（4agent）：搬之前先驗 v1 已知容器與欄位型別；型別不對就封鎖並記原因，不得靜默略過後寫出空白 v3
+  function v1Problem(text) {
     var o;
-    try { o = JSON.parse(text); } catch (e) { return null; }
-    if (!isObj(o) || o.v !== 1) return null;
+    try { o = JSON.parse(text); } catch (e) { return "PARSE"; }
+    if (!isObj(o) || o.v !== 1) return "VERSION";
+    if (!isObj(o.cards) || (o.extra !== undefined && !Array.isArray(o.extra)) ||
+        (o.unit3 !== undefined && !isBool(o.unit3)) || (o.prefs !== undefined && !isObj(o.prefs))) return "BAD_V1";
+    var badCard = Object.keys(o.cards).some(function (k) {
+      var c = o.cards[k];
+      return !isObj(c) || !isNat(c.seen) || !(c.due === undefined || c.due === null || isStr(c.due));
+    });
+    return badCard ? "BAD_V1" : null;
+  }
+  function migrateV1(text, now, bank) {
+    if (v1Problem(text)) return null;
+    var o = JSON.parse(text);
     var today = dayKey(now), tm = addDays(today, 1), s = blankState();
     var ids = {}; bank.cards.forEach(function (c) { ids[c.id] = c; });
     if (Array.isArray(o.extra)) o.extra.forEach(function (c) { if (validCard(c, bank) && !ids[c.id]) { s.extra.push(clone(c)); ids[c.id] = c; } });
@@ -2165,7 +2184,8 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   function createStore(opt) {
     var storage = opt.storage, bank = opt.bank, clock = opt.clock;
     // loadError：SCHEMA（存檔讀得到但不合法）／READ（讀不到）／MIGRATE（舊資料搬不進去）——三種都封鎖寫入，絕不拿空白蓋掉看不到的資料
-    var st = { state: blankState(), saveStatus: "ok", pendingAction: null, loadError: null, syncMode: "local", migrated: false };
+    // migrateReason（只在 loadError=MIGRATE 時有值）：PARSE 解析失敗／VERSION 版本不支援／BAD_V1 結構不合法／WRITE 寫不進去
+    var st = { state: blankState(), saveStatus: "ok", pendingAction: null, loadError: null, migrateReason: null, syncMode: "local", migrated: false };
     function env() { return { now: clock(), bank: bank }; }
     function write(next) {
       var errs = checkState(next, bank);
@@ -2183,13 +2203,11 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
       }
       try { old = storage.getItem(LS_V1); } catch (e) { st.loadError = "READ"; st.saveStatus = "blocked"; return st; }
       if (old !== null) {
-        var m = migrateV1(old, clock(), bank);
-        if (!m) { st.loadError = "MIGRATE"; st.saveStatus = "blocked"; return st; }
-        if (m) {
-          var w = write(m);   // 寫入成功才公布；寫不進去就封鎖，下次開啟再搬（v1 原文始終不動）
-          if (w === "ok") { st.state = m; st.migrated = true; st.saveStatus = "ok"; }
-          else { st.loadError = "MIGRATE"; st.saveStatus = "blocked"; }
-        }
+        var why = v1Problem(old), m = why ? null : migrateV1(old, clock(), bank);
+        if (!m) { st.loadError = "MIGRATE"; st.migrateReason = why || "BAD_V1"; st.saveStatus = "blocked"; return st; }
+        var w = write(m);   // 寫入成功才公布；寫不進去就封鎖，下次開啟再搬（v1 原文始終不動）
+        if (w === "ok") { st.state = m; st.migrated = true; st.saveStatus = "ok"; }
+        else { st.loadError = "MIGRATE"; st.migrateReason = "WRITE"; st.saveStatus = "blocked"; }
       }
       return st;
     }
@@ -2228,7 +2246,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
       var b0 = blankState();
       if (checkState(b0, bank).length) return false;
       try { storage.setItem(LS_KEY, JSON.stringify(b0)); } catch (e) { st.saveStatus = "failed"; return false; }
-      st.loadError = null; st.state = b0; st.saveStatus = "ok"; st.pendingAction = null;
+      st.loadError = null; st.migrateReason = null; st.state = b0; st.saveStatus = "ok"; st.pendingAction = null;
       return true;
     }
     return { get: function () { return st; }, load: load, dispatch: dispatch, retry: retry, accepted: accepted, discardBroken: discardBroken,
@@ -2650,7 +2668,9 @@ function header(){
 function banners(){
   var st=store.get(), h="";
   if(st.loadError==="SCHEMA") h+='<div class="banner"><strong>存檔讀不出來（可能被改壞了）</strong><span class="small">為了不蓋掉原本的紀錄，現在不會存任何作答。請爸媽到「設定與題庫」決定要不要清除重來。</span></div>';
-  else if(st.loadError==="MIGRATE") h+='<div class="banner"><strong>舊版的作答紀錄搬不過來</strong><span class="small">可能是這台裝置的儲存空間不夠。舊紀錄還在、沒有被刪；清出一些空間後重新整理頁面，就會再搬一次。這段時間不會存作答。</span></div>';
+  // R5/R8（4agent）：只有真的寫不進去（WRITE）才提儲存空間；格式讀不懂就直接指向「設定與題庫」的略過按鈕
+  else if(st.loadError==="MIGRATE"&&st.migrateReason==="WRITE") h+='<div class="banner"><strong>舊版的作答紀錄搬不過來</strong><span class="small">可能是這台裝置的儲存空間不夠。舊紀錄還在、沒有被刪；清出一些空間後重新整理頁面，就會再搬一次。這段時間不會存作答。</span></div>';
+  else if(st.loadError==="MIGRATE") h+='<div class="banner"><strong>舊版的作答紀錄格式讀不懂，搬不過來</strong><span class="small">不是空間問題，重新整理也不會好。舊紀錄還在、沒有被刪；請爸媽到下方「設定與題庫」按「略過舊紀錄，從頭開始」。按之前不會存作答。</span></div>';
   else if(st.loadError) h+='<div class="banner"><strong>讀不到這台裝置的作答紀錄</strong><span class="small">為了不蓋掉看不到的紀錄，現在不會存任何作答。請改用一般瀏覽模式，或重新整理頁面再試。</span></div>';
   else if(memoryOnly) h+='<div class="banner"><strong>這台裝置存不了作答紀錄</strong><span class="small">可能是無痕模式或關閉了網站資料。請改用一般瀏覽模式開啟，否則關掉頁面紀錄就會不見。</span></div>';
   else if(st.saveStatus==="invalid") h+='<div class="banner"><strong>剛剛那一步沒有存（資料檢查沒通過）</strong><span class="small">紀錄沒有被改動。請重新整理頁面；如果一直出現，請爸媽告訴我。</span></div>';
@@ -2893,7 +2913,9 @@ function submit(c,ok,m,selfGraded){
   var r=act(a);
   if(!r.ok&&!r.dup&&r.error==="SAVE_PENDING"){
     $("#ansBox").insertAdjacentHTML("beforeend",'<div class="fb no" id="saveFail"><strong>上一步還沒存到這台裝置，這一題先不算</strong><span class="small">按上方的「再存一次」，存好以後再作答這一題。</span></div>');
-    setTimeout(renderPractice,1600);
+    // R2（4agent M04）：1.6 秒後重繪前先確認她還在同一題的答題畫面；已離開（觀念頁、實驗室、首頁）就不搶回
+    var here=ui;
+    setTimeout(function(){if(screen==="practice"&&ui===here)renderPractice();},1600);
     return;
   }
   pending={a:a,c:c,ok:ok,m:m,selfGraded:selfGraded};
@@ -3292,7 +3314,8 @@ LABS.sort=function(box){
 LABS.dissolve=function(box){
   box.innerHTML='<svg class="labsvg" viewBox="0 0 360 240" id="dsSvg"></svg><div class="row"><button class="btn sm" type="button" id="dsGo">放入方糖（10 g）</button><label class="toggle small"><input type="checkbox" id="dsStir"> 攪拌</label><label class="toggle small"><input type="checkbox" id="dsHot"> 熱水</label><button class="btn sun sm" type="button" id="dsSalt">加一匙鹽（6 g）</button><button class="btn ghost sm" type="button" id="dsNew">換一杯清水</button></div><div class="readout" id="dsRo">按「放入方糖」開始。溶解快慢是示意，不是真實測量。</div>';
   var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var m=C.dissolveNew(), P=[], sugarStart=null, coldStir=null, hotStir=null, mixed=false;
+  // fresh：這顆糖放下去時杯子是不是「清水」（還沒放過糖或鹽）；R3（4agent M27）只有清水杯的第一顆糖能登記冷水／熱水結果
+  var m=C.dissolveNew(), P=[], sugarStart=null, coldStir=null, hotStir=null, mixed=false, fresh=false;
   function now(){return performance.now();}
   function sync(){m=C.dissolveStep(m,now());}
   function draw(){
@@ -3314,6 +3337,7 @@ LABS.dissolve=function(box){
       var sec=((m.sugarDoneAt-sugarStart)/1000).toFixed(1), label=(m.hot?"熱水":"冷水")+(m.stir?"＋攪拌":"");
       var weigh='<br>秤重：杯子＋水 '+m.base+' g、糖 '+r.sugarTotal+' g；溶解後一起秤 <b>'+r.scaleMass+' g</b>，重量一樣。';
       if(mixed) $("#dsRo").innerHTML='方糖溶完了，糖還在水裡。這次溶到一半換了條件，不能拿來比冷水和熱水；按「換一杯清水」再各做一次。'+weigh;
+      else if(!fresh) $("#dsRo").innerHTML='方糖溶完了，糖還在水裡。這杯水放糖之前已經有糖或鹽，不是清水，不能拿來比冷水和熱水；按「換一杯清水」再做一次。'+weigh;
       else{ if(!m.hot) coldStir=m.stir; else hotStir=m.stir;
         var fair=coldStir!==null&&hotStir!==null&&coldStir===hotStir, unfair=coldStir!==null&&hotStir!==null&&coldStir!==hotStir;
         $("#dsRo").innerHTML='方糖不見了，可是糖還在水裡（分散成看不見的小粒子）。'+label+'：花了 '+sec+' 秒（示意）。'+weigh+
@@ -3325,6 +3349,7 @@ LABS.dissolve=function(box){
   }
   function start(){if(!labTimer) labTimer=requestAnimationFrame(tick);}
   on("#dsGo",function(){sync();if(C.dissolveRead(m).sugarSolid>0){$("#dsRo").textContent="上一顆方糖還在溶解，等它溶完再放。";return;}
+    var r0=C.dissolveRead(m); fresh=r0.sugarTotal===0&&r0.saltTotal===0;
     m=C.dissolveAddSugar(m,now()); sugarStart=now(); mixed=false; $("#dsRo").textContent="糖正在溶解……"; start();});
   function changed(){if(sugarStart!==null&&C.dissolveRead(m).sugarSolid>0) mixed=true;}
   $("#dsStir").onchange=function(e){sync();changed();m.stir=e.target.checked;};

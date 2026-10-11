@@ -736,3 +736,65 @@ test("V5 卡住（待協助）的觀念在小考複習排最後，一段 20 題�
     assert.equal(r.session.queue.length, 6, "size=" + bad);
   });
 });
+
+/* ---------- 4agent 必修（run 4B-20261011-g5app；交辦 #1182 自修 session 接手）---------- */
+test("R9 停輪標題優先：halted 不得被「今天都做完了」或「沒有排定卡片」蓋掉（M22）", () => {
+  const se = { halted: true, queue: ["s3"], answered: ["s1", "s2"], wrong: ["s2"] };
+  assert.equal(C.endTitle({ planIds: ["s1"], completed: true, session: se }), "這一輪先停在這裡");
+  assert.equal(C.endTitle({ planIds: [], completed: false, session: se }), "這一輪先停在這裡");
+  assert.equal(C.endTitle({ planIds: ["s1"], completed: true, session: Object.assign({}, se, { halted: false }) }), "今天的卡片都做完了");
+});
+
+test("R5/R8 v1 結構不合法：封鎖、BAD_V1、不寫 v3、v1 原文不動（D2-c／M08）", () => {
+  const b = bank(["s1"]);
+  for (const raw of ['{"v":1,"cards":[]}', '{"v":1}', '{"v":1,"cards":{"s1":{"seen":"2"}}}', '{"v":1,"cards":{},"extra":{}}', '{"v":1,"cards":{},"unit3":"yes"}']) {
+    const mem = memStorage({ "g5sci.v1": raw }); const st = mkStore(mem, b, { t: NOON(D) });
+    assert.equal(st.get().loadError, "MIGRATE", raw); assert.equal(st.get().migrateReason, "BAD_V1", raw);
+    const r = st.dispatch({ type: "tick" });
+    assert.equal(r.error, "SAVE_BLOCKED", raw); assert.equal(mem.writes(), 0, raw);
+    assert.equal(mem.raw["g5sci.v3"], undefined, raw); assert.equal(mem.raw["g5sci.v1"], raw, raw);
+  }
+});
+
+test("R5/R8 v1 失敗原因分開記：解析失敗 PARSE、版本不支援 VERSION、寫不進去 WRITE（D2-a／D2-b／M10；殺突變 N8）", () => {
+  const b = bank(["s1"]);
+  for (const [raw, why] of [["{", "PARSE"], ['{"v":2,"cards":{}}', "VERSION"]]) {
+    const mem = memStorage({ "g5sci.v1": raw }); const st = mkStore(mem, b, { t: NOON(D) });
+    assert.deepEqual([st.get().loadError, st.get().migrateReason, mem.writes()], ["MIGRATE", why, 0], raw);
+    assert.equal(mem.raw["g5sci.v1"], raw);
+  }
+  const v1 = JSON.stringify({ v: 1, cards: { s1: { seen: 2, due: "2026-10-21" } } });
+  const mem = memStorage({ "g5sci.v1": v1 }); mem.setFail(true);
+  const st = mkStore(mem, b, { t: NOON(D) });
+  assert.deepEqual([st.get().loadError, st.get().migrateReason], ["MIGRATE", "WRITE"]);
+});
+
+function dayRec(plan, done, touched) { return { planIds: plan, doneIds: done, touched: touched || done.slice(), extraDone: false, labRuns: 0, teach: 0, mood: null }; }
+
+test("R4 D4-b doneIds 裡的消失卡要剔掉（殺突變 N3）：planIds=[s1]、doneIds=[]、進度 0/1", () => {
+  const b = bank(["s1", "s2"]); const s = C.blankState();
+  s.days[D] = dayRec(["gone", "s1"], ["gone"]);
+  const v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual([v.planIds, v.doneIds, v.M.cardProgress], [["s1"], [], { done: 0, planned: 1 }]);
+  assert.equal(v.completed, false);
+  assert.deepEqual(s.days[D].doneIds, ["gone"], "view 不得改到輸入");
+});
+
+test("R4 D4-c session.answered／wrong 裡的消失卡要剔掉（殺突變 N4）", () => {
+  const b = bank(["s1", "s2"]); const s = C.blankState();
+  s.cards.s2 = learned(1, [D], "2026-10-21");
+  s.days[D] = dayRec(["s1", "s2"], ["s2"], ["s2"]);
+  s.session = { day: D, kind: "plan", queue: ["gone", "s1"], answered: ["gone", "s2"], wrong: ["gone", "s2"], kinds: {} };
+  const v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual([v.session.queue, v.session.answered, v.session.wrong], [["s1"], ["s2"], ["s2"]]);
+  assert.equal(v.completed, false);
+});
+
+test("R5/R8 合法 v1 照常搬（D2-d）：只寫一次、migrateReason=null", () => {
+  const b = bank(["s1"]);
+  const v1 = '{"v":1,"cards":{"s1":{"seen":8,"due":"2026-10-25"}}}';
+  const mem = memStorage({ "g5sci.v1": v1 }); const st = mkStore(mem, b, { t: NOON(D) });
+  assert.deepEqual([st.get().loadError, st.get().migrateReason, mem.writes()], [null, null, 1]);
+  assert.deepEqual(st.get().state.cards.s1, { seen: 8, goodDays: [], blockedDay: null, due: "2026-10-21", needsRecheck: true });
+  assert.equal(mem.raw["g5sci.v1"], v1);
+});

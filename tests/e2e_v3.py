@@ -361,6 +361,106 @@ def flow_dissolve_fair_test(browser):
     ctx.close()
 
 
+# ---------- 4agent 必修（run 4B-20261011-g5app；交辦 #1182 自修 session 接手） ----------
+BLOCK = "window.__s=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new Error('QuotaExceededError')};0"
+
+
+def seed_state(when_day, plan, done, queue, answered):
+    s = {"v": 3, "cards": {}, "exits": {}, "days": {}, "labRuns": {}, "session": None, "log": [], "ops": [], "help": {}, "extra": [],
+         "settings": {"unit3": False, "sound": False}}
+    for cid in answered:
+        s["cards"][cid] = {"seen": 1, "goodDays": [when_day], "blockedDay": None, "due": "2026-10-12"}
+    s["days"][when_day] = {"planIds": plan, "doneIds": done, "touched": list(answered), "extraDone": False, "labRuns": 0, "teach": 0, "mood": None}
+    s["session"] = {"day": when_day, "kind": "plan", "queue": queue, "answered": answered, "wrong": [], "kinds": {}}
+    return "if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', %s);}" % json.dumps(json.dumps(s))
+
+
+def flow_pending_timer_no_hijack(browser, device=None, label="chromium"):
+    """R2（M04／D1-c）：待存時重答會排 1.6 秒重繪；她在這 1.6 秒內離開到觀念頁，重繪不得把她拉回練習。"""
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00", device,
+                                 init=seed_state("2026-10-11", ["s1", "s2", "s3"], ["s1"], ["s2", "s3"], ["s1"]))
+    page.locator("#goOn").click(); page.evaluate(BLOCK)
+    page.locator("#main .opt").nth(1).click()                              # s2 存失敗（成為待補存）
+    page.locator(".ccard[data-cid='1-2']").click(); btn(page, "回首頁").click()
+    page.locator("#goOn").click(); page.locator("#main .opt").nth(1).click()  # 重答 → SAVE_PENDING
+    page.locator(".ccard[data-cid='1-3']").click()                           # 立刻離開到季節觀念頁
+    before = "一年中太陽走的路線" in page.inner_text("#main")
+    page.clock.run_for(1700)
+    after = page.inner_text("#main")
+    check(f"{label} R2 離頁後 1.6 秒重繪不搶回練習（仍在季節觀念頁、沒有選項）",
+          before and "一年中太陽走的路線" in after and page.locator("#main .opt").count() == 0,
+          (before, after[:80], page.locator("#main .opt").count()))
+    check(f"{label} R2 流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def open_dissolve_lab(browser):
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00")
+    page.locator("#setBox summary").click(); page.locator("#u3").check()
+    page.locator(".ccard[data-cid='3-1']").click(); btn(page, "去實驗室動手做").click()
+    page.locator("#labPredict button[data-g='0']").click()
+    return ctx, page, errors
+
+
+def got(page):
+    return page.locator("#labTask .ck.got").count()
+
+
+def flow_dissolve_fresh_cup(browser):
+    """R3（M27／D9-b、D9-c、D9-d）：只有「新的一杯清水」放的第一顆糖才登記冷水／熱水結果。"""
+    # D9-b：冷水做完不換杯，勾熱水再放糖 → 不是清水，不得拿到冷熱對照勾；換清水再做才拿到
+    ctx, page, errors = open_dissolve_lab(browser)
+    btn(page, "放入方糖").click(); page.clock.run_for(11000)
+    check("R3 冷水第一杯有效（任務 2 格）", got(page) == 2, page.inner_text("#labTask"))
+    page.locator("#dsHot").check(); btn(page, "放入方糖").click(); page.clock.run_for(11000)
+    ro = page.inner_text("#dsRo")
+    check("R3 同一杯續加糖：提示不是清水、不給冷熱對照勾", got(page) == 2 and "不是清水" in ro, (got(page), ro[-90:]))
+    btn(page, "換一杯清水").click(); btn(page, "放入方糖").click(); page.clock.run_for(11000)
+    check("R3 換清水後熱水那杯有效：拿到冷熱對照勾", got(page) == 3, page.inner_text("#labTask"))
+    check("R3 續加糖流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+    # D9-c：第二杯先加鹽再放糖 → 有鹽的杯子不是清水
+    ctx, page, errors = open_dissolve_lab(browser)
+    btn(page, "放入方糖").click(); page.clock.run_for(11000)
+    btn(page, "換一杯清水").click(); page.locator("#dsHot").check()
+    page.locator("#dsSalt").click(); btn(page, "放入方糖").click(); page.clock.run_for(11000)
+    ro = page.inner_text("#dsRo")
+    check("R3 含鹽杯不給冷熱對照勾", got(page) == 2 and "不是清水" in ro, (got(page), ro[-90:]))
+    ctx.close()
+    # D9-d：溶到一半改條件 → 這杯不算冷也不算熱
+    ctx, page, errors = open_dissolve_lab(browser)
+    btn(page, "放入方糖").click(); page.clock.run_for(2000)
+    page.locator("#dsHot").check(); page.clock.run_for(11000)
+    check("R3 溶到一半換條件：只拿到秤重那格", got(page) == 1 and "換了條件" in page.inner_text("#dsRo"), (got(page), page.inner_text("#dsRo")[-90:]))
+    ctx.close()
+
+
+def flow_bad_v1_banner(browser):
+    """R5/R8（M08／M10）：v1 結構不合法 → 橫幅不提儲存空間、指向「設定與題庫」；略過後從頭開始、v1 原文不動。"""
+    v1 = json.dumps({"v": 1, "cards": []})
+    ctx, page, errors = new_page(browser, "2026-10-20T12:00:00+08:00",
+                                 init=f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v1', {json.dumps(v1)});}}")
+    ban = page.inner_text("#banners")
+    check("R5 壞 v1 橫幅：不提儲存空間、指向設定與題庫", "格式讀不懂" in ban and "儲存空間" not in ban and "設定與題庫" in ban, ban)
+    check("R5 壞 v1 不寫 v3", page.evaluate("localStorage.getItem('g5sci.v3')") is None)
+    page.locator("#setBox summary").click()
+    has_discard = page.locator("#discard").count() == 1
+    check("R5 設定與題庫有「略過舊紀錄」鈕", has_discard)
+    if has_discard:
+        page.locator("#discard").click(); page.locator("#discardYes").click()
+        check("R5 略過後 v3 建立、v1 原文不動", state(page) is not None and page.evaluate("localStorage.getItem('g5sci.v1')") == v1)
+    check("R5 流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def flow_import_hidden(browser):
+    """scope-cut（4agent）：設定頁不再顯示貼 JSON 加題卡的入口；既存 extra 照常讀取驗證。"""
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00")
+    page.locator("#setBox summary").click()
+    check("scope-cut 匯入框不顯示", not page.locator("#importBox").is_visible() and not page.locator("#importBtn").is_visible())
+    ctx.close()
+
+
 def shots_season_diagrams(browser):
     if not SHOTS:
         return
@@ -472,6 +572,11 @@ def main():
         flow_review_after_plan_done(ch)
         flow_pending_blocks_new_answer(ch)
         flow_dissolve_fair_test(ch)
+        flow_pending_timer_no_hijack(ch)
+        flow_pending_timer_no_hijack(wk, ipad, "webkit_ipad")
+        flow_dissolve_fresh_cup(ch)
+        flow_bad_v1_banner(ch)
+        flow_import_hidden(ch)
         shots_season_diagrams(ch)
         flow_season(ch)
         flow_season(wk, ipad)
