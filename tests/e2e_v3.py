@@ -147,6 +147,13 @@ def flow_review(browser, device=None):
     page.evaluate("document.dispatchEvent(new Event('visibilitychange')); 0")
     page.reload(); page.wait_for_selector("#main")
     home = page.inner_text("#main")
+    # R1／M20（4agent 2026-10-11）：小考複習做到一半，首頁仍要有「開始今天的練習」，複習另有續接鈕
+    check("小考複習中首頁仍有「開始今天的練習」（M20）", "開始今天的練習" in home and "繼續小考複習（還有" in home and "繼續這一輪" not in home, home[:240])
+    check("小考複習中首頁仍顯示今天要練幾張", "今天還有" in home or "今天要練" in home, home[:120])
+    btn(page, "開始今天的練習").click()
+    check("從首頁開今天的練習＝計畫回合", state(page)["session"]["kind"] == "plan" and "小考複習" not in page.inner_text("#main")[:40], json.dumps(state(page)["session"])[:160])
+    page.reload(); page.wait_for_selector("#main")
+    home = page.inner_text("#main")
     check("首頁有安親班複習卷兩顆按鈕", "安親班複習卷：太陽與光" in home and "安親班複習卷：植物世界" in home, home[-260:])
     n2 = int(home.split("安親班複習卷：植物世界（")[1].split(" 題")[0])
     btn(page, "安親班複習卷：植物世界").click()
@@ -273,8 +280,8 @@ def flow_review_after_plan_done(browser):
     before = state(page)["session"]["queue"]
     page.reload(); page.wait_for_selector("#main")
     main = page.inner_text("#main")
-    check("做完計畫後的小考複習可在首頁接續（D5）", "繼續這一輪" in main, main[:200])
-    btn(page, "繼續這一輪").click()
+    check("做完計畫後的小考複習可在首頁接續（D5）", "繼續小考複習" in main, main[:200])
+    btn(page, "繼續小考複習").click()
     after = state(page)["session"]["queue"]
     check("接續後剩下的題與順序不變", after == before and len(after) > 0, (before[:3], after[:3]))
     check("接續流程沒有 JS 錯誤", not errors, errors)

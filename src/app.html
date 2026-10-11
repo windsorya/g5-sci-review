@@ -578,7 +578,10 @@ function renderHome(){
   screen="home"; leaveLab();
   var v=V(), se=v.session, left=v.remainingIds.length, el=$("#main"), h;
   var inRound=se&&se.day===v.today&&se.queue.length&&!se.halted&&se.answered.length>0;
-  var cont=inRound?'<div class="row" style="justify-content:center"><button class="btn" type="button" id="goOn">繼續這一輪（還有 '+se.queue.length+' 張）</button></div>':'';
+  // R1（4agent 2026-10-11）：小考複習進行中不得佔住首頁——「開始今天的練習」一律在，複習續接另給一顆
+  var isReview=inRound&&se.kind==="review";
+  var onLabel=!inRound?'':isReview?'繼續小考複習（還有 '+se.queue.length+' 題）':'繼續這一輪（還有 '+se.queue.length+' 張）';
+  var cont=inRound?'<div class="row" style="justify-content:center"><button class="btn'+(isReview?' ghost':'')+'" type="button" id="goOn">'+onLabel+'</button></div>':'';
   if(!v.planIds.length){
     h='<div class="done"><b class="t">今天沒有排定卡片</b><p class="muted" style="margin:0">可以點下面的觀念看圖解、去實驗室玩，或「考考爸媽」。</p>'+cont+'<div class="row" style="justify-content:center"><button class="btn ghost" type="button" id="goTeach">考考爸媽</button></div></div>';
   }else if(v.completed){
@@ -590,8 +593,9 @@ function renderHome(){
     h='<div class="today"><div class="big"><b>'+Math.max(0,C.diffDays(v.today,EXAM))+'</b><span class="muted small">天後考試</span></div><div style="display:grid;gap:10px">'+
       '<div style="font-size:23px;font-weight:700">'+(v.doneIds.length?'今天還有 '+left+' 張':'今天要練 '+left+' 張')+'</div>'+
       '<div class="muted">'+parts.join("、")+'。答錯可以看圖解、進實驗室弄懂。</div>'+
-      '<div class="row">'+(inRound?'<button class="btn" type="button" id="goOn">繼續這一輪（還有 '+se.queue.length+' 張）</button>':'<button class="btn" type="button" id="goAll">開始今天的練習</button>')+
-      (!inRound&&left>3?'<button class="btn ghost" type="button" id="goLight">今天有點累，只做 3 張</button>':'')+'</div></div></div>';
+      '<div class="row">'+(inRound&&!isReview?'<button class="btn" type="button" id="goOn">'+onLabel+'</button>':'<button class="btn" type="button" id="goAll">開始今天的練習</button>')+
+      (isReview?'<button class="btn ghost" type="button" id="goOn">'+onLabel+'</button>':'')+
+      (!(inRound&&!isReview)&&left>3?'<button class="btn ghost" type="button" id="goLight">今天有點累，只做 3 張</button>':'')+'</div></div></div>';
   }
   el.innerHTML=h+reviewRow();
   wireReview(el);
