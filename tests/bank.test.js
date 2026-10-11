@@ -1,0 +1,56 @@
+// 題庫完整性：從 src/app.html 抽出 BASE_CARDS、CONCEPTS、EXPLAIN 的觀念清單，逐張用核心的 validCard 驗。
+// 加題（尤其依考古卷改寫的題）前後都跑：node --test tests/bank.test.js
+"use strict";
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
+const C = require("../src/core.js");
+
+const html = fs.readFileSync(path.join(__dirname, "../src/app.html"), "utf8");
+function grab(startMarker, endMarker) {
+  const i = html.indexOf(startMarker), j = html.indexOf(endMarker, i);
+  assert.ok(i >= 0 && j > i, "找不到 " + startMarker);
+  return html.slice(i + startMarker.length, j);
+}
+const cards = vm.runInNewContext("(" + grab("var BASE_CARDS = ", ";\nvar BANK") + ")");
+const concepts = vm.runInNewContext("(" + grab("var CONCEPTS = ", ";\nvar CIDS") + ")");
+const figs = vm.runInNewContext("(" + grab("var FIGS = ", ";\nvar BASE_CARDS") + ")");
+const bank = { cards: [], concepts: {}, figs };
+Object.keys(concepts).forEach((k) => { bank.concepts[k] = { unit: concepts[k].unit }; });
+
+test("每張卡都通過 validCard、屬於六個觀念之一", () => {
+  // cards 來自 vm 沙箱，陣列原型跟這裡不同，deepEqual 會誤判；比長度
+  const bad = Array.from(cards.filter((c) => !C.validCard(c, bank)), (c) => c.id);
+  assert.equal(bad.length, 0, bad.join(","));
+  assert.ok(cards.length >= 36, "題庫只有 " + cards.length + " 張");
+});
+
+test("卡片 id 不重複", () => {
+  const seen = {}, dup = [];
+  cards.forEach((c) => { if (seen[c.id]) dup.push(c.id); seen[c.id] = 1; });
+  assert.deepEqual(dup, []);
+});
+
+test("每個觀念都有卡、都有出口題與兩種說法", () => {
+  Object.keys(concepts).forEach((cid) => {
+    assert.ok(cards.some((c) => c.concept === cid), cid + " 沒有卡");
+    assert.ok(concepts[cid].exit && concepts[cid].exitAns, cid + " 缺出口題");
+  });
+  const explainKeys = (html.match(/^  "(\d-\d)":\[\n    \{name:/gm) || []).map((m) => m.slice(3, 6));
+  assert.deepEqual(explainKeys.sort(), Object.keys(concepts).sort());
+});
+
+test("依考古卷改寫的題（id 以 k 開頭）一定標出處，且不是示範題", () => {
+  cards.filter((c) => /^k/.test(c.id)).forEach((c) => {
+    assert.ok(typeof c.page === "string" && /題型參考/.test(c.page), c.id + " 沒標題型參考出處");
+    assert.ok(c.why && c.why.length >= 6, c.id + " 缺解說");
+  });
+});
+
+test("選擇題的正解不能永遠在同一個位置（避免靠位置猜）", () => {
+  const choice = cards.filter((c) => c.type === "choice" || c.type === "figure");
+  const firstShare = choice.filter((c) => c.a === 0).length / choice.length;
+  assert.ok(firstShare < 0.6, "正解在第一個選項的比例 " + firstShare.toFixed(2));
+});
