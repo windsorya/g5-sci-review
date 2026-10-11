@@ -664,6 +664,18 @@ test("D3 題卡 id：匯入題自己重複 → schema 拒絕；與內建題同 i
   assert.equal(C.cardById(st.get().state, b, "s1").q, "題目 s1");
 });
 
+test("M11（Codex 第 3 輪規格核對）：三卡題庫＋同 id 匯入題 → 計畫照常排三張新卡，s1 只出現一次且是內建版", () => {
+  const b = bank(["s1", "s2", "s3"]);
+  const clash = C.blankState(); clash.extra = [card("s1", "1-1", { q: "匯入的同名題" })];
+  const mem = memStorage({ "g5sci.v3": JSON.stringify(clash) }); const st = mkStore(mem, b, { t: NOON(D) });
+  assert.equal(st.dispatch(op("sessionStart", {})).ok, true);
+  const plan = st.get().state.days[D].planIds;
+  assert.deepEqual(plan.slice().sort(), ["s1", "s2", "s3"]);
+  assert.equal(plan.filter((id) => id === "s1").length, 1);
+  assert.equal(C.allCards(st.get().state, b).filter((c) => c.id === "s1").length, 1);
+  assert.equal(C.cardById(st.get().state, b, "s1").q, "題目 s1");
+});
+
 test("D4 題庫改版後消失的卡：從計畫與回合剔除，不假完成、不留永遠做不完的計畫", () => {
   const b = bank(["s1"]); let s = C.blankState();
   s.days[D] = { planIds: ["gone", "s1"], doneIds: [], touched: [], extraDone: false, labRuns: 0, teach: 0, mood: null };
