@@ -95,6 +95,10 @@ def flow_remedy(browser, label, device=None):
     check(f"{label} 變式仍錯＝停本輪", "這一輪先停在這裡" in main and "東邊升起、西邊落下" in main, main[:160])
     check(f"{label} 標待協助", "需要爸媽陪著看的觀念：太陽與影子" in page.inner_text("#banners"))
     shot(page, f"{label}_06_halted")
+    page.locator(".ccard[data-cid='1-1']").click()
+    cm = page.inner_text("#main")
+    check(f"{label} 待協助的觀念頁先請爸媽陪著看、不給先練", "先和爸媽一起看圖解" in cm and "先練這個觀念" not in cm and "練這個觀念的全部" not in cm, cm[:160])
+    btn(page, "回首頁").click()
     page.locator("#parentBox summary").click()
     summ = page.inner_text("#summary")
     check(f"{label} 家長摘要三數", "2 / 10" in summ and "出口題待辦" in summ and "還沒" in summ and "需要爸媽陪著看" in summ, summ[:200])
@@ -171,6 +175,7 @@ def flow_short_round_and_teach(browser, device):
     vis = [f for f in figs.all() if f.is_visible()]
     box = vis[0].bounding_box() if vis else None
     check("考考爸媽題圖 1 張且有尺寸（矩陣 25）", len(vis) == 1 and box and box["width"] > 0 and box["height"] > 0, f"{len(vis)} {box}")
+    check("考考爸媽題圖就是抽中的 s3（sun-am）", bool(vis) and vis[0].get_attribute("data-fig") == "sun-am", vis[0].get_attribute("data-fig") if vis else None)
     marks = [m for m in page.locator("#main .ans-mark").all() if m.is_visible()]
     check("揭答前沒有答案影子標註", len(marks) == 0)
     shot(page, "ipad768_teach")
@@ -191,6 +196,43 @@ def flow_save_fail(browser):
     s = state(page)
     check("重試只算一次", s["cards"]["s1"]["seen"] == 1, s["cards"].get("s1"))
     check("寫入失敗流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def flow_save_fail_then_tick(browser):
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00")
+    btn(page, "開始今天的練習").click()
+    page.evaluate("window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function(){ throw new Error('QuotaExceededError'); }; 0")
+    btn(page, "東邊升起、西邊落下").click()
+    page.evaluate("Storage.prototype.setItem = window.__realSet; 0")
+    page.evaluate("document.dispatchEvent(new Event('visibilitychange')); 0")   # 切回頁面：tick 先補寫待重試的答案
+    page.locator("#saveAgain").click()
+    check("存檔失敗→切回頁面→再存一次：仍顯示這一題的回饋（以操作 ID 判斷）", "答對了" in page.inner_text("#ansBox"), page.inner_text("#ansBox")[:120])
+    s = state(page)
+    check("該答案只寫入一次", s["cards"]["s1"]["seen"] == 1 and s["ops"].count(s["log"][0]["op"]) == 1, s["cards"].get("s1"))
+    check("切回頁面流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def flow_season(browser, device=None):
+    ctx, page, errors = new_page(browser, "2026-10-11T20:40:00+08:00", device)
+    page.locator(".ccard[data-cid='1-3']").click()
+    btn(page, "去實驗室動手做").click()
+    check("季節實驗室預測前隱藏", page.locator("#labBody").is_hidden())
+    page.locator("#labPredict button[data-g='0']").click()
+    check("季節實驗室打開後任務還沒自己打勾", page.locator("#labTask .ck.got").count() == 0)
+    page.evaluate("v => { const r = document.querySelector('#seT'); r.value = v; r.dispatchEvent(new Event('input')); }", "12")
+    ro_summer = page.inner_text("#seRo")
+    page.locator("#seTabs button[data-k='3']").click()
+    page.evaluate("v => { const r = document.querySelector('#seT'); r.value = v; r.dispatchEvent(new Event('input')); }", "12")
+    ro_winter = page.inner_text("#seRo")
+    check("夏至：日出東偏北、中午約 89°", "日出 5:14（東偏北）" in ro_summer and "約 89°" in ro_summer, ro_summer)
+    check("冬至：日出東偏南、中午約 42°", "日出 6:40（東偏南）" in ro_winter and "約 42°" in ro_winter, ro_winter)
+    check("季節實驗三個任務都完成", page.locator("#labTask .ck.got").count() == 3, page.inner_text("#labTask"))
+    shot(page, "season_lab")
+    btn(page, "完成實驗").click()
+    check("季節實驗完成", "實驗完成" in page.inner_text("#main"))
+    check("季節實驗沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
 
@@ -289,6 +331,9 @@ def main():
         flow_review(wk, ipad)
         flow_short_round_and_teach(wk, dict(p.devices["iPad Mini"]))
         flow_save_fail(ch)
+        flow_save_fail_then_tick(ch)
+        flow_season(ch)
+        flow_season(wk, ipad)
         flow_corrupt(ch)
         flow_migrate(ch)
         flow_midnight(ch)

@@ -104,13 +104,15 @@
     while (out.length < ids.length) order.forEach(function (k) { if (by[k].length) out.push(by[k].shift()); });
     return out;
   }
+  // 待協助的觀念排到這一輪最後：先別再刷她卡住的觀念（補救分支三）；穩定排序，其餘順序不動
+  function stuckLast(state, bank, ids) {
+    var stuck = function (id) { var c = cardById(state, bank, id), h = c && state.help[c.concept]; return h && h.needsHelp ? 1 : 0; };
+    return ids.map(function (id, i) { return [stuck(id), i, id]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (x) { return x[2]; });
+  }
   function planSession(state, bank, day) {
     var d = ensureDay(state, bank, day);
-    var q = sessionOrder(state, bank, day, remainingOf(d));
-    // 待協助的概念排到這一輪最後：先別再刷她卡住的觀念（補救分支三）
-    var stuck = function (id) { var c = cardById(state, bank, id), h = c && state.help[c.concept]; return h && h.needsHelp ? 1 : 0; };
-    q = q.map(function (id, i) { return [stuck(id), i, id]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (x) { return x[2]; });
-    return { day: day, kind: "plan", queue: q, answered: [], wrong: [], kinds: {} };
+    var ids = remainingOf(d).filter(function (id) { return !!cardById(state, bank, id); });   // 題庫改版後消失的卡不排進回合
+    return { day: day, kind: "plan", queue: stuckLast(state, bank, sessionOrder(state, bank, day, ids)), answered: [], wrong: [], kinds: {} };
   }
   // 跨午夜：日期與任務一起切換（矩陣 16、17）
   function syncSession(state, bank, day) {
@@ -144,10 +146,12 @@
         if (action.kind === "redo" || action.kind === "review") {
           // redo＝再練答錯的；review＝小考前把整個單元／觀念練一次。作答規則一樣，不改當日計畫與完成判定
           var ids = (Array.isArray(action.ids) ? action.ids : []).filter(function (id) { return !!cardById(s, bank, id); });
-          s.session = { day: today, kind: action.kind, queue: uniq(ids), answered: [], wrong: [], kinds: {} };
+          s.session = { day: today, kind: action.kind, queue: stuckLast(s, bank, uniq(ids)), answered: [], wrong: [], kinds: {} };
         } else {
           var sess = planSession(s, bank, today);
-          if (isStr(action.focus) && bank.concepts[action.focus]) {
+          var blocked = isStr(action.focus) && s.help[action.focus] && s.help[action.focus].needsHelp;
+          if (blocked) info.focusBlocked = true;   // 待協助優先於概念入口：卡住的觀念不能被拉到最前面
+          if (isStr(action.focus) && bank.concepts[action.focus] && !blocked) {
             // 概念入口：她選的觀念先練，只換順序、不改到期規則與當日計畫
             var mine = function (id) { var c = cardById(s, bank, id); return c && c.concept === action.focus ? 0 : 1; };
             sess.queue = sess.queue.map(function (id, i) { return [mine(id), i, id]; }).sort(function (x, y) { return x[0] - y[0] || x[1] - y[1]; }).map(function (x) { return x[2]; });
@@ -410,6 +414,7 @@
   }
 
   /* ---------- 嚴格 schema（矩陣 19） ---------- */
+  function uniqList(a) { return uniq(a).length === a.length; }
   function dayList(a) { return Array.isArray(a) && a.every(isDay) && uniq(a).length === a.length; }
   function strList(a) { return Array.isArray(a) && a.every(isStr); }
   function checkState(o, bank) {
@@ -436,12 +441,13 @@
           !isBool(d.extraDone) || !isNat(d.labRuns) || !isNat(d.teach) ||
           !(d.mood === null || ["good", "ok", "tired"].indexOf(d.mood) >= 0)) { bad("day " + k); return; }
       if (!d.doneIds.every(function (id) { return d.planIds.indexOf(id) >= 0; })) bad("day " + k + " done⊄plan");
+      if (!uniqList(d.planIds) || !uniqList(d.doneIds) || !uniqList(d.touched)) bad("day " + k + " duplicate");
     });
     if (!isObj(o.labRuns)) bad("labRuns"); else Object.keys(o.labRuns).forEach(function (k) {
       var r = o.labRuns[k];
       if (!isObj(r) || !isStr(r.lab) || !isDay(r.day) || ["predict", "observe", "complete"].indexOf(r.phase) < 0 ||
           !(r.prediction === null || isNat(r.prediction)) || !(r.predictionCorrect === null || isBool(r.predictionCorrect)) ||
-          !isNat(r.answer) || !isNat(r.tasks) || !Array.isArray(r.tasksDone) || !r.tasksDone.every(isNat) ||
+          !isNat(r.answer) || !isNat(r.tasks) || !Array.isArray(r.tasksDone) || !r.tasksDone.every(isNat) || !uniqList(r.tasksDone) ||
           ["wrong", "menu"].indexOf(r.from) < 0 || !(r.card === null || isStr(r.card))) bad("run " + k);
     });
     if (o.session !== null) {
@@ -450,12 +456,13 @@
           !strList(se.answered) || !strList(se.wrong) || !isObj(se.kinds) ||
           (se.size !== undefined && !isNat(se.size)) || (se.halted !== undefined && !isBool(se.halted)) ||
           (se.focus !== undefined && !bank.concepts[se.focus])) bad("session");
+      else if (!uniqList(se.queue) || !uniqList(se.answered) || !uniqList(se.wrong)) bad("session duplicate");
     }
     if (!Array.isArray(o.log) || !o.log.every(function (e) {
       return isObj(e) && isStr(e.op) && isDay(e.d) && isStr(e.card) && isStr(e.c) &&
         isBool(e.ok) && isBool(e.hint) && isBool(e.unsure) && isBool(e.variation) && isBool(e.first);
     })) bad("log");
-    if (!strList(o.ops)) bad("ops");
+    if (!strList(o.ops) || !uniqList(o.ops)) bad("ops");
     if (!isObj(o.help)) bad("help"); else Object.keys(o.help).forEach(function (k) {
       var h = o.help[k];
       if (!bank.concepts[k] || !isObj(h) || !isNat(h.count) || !(h.last === null || isDay(h.last)) || !isNat(h.way) || !isBool(h.needsHelp)) bad("help " + k);
@@ -495,48 +502,73 @@
   /* ---------- 儲存層：寫入成功才公布（矩陣 27） ---------- */
   function createStore(opt) {
     var storage = opt.storage, bank = opt.bank, clock = opt.clock;
+    // loadError：SCHEMA（存檔讀得到但不合法）／READ（讀不到）／MIGRATE（舊資料搬不進去）——三種都封鎖寫入，絕不拿空白蓋掉看不到的資料
     var st = { state: blankState(), saveStatus: "ok", pendingAction: null, loadError: null, syncMode: "local", migrated: false };
     function env() { return { now: clock(), bank: bank }; }
     function write(next) {
       var errs = checkState(next, bank);
       if (errs.length) return "invalid";
-      if (st.loadError) return "blocked";             // 讀不出的舊存檔不覆蓋（矩陣 19）
+      if (st.loadError) return "blocked";
       try { storage.setItem(LS_KEY, JSON.stringify(next)); return "ok"; } catch (e) { return "failed"; }
     }
     function load() {
-      var raw = null;
-      try { raw = storage.getItem(LS_KEY); } catch (e) { st.saveStatus = "failed"; return st; }
+      var raw = null, old = null;
+      try { raw = storage.getItem(LS_KEY); } catch (e) { st.loadError = "READ"; st.saveStatus = "blocked"; return st; }
       if (raw !== null) {
         var r = decode(raw, bank);
         if (r.accepted) st.state = r.state; else { st.loadError = r.error; st.saveStatus = "blocked"; }
         return st;
       }
-      var old = null;
-      try { old = storage.getItem(LS_V1); } catch (e) { old = null; }
+      try { old = storage.getItem(LS_V1); } catch (e) { st.loadError = "READ"; st.saveStatus = "blocked"; return st; }
       if (old !== null) {
         var m = migrateV1(old, clock(), bank);
-        if (m) { st.state = m; st.migrated = true; st.saveStatus = write(m) === "ok" ? "ok" : "failed"; }
+        if (m) {
+          var w = write(m);   // 寫入成功才公布；寫不進去就封鎖，下次開啟再搬（v1 原文始終不動）
+          if (w === "ok") { st.state = m; st.migrated = true; st.saveStatus = "ok"; }
+          else { st.loadError = "MIGRATE"; st.saveStatus = "blocked"; }
+        }
       }
       return st;
     }
+    // 先把待重試的操作補寫；補不進去就不接受新操作（不讓 tick 之類的操作把它沖掉）
+    function flushPending() {
+      if (!st.pendingAction) return true;
+      var a = st.pendingAction, r = reduce(st.state, a, env());
+      if (r.error || r.dup) { st.pendingAction = null; return true; }
+      var w = write(r.state);
+      if (w !== "ok") { st.saveStatus = w; return false; }
+      st.state = r.state; st.saveStatus = "ok"; st.pendingAction = null;
+      return true;
+    }
     function dispatch(action) {
+      if (st.pendingAction && !(action && action.id && action.id === st.pendingAction.id)) {
+        if (!flushPending()) return { ok: false, error: "SAVE_PENDING", pendingId: st.pendingAction.id, state: st.state };
+      }
       var r = reduce(st.state, action, env());
-      if (r.error || r.dup) return { ok: !r.error, error: r.error, dup: !!r.dup, info: r.info, state: st.state };
+      if (r.error || r.dup) {
+        if (r.dup && st.pendingAction && action.id === st.pendingAction.id) st.pendingAction = null;
+        return { ok: !r.error, error: r.error, dup: !!r.dup, info: r.info, state: st.state };
+      }
       var w = write(r.state);
       if (w !== "ok") {
-        st.saveStatus = w; st.pendingAction = action;
+        st.saveStatus = w;
+        if (action.id) st.pendingAction = action;   // tick 沒有 id：失敗就算了，下次再 tick
         return { ok: false, error: w === "invalid" ? "INVARIANT" : "SAVE_" + w.toUpperCase(), state: st.state };
       }
-      st.state = r.state; st.saveStatus = "ok"; st.pendingAction = null;
+      st.state = r.state; st.saveStatus = "ok"; if (st.pendingAction && st.pendingAction.id === action.id) st.pendingAction = null;
       return { ok: true, info: r.info, state: st.state };
     }
-    function retry() { return st.pendingAction ? dispatch(st.pendingAction) : { ok: true, state: st.state }; }
-    function discardBroken() {   // 家長明確按「清除並重新開始」才覆蓋壞存檔
-      st.loadError = null; var b = blankState();
-      if (write(b) === "ok") { st.state = b; st.saveStatus = "ok"; return true; }
-      st.saveStatus = "failed"; return false;
+    function retry() { return st.pendingAction ? dispatch(st.pendingAction) : { ok: true, nothing: true, state: st.state }; }
+    function accepted(id) { return st.state.ops.indexOf(id) >= 0; }   // 畫面只在「這個操作 ID 真的寫進去了」才公布結果
+    function discardBroken() {   // 家長明確按「清除並重新開始」：一樣先驗證、寫入成功才公布
+      if (st.loadError !== "SCHEMA") return false;
+      var b0 = blankState();
+      if (checkState(b0, bank).length) return false;
+      try { storage.setItem(LS_KEY, JSON.stringify(b0)); } catch (e) { st.saveStatus = "failed"; return false; }
+      st.loadError = null; st.state = b0; st.saveStatus = "ok"; st.pendingAction = null;
+      return true;
     }
-    return { get: function () { return st; }, load: load, dispatch: dispatch, retry: retry, discardBroken: discardBroken,
+    return { get: function () { return st; }, load: load, dispatch: dispatch, retry: retry, accepted: accepted, discardBroken: discardBroken,
              view: function () { return view(st.state, env()); }, env: env };
   }
 

@@ -200,6 +200,7 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 var C = window.G5Core;
 var EXAM = "2026-11-05", START = "2026-10-11";
 var TAICHUNG = {lat:24.15, lon:120.68, tz:8};
+function tpeNow(){var d=new Date(Date.now()+8*3600000);return {date:new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()),hour:d.getUTCHours()+d.getUTCMinutes()/60};}
 var UNITS = {"1":"一、太陽與光","2":"二、植物世界","3":"三、水溶液"};
 var CONCEPTS = {
   "1-1":{unit:"1",short:"太陽與影子",title:"太陽在天空中的位置變化",lab:"shadow",tone:"c1",
@@ -486,8 +487,15 @@ var PREDICT={
 /* ---------- 儲存 ---------- */
 var memoryOnly = false;
 function makeStorage(){
-  try{var k="g5sci.probe";window.localStorage.setItem(k,"1");window.localStorage.removeItem(k);return window.localStorage;}
-  catch(e){memoryOnly=true;var m={};return {getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null;},setItem:function(k,v){m[k]=String(v);}};}
+  var ls=null; try{ls=window.localStorage;}catch(e){ls=null;}
+  if(ls){
+    var canWrite=true; try{ls.setItem("g5sci.probe","1");ls.removeItem("g5sci.probe");}catch(e){canWrite=false;}
+    if(canWrite) return ls;
+    var hasData=true; try{hasData=ls.getItem("g5sci.v3")!==null||ls.getItem("g5sci.v1")!==null;}catch(e){hasData=true;}
+    if(hasData) return ls;   // 有舊紀錄就不換成空白：照常讀，寫入失敗由 store 擋下並提示
+  }
+  memoryOnly=true; var m={};
+  return {getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null;},setItem:function(k,v){m[k]=String(v);}};
 }
 var store = C.createStore({storage:makeStorage(), bank:BANK, clock:function(){return Date.now();}});
 store.load();
@@ -518,7 +526,7 @@ function chime(){
 // 天空場景帶：面向南方看（左東、右西），太陽畫在今天台中此刻的位置（晚上換成月亮）
 function drawSky(){
   var el=$("#sky"), W=Math.max(300,Math.round(el.getBoundingClientRect().width||820)), H=132, base=104, x0=40, x1=W-40;
-  var now=new Date(), hour=now.getHours()+now.getMinutes()/60;
+  var tn=tpeNow(), now=tn.date, hour=tn.hour;
   var st=sunTimes(now,TAICHUNG.lat,TAICHUNG.lon,TAICHUNG.tz), rise=st.rise||6, set=st.set||18;
   var f=(hour-rise)/(set-rise), up=f>=0&&f<=1, ff=Math.max(0,Math.min(1,f)), peak=86;
   var x=x0+(x1-x0)*ff, y=base-Math.sin(Math.PI*ff)*peak;
@@ -542,7 +550,9 @@ function header(){
 }
 function banners(){
   var st=store.get(), h="";
-  if(st.loadError) h+='<div class="banner"><strong>存檔讀不出來（可能被改壞了）</strong><span class="small">為了不蓋掉原本的紀錄，現在不會存任何作答。請爸媽到「設定與題庫」決定要不要清除重來。</span></div>';
+  if(st.loadError==="SCHEMA") h+='<div class="banner"><strong>存檔讀不出來（可能被改壞了）</strong><span class="small">為了不蓋掉原本的紀錄，現在不會存任何作答。請爸媽到「設定與題庫」決定要不要清除重來。</span></div>';
+  else if(st.loadError==="MIGRATE") h+='<div class="banner"><strong>舊版的作答紀錄搬不過來</strong><span class="small">可能是這台裝置的儲存空間不夠。舊紀錄還在、沒有被刪；清出一些空間後重新整理頁面，就會再搬一次。這段時間不會存作答。</span></div>';
+  else if(st.loadError) h+='<div class="banner"><strong>讀不到這台裝置的作答紀錄</strong><span class="small">為了不蓋掉看不到的紀錄，現在不會存任何作答。請改用一般瀏覽模式，或重新整理頁面再試。</span></div>';
   else if(memoryOnly) h+='<div class="banner"><strong>這台裝置存不了作答紀錄</strong><span class="small">可能是無痕模式或關閉了網站資料。請改用一般瀏覽模式開啟，否則關掉頁面紀錄就會不見。</span></div>';
   else if(st.saveStatus==="failed") h+='<div class="banner"><strong>剛剛那一步沒有存到這台裝置</strong><div class="row"><button class="btn sm" type="button" id="retrySave">再存一次</button></div></div>';
   var v=V();
@@ -560,7 +570,7 @@ function route(){
   return renderHome();
 }
 function renderHome(){
-  screen="home";
+  screen="home"; leaveLab();
   var v=V(), se=v.session, left=v.remainingIds.length, el=$("#main"), h;
   var inRound=se&&se.day===v.today&&se.queue.length&&!se.halted&&se.answered.length>0;
   if(!v.planIds.length){
@@ -633,14 +643,15 @@ function toast(t){var el=$("#main"),d=document.createElement("div");d.className=
 /* ---------- 觀念頁（概念入口） ---------- */
 function conceptCards(cid){return C.allCards(S(),BANK).filter(function(c){return c.concept===cid;}).map(function(c){return c.id;});}
 function renderConcept(cid){
-  screen="concept";
+  screen="concept"; leaveLab();
   var c=CONCEPTS[cid], v=V(), ex=EXPLAIN[cid][0];
-  var mine=v.remainingIds.filter(function(id){var k=card(id);return k&&k.concept===cid;}).length;
+  var mine=v.remainingIds.filter(function(id){var k=card(id);return k&&k.concept===cid;}).length, stuck=v.needsHelp.indexOf(cid)>=0;
   var el=$("#main");
   el.innerHTML='<div style="display:grid;gap:14px"><div class="qhead"><span>'+esc(UNITS[c.unit])+'</span><span>'+STAGE[v.stages[cid]]+'</span></div><h2>'+esc(c.title)+'</h2>'+
+    (stuck?'<div class="banner info"><strong>這個觀念先和爸媽一起看圖解</strong><span class="small">爸媽在「家長摘要」按「已經陪她看過」以後，再來練這個觀念的題目。</span></div>':'')+
     explainBlock(ex)+
-    '<div class="row"><button class="btn" type="button" id="cLab">去實驗室動手做</button>'+(mine&&!v.completed?'<button class="btn ghost" type="button" id="cFocus">先練這個觀念（今天 '+mine+' 張）</button>':'')+
-    '<button class="btn ghost" type="button" id="cAll">練這個觀念的全部 '+conceptCards(cid).length+' 題</button>'+
+    '<div class="row"><button class="btn" type="button" id="cLab">去實驗室動手做</button>'+(mine&&!v.completed&&!stuck?'<button class="btn ghost" type="button" id="cFocus">先練這個觀念（今天 '+mine+' 張）</button>':'')+
+    (stuck?'':'<button class="btn ghost" type="button" id="cAll">練這個觀念的全部 '+conceptCards(cid).length+' 題</button>')+
     '<button class="btn ghost" type="button" id="cMore">換另一種說法</button><button class="btn ghost sm" type="button" id="cBack">回首頁</button></div></div>';
   on("#cLab",function(){openLab(cid,{from:"menu"});});
   on("#cFocus",function(){act({type:"sessionStart",focus:cid});startRound();});
@@ -693,7 +704,7 @@ function answerText(c){return c.type==="recall"?c.ans:c.type==="map"?c.branches.
 /* ---------- 練習 ---------- */
 var ui={hint:false,cardId:null};
 function renderPractice(){
-  screen="practice";
+  screen="practice"; leaveLab();
   var v=V(), se=v.session, el=$("#main");
   if(!se||!se.queue.length||se.halted) return renderEnd();
   var id=se.queue[0], c=card(id);
@@ -749,9 +760,9 @@ function submit(c,ok,m,selfGraded){
 // 兩個「再存一次」（上方提示列、題目下方）走同一條路：存成功才公布回饋
 function retrySave(){
   var rr=store.retry(); banners();
-  if(!rr.ok) return;
   var f=$("#saveFail");
-  if(f&&pending){f.remove();feedback(pending,rr.info||{});} else route();
+  if(f&&pending){ if(store.accepted(pending.a.id)){f.remove();feedback(pending,(rr&&rr.info)||{});} return; }
+  if(rr.ok) route();
 }
 function feedback(p,info){
   var c=p.c, ok=p.ok, shaky=ok&&(p.m.unsure||p.m.hint), box=$("#ansBox");
@@ -797,7 +808,7 @@ function remedy(c){
   $("#remedy").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function renderHalted(c,selfGraded){
-  screen="end";
+  screen="end"; leaveLab();
   var con=CONCEPTS[c.concept];
   $("#main").innerHTML='<div class="done"><b class="t">這一輪先停在這裡</b>'+
     (selfGraded?'':'<div class="fb no" style="text-align:left;justify-self:stretch"><strong>這題的正確答案是「'+esc(answerText(c))+'」</strong><span>'+esc(c.why||"")+'</span></div>')+
@@ -809,7 +820,7 @@ function renderHalted(c,selfGraded){
   renderSide();
 }
 function renderEnd(){
-  screen="end";
+  screen="end"; leaveLab();
   var v=V(), se=v.session, el=$("#main");
   if(!se) return renderHome();
   var title=C.endTitle(v)||"這一輪完成了", right=se.answered.length-se.wrong.length;
@@ -831,7 +842,7 @@ function renderEnd(){
 
 /* ---------- 考考爸媽 ---------- */
 function renderTeach(){
-  screen="teach";
+  screen="teach"; leaveLab();
   var s=S(), today=V().today;
   var okToday=s.log.filter(function(e){return e.d===today&&e.ok;}).map(function(e){return e.card;});
   var pool=okToday.length?okToday:s.log.filter(function(e){return e.ok;}).map(function(e){return e.card;});
@@ -851,6 +862,7 @@ function renderTeach(){
 /* ---------- 實驗室：先預測才能操作；完成才算數 ---------- */
 var labTimer=null;
 function stopAnim(){if(labTimer){cancelAnimationFrame(labTimer);labTimer=null;}}
+function leaveLab(){stopAnim();lab=null;}
 var LAB_TASKS={
   shadow:["把時間拉到早上 8 點左右，看影子朝哪邊","拉到中午 12 點左右，看影子變長還是變短","拉到下午 4 點左右，看影子朝哪邊"],
   season:["選「夏至」，把時間拉到中午 12 點左右，看影子多長","選「冬至」，把時間拉到中午 12 點左右，比比看影子","比較夏至和冬至：太陽從哪個方向升起（兩天都看過）"],
@@ -918,7 +930,7 @@ function drawNav(){
 var LABS={};
 /* 1-1 影子：台中今天的真實太陽位置（NOAA 簡化公式，約略計算）；從上往下看的方位盤＋高度角條 */
 LABS.shadow=function(box){
-  var today=new Date(), st=sunTimes(today,TAICHUNG.lat,TAICHUNG.lon,TAICHUNG.tz);
+  var today=tpeNow().date, st=sunTimes(today,TAICHUNG.lat,TAICHUNG.lon,TAICHUNG.tz);
   box.innerHTML='<p class="small muted" style="margin:0">台中・今天（約略計算）。從上往下看，像地圖：上北、下南、右東、左西。太陽在圓圈外面繞，中間是竿子。</p>'+
     '<svg class="labsvg" viewBox="0 0 360 270" id="shSvg"></svg>'+
     '<label for="shT" class="small">時間：<b id="shTl"></b></label><input type="range" id="shT" min="'+Math.ceil((st.rise||6)*4)/4+'" max="'+Math.floor((st.set||18)*4)/4+'" step="0.25" value="10">'+
@@ -938,9 +950,9 @@ LABS.shadow=function(box){
       '<rect x="330" y="40" width="14" height="180" rx="7" fill="var(--line)"/><rect x="330" y="'+(220-180*alt/90).toFixed(1)+'" width="14" height="'+(180*alt/90).toFixed(1)+'" rx="7" fill="var(--sun)"/>'+
       '<text x="337" y="236" text-anchor="middle" font-size="11" fill="var(--muted)">高度</text>';
     $("#shRo").innerHTML=p.alt>0?'太陽在<b>'+C.dirName(p.az)+'</b>方的天空，高度角約 <b>'+Math.round(p.alt)+'°</b>　→　影子朝<b>'+C.dirName(sh.az)+'</b>方，'+(sh.len>2?'很長':sh.len>0.9?'中等':'很短'):'太陽在地平線附近，影子非常長。';
-    if(t<=9) check(0); if(t>=11.5&&t<=12.5) check(1); if(t>=15.5&&t<=16.5) check(2);
   }
-  $("#shT").oninput=draw; draw();
+  function tasks(){var t=+$("#shT").value; if(t<=9) check(0); if(t>=11.5&&t<=12.5) check(1); if(t>=15.5&&t<=16.5) check(2);}
+  $("#shT").oninput=function(){draw();tasks();}; draw();
 };
 /* 1-3 季節：選夏至／春分／秋分／冬至，看台中真實的日出方向、白天長短、正午高度與影子（sun.js 約略計算） */
 LABS.season=function(box){
@@ -975,12 +987,15 @@ LABS.season=function(box){
     $("#seRo").innerHTML='<b>'+d[0]+'</b>：日出 '+fmt(tm.rise)+'（'+riseDir(ri.az)+'）、日落 '+fmt(tm.set)+'（'+setDir(se.az)+'），白天約 '+(tm.set-tm.rise).toFixed(1)+' 小時；中午太陽高度約 '+Math.round(noon)+'°。<br>'+
       '現在：太陽在'+C.dirName(p.az)+'方的天空、高度約 '+Math.round(p.alt)+'°，影子'+(p.alt<=0?'看不到':sh.len<0.1?'非常短（幾乎看不到）':sh.len>2?'很長':sh.len>0.9?'中等':'很短')+'。';
     document.querySelectorAll("#seTabs button").forEach(function(b){b.classList.toggle("on",+b.dataset.k===st.k);});
-    var rr=lab&&run(); if(rr&&rr.phase!=="predict"){st.seen[st.k]=1;
-      if(t>=11.5&&t<=12.5){ if(st.k===0) check(0); if(st.k===3) check(1); }
-      if(st.seen[0]&&st.seen[3]) check(2);}
   }
-  document.querySelectorAll("#seTabs button").forEach(function(b){b.onclick=function(){st.k=+b.dataset.k;draw();};});
-  $("#seT").oninput=draw;
+  function tasks(){
+    var rr=lab&&run(); if(!rr||rr.phase==="predict") return;
+    var t=+$("#seT").value; st.seen[st.k]=1;
+    if(t>=11.5&&t<=12.5){ if(st.k===0) check(0); if(st.k===3) check(1); }
+    if(st.seen[0]&&st.seen[3]) check(2);
+  }
+  document.querySelectorAll("#seTabs button").forEach(function(b){b.onclick=function(){st.k=+b.dataset.k;draw();tasks();};});
+  $("#seT").oninput=function(){draw();tasks();};
   LABS.season.after=draw;
   draw();
 };
@@ -1024,7 +1039,6 @@ LABS.light=function(box){
     on("#lgP",function(){st.shine=true;check(3);draw();});
   }
   document.querySelectorAll("#lgTabs button").forEach(function(b){b.onclick=function(){st.k=+b.dataset.k;draw();};});
-  LABS.light.after=function(){check(0);};
   draw();
 };
 /* 2-1 根莖葉 */
@@ -1040,9 +1054,8 @@ LABS.transport=function(box){
       '<path d="M180 240 l-14 14 M180 240 l12 14 M180 240 l0 16" stroke="var(--soil)" stroke-width="3"/><rect x="174" y="70" width="12" height="172" rx="5" fill="var(--leaf)"/><rect x="174" y="'+(242-h).toFixed(1)+'" width="12" height="'+h.toFixed(1)+'" rx="5" fill="var(--red)" opacity=".8"/>';
     [[180,90,-1],[180,120,1],[180,150,-1]].forEach(function(p){var d=p[2];s+='<path d="M'+p[0]+' '+p[1]+' q'+(40*d)+' -30 '+(70*d)+' -6 q'+(-30*d)+' 26 '+(-70*d)+' 6" fill="var(--leaf)"/>';if(leafRed>0)s+='<path d="M'+p[0]+' '+p[1]+' q'+(40*d)+' -30 '+(70*d)+' -6" stroke="var(--red)" stroke-width="3" fill="none" opacity="'+leafRed.toFixed(2)+'"/>';});
     $("#trSvg").innerHTML=s+'<circle cx="320" cy="40" r="18" fill="var(--sunball)"/>';
-    if(t>=6) check(0);
   }
-  $("#trT").oninput=draw; draw();
+  $("#trT").oninput=function(){draw(); if(+$("#trT").value>=6) check(0);}; draw();
   box.querySelectorAll("#trBtns button").forEach(function(b){b.onclick=function(){$("#trRo").textContent=FN[b.dataset.p];check({root:1,stem:2,leaf:3}[b.dataset.p]);};});
 };
 /* 2-2 繁殖 */
@@ -1170,8 +1183,9 @@ function renderSide(){header();banners();renderConcepts();renderCal();renderExit
 function renderSettings(){
   var s=S(), st=store.get();
   $("#u3").checked=!!s.settings.unit3; $("#snd").checked=!!s.settings.sound;
-  $("#storeMsg").textContent=st.loadError?"存檔讀不出來，目前不會存檔。":memoryOnly?"這台裝置存不了作答紀錄。":"作答紀錄只存在這台裝置的瀏覽器（不上傳）。"+(st.migrated?"已把舊版紀錄搬過來；舊版的「畢業」要重新確認一次。":"");
+  $("#storeMsg").textContent=st.loadError?(st.loadError==="SCHEMA"?"存檔讀不出來，目前不會存檔。":st.loadError==="MIGRATE"?"舊紀錄搬不過來，目前不會存檔（舊紀錄還在）。":"讀不到這台裝置的紀錄，目前不會存檔。"):memoryOnly?"這台裝置存不了作答紀錄。":"作答紀錄只存在這台裝置的瀏覽器（不上傳）。"+(st.migrated?"已把舊版紀錄搬過來；舊版的「畢業」要重新確認一次。":"");
   var rr=$("#resetRow");
+  if(st.loadError&&st.loadError!=="SCHEMA"){rr.innerHTML="";return;}
   if(st.loadError){rr.innerHTML='<button class="btn warn sm" id="discard" type="button">清除壞掉的存檔，重新開始</button>';on("#discard",function(){rr.innerHTML='<span>確定要清除？舊存檔會被覆蓋。</span><button class="btn warn sm" id="discardYes" type="button">清除</button><button class="btn ghost sm" id="discardNo" type="button">取消</button>';on("#discardNo",renderSettings);on("#discardYes",function(){store.discardBroken();renderHome();});});return;}
   if(!rr.dataset.state){rr.innerHTML='<button class="btn ghost sm" id="resetBtn" type="button">清除全部作答紀錄</button>';
     on("#resetBtn",function(){rr.dataset.state="ask";rr.innerHTML='<span>確定要清除所有作答紀錄？</span><button class="btn warn sm" id="resetYes" type="button">清除</button><button class="btn ghost sm" id="resetNo" type="button">取消</button>';

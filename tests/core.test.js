@@ -468,9 +468,15 @@ test("R3 補救後變式仍錯＝停止本輪、標待協助；下一輪把它�
   assert.deepEqual(v.needsHelp, ["1-1"]); assert.equal(C.endTitle(v), "這一輪先停在這裡");
   const b2 = { cards: [card("s1"), card("s2"), card("s3"), card("t1", "1-2")], concepts: CONCEPTS, figs: FIGS };
   let s2 = JSON.parse(JSON.stringify(s));
-  s2.days[D].planIds = ["s3", "t1"];
+  s2.days[D].planIds = ["s3", "t1"]; s2.days[D].doneIds = [];      // 夾具要合法：done ⊆ plan（Codex 第 1 輪 C3 指出）
+  assert.deepEqual(C.checkState(s2, b2), []);
   s2 = run(s2, b2, NOON(D), op("sessionStart", {}));
   assert.deepEqual(s2.session.queue, ["t1", "s3"]);
+  const f = C.reduce(s2, op("sessionStart", { focus: "1-1" }), env(b2, NOON(D)));
+  assert.equal(f.info.focusBlocked, true);                            // 待協助優先於概念入口
+  assert.deepEqual(f.state.session.queue, ["t1", "s3"]);
+  const rv = C.reduce(s2, op("sessionStart", { kind: "review", ids: ["s3", "t1"] }), env(b2, NOON(D)));
+  assert.deepEqual(rv.state.session.queue, ["t1", "s3"]);              // 小考複習也把卡住的觀念排最後
   s2 = run(s2, b2, NOON(D), op("helped", { cid: "1-1" }));
   assert.equal(s2.help["1-1"].needsHelp, false);
 });
@@ -505,4 +511,118 @@ test("V1 小考複習回合：指定整個單元的題、作答照規則記分�
   assert.deepEqual(C.checkState(s, b), []);
   const v = C.view(s, env(b, NOON(D)));
   assert.equal(v.session.queue.length, 2);
+});
+
+/* ---------- Codex 第 1 輪（設計後）缺測補齊：真的經 store 重載、儲存層各分支 ---------- */
+function mkStore(storage, b, clockRef) { const st = C.createStore({ storage, bank: b, clock: () => clockRef.t }); st.load(); return st; }
+
+test("09R 短回合後真的重載（新 store 讀同一份儲存）再接續", () => {
+  const b = bank(["s1", "s2", "s3", "s4", "s5", "s23"]); const mem = memStorage(); const clk = { t: NOON(D) };
+  let st = mkStore(mem, b, clk);
+  st.dispatch(op("sessionStart", { size: 3 }));
+  ["s1", "s2", "s3"].forEach((id) => st.dispatch(op("answer", { cardId: id, ok: true })));
+  st = mkStore(mem, b, clk);                                         // 重載
+  assert.equal(st.get().loadError, null);
+  st.dispatch(op("sessionStart", {}));
+  assert.deepEqual(st.get().state.session.queue, ["s4", "s5"]);      // 計畫只有 5 張新卡（10/20 起每日 5 張）
+  ["s4", "s5"].forEach((id) => st.dispatch(op("answer", { cardId: id, ok: true })));
+  const v = st.view();
+  assert.deepEqual([v.completed, v.M.extraDone, v.M.cardProgress.planned], [true, false, 5]);
+});
+
+test("13R／15R 出口題票真的寫進儲存、隔幾天重載還在，通過才關閉", () => {
+  const b = bank(["s1"]); const mem = memStorage(); const clk = { t: NOON("2026-10-19") };
+  let st = mkStore(mem, b, clk);
+  st.dispatch(op("answer", { cardId: "s1", ok: true }));
+  clk.t = NOON("2026-10-22"); st = mkStore(mem, b, clk);
+  assert.equal(st.view().M.exitPending, 1);
+  st.dispatch(op("exit", { cid: "1-1", result: "fail" }));
+  clk.t = NOON("2026-10-24"); st = mkStore(mem, b, clk);
+  assert.deepEqual([st.get().state.exits["1-1"].status, st.view().M.exitPending], ["fail", 1]);
+  st.dispatch(op("exit", { cid: "1-1", result: "pass" }));
+  st = mkStore(mem, b, clk);
+  assert.equal(st.view().M.exitPending, 0);
+});
+
+test("29R 匯入後真的重載，當天計畫不變、隔天才納入", () => {
+  const b = bank(["s1"]); const mem = memStorage(); const clk = { t: NOON(D) };
+  let st = mkStore(mem, b, clk);
+  st.dispatch(op("answer", { cardId: "s1", ok: true }));
+  st.dispatch(op("import", { cards: [card("x1")] }));
+  st = mkStore(mem, b, clk);
+  assert.deepEqual(st.view().planIds, ["s1"]);
+  clk.t = NOON("2026-10-21"); st = mkStore(mem, b, clk);
+  assert.ok(st.view().planIds.includes("x1"));
+});
+
+test("12b 觀察階段任務沒做完不能完成實驗", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("labStart", { runId: "r1", lab: "shadow", tasks: 3, answer: 0, from: "menu" }));
+  s = run(s, b, NOON(D), op("labPredict", { runId: "r1", choice: 0 }));
+  s = run(s, b, NOON(D), op("labTask", { runId: "r1", task: 0 }));
+  const r = C.reduce(s, op("labComplete", { runId: "r1" }), env(b, NOON(D)));
+  assert.equal(r.error, "TASKS_LEFT"); assert.equal(r.state, s);
+});
+
+test("18b 啟動前已有出口失敗與 window.claude 舊進度：不呼叫雲端、不改本機狀態", () => {
+  const b = bank(["s1"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  s = run(s, b, NOON(D), op("exit", { cid: "1-1", result: "fail" }));
+  const mem = memStorage({ "g5sci.v3": JSON.stringify(s) }); let calls = 0;
+  global.window = { claude: { use: () => { calls++; return Promise.resolve({ doc: () => ({ get: () => Promise.resolve({ exists: true, data: () => ({ v: 1, cards: {} }) }) }) }); } } };
+  const st = mkStore(mem, b, { t: NOON("2026-10-21") });
+  st.dispatch({ type: "tick" });
+  delete global.window;
+  assert.equal(calls, 0);
+  assert.deepEqual([st.get().state.exits["1-1"].status, st.get().state.cards.s1.due], ["fail", "2026-10-21"]);
+});
+
+test("27b 存檔失敗後切回頁面（tick）：先補寫待重試的答案，不會被沖掉；畫面以操作 ID 判斷", () => {
+  const b = bank(["s1"]); const mem = memStorage(); const clk = { t: NOON(D) };
+  const st = mkStore(mem, b, clk);
+  mem.setFail(true);
+  assert.equal(st.dispatch({ type: "answer", id: "a1", cardId: "s1", ok: true }).ok, false);
+  const t1 = st.dispatch({ type: "tick" });                           // 還寫不進去：tick 也不接受，a1 仍待重試
+  assert.equal(t1.ok, false); assert.equal(st.get().pendingAction.id, "a1"); assert.equal(st.accepted("a1"), false);
+  mem.setFail(false);
+  assert.equal(st.dispatch({ type: "tick" }).ok, true);               // 恢復後 tick 先補寫 a1
+  assert.equal(st.get().pendingAction, null); assert.equal(st.accepted("a1"), true);
+  assert.equal(st.get().state.cards.s1.seen, 1);
+  assert.equal(st.retry().nothing, true);                             // 沒有待重試的了
+  assert.equal(st.get().state.cards.s1.seen, 1);                      // 只算一次
+});
+
+test("27c 讀不到存檔（getItem 丟錯）：封鎖寫入，不拿空白蓋掉", () => {
+  const b = bank(["s1"]); let writes = 0;
+  const bad = { getItem: () => { throw new Error("SecurityError"); }, setItem: () => { writes++; } };
+  const st = C.createStore({ storage: bad, bank: b, clock: () => NOON(D) }); st.load();
+  assert.equal(st.get().loadError, "READ");
+  st.dispatch(op("answer", { cardId: "s1", ok: true }));
+  assert.equal(writes, 0); assert.equal(st.get().state.cards.s1, undefined);
+});
+
+test("28b 舊資料搬不進去（寫入失敗）：不公布、封鎖寫入、v1 原文不動", () => {
+  const b = bank(["s1"]);
+  const v1 = JSON.stringify({ v: 1, cards: { s1: { box: 1, streak: 1, due: "2026-10-21", seen: 2, right: 2, wrong: 0, retired: false } } });
+  const mem = memStorage({ "g5sci.v1": v1 }); mem.setFail(true);
+  const st = mkStore(mem, b, { t: NOON(D) });
+  assert.equal(st.get().loadError, "MIGRATE"); assert.equal(st.get().migrated, false);
+  assert.equal(st.get().state.cards.s1, undefined);
+  assert.equal(mem.raw["g5sci.v1"], v1); assert.equal(mem.raw["g5sci.v3"], undefined);
+});
+
+test("19c schema 拒絕重複集合（假進度 2/1）與重複佇列", () => {
+  const b = bank(["s1", "s2"]); let s = C.blankState();
+  s = run(s, b, NOON(D), op("sessionStart", {}));
+  s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
+  const good = JSON.stringify(s);
+  for (const m of [(o) => { o.days[D].doneIds.push("s1"); }, (o) => { o.days[D].planIds.push("s2"); }, (o) => { o.session.queue.push("s2"); }, (o) => { o.ops.push(o.ops[0]); }]) {
+    const o = JSON.parse(good); m(o); assert.equal(C.decode(JSON.stringify(o), b).accepted, false, m.toString());
+  }
+});
+
+test("Q1 每日新卡額度：10/14 前診斷期最多 10 張，之後 5 張（刻意偏離規格的 5 張，理由：先把教過的卡各做一遍）", () => {
+  const ids = Array.from({ length: 14 }, (_, i) => "c" + i); const b = bank(ids);
+  assert.equal(C.view(C.blankState(), env(b, NOON("2026-10-12"))).planIds.length, 10);
+  assert.equal(C.view(C.blankState(), env(b, NOON("2026-10-14"))).planIds.length, 5);
 });
