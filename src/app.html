@@ -111,6 +111,21 @@ input[type=checkbox]{width:24px;height:24px;accent-color:var(--pri);flex:none}
 /* 補救 */
 .remedy{border:2px solid var(--pri);background:var(--pri-soft);border-radius:var(--r);padding:18px;display:grid;gap:12px}
 .remedy ul{margin:0;padding-left:22px;display:grid;gap:6px}
+.rv{display:grid;gap:6px}.rv .row{gap:8px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.step{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;align-items:center;background:var(--card);border-radius:14px;padding:12px}
+.step .say{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
+.step .say p{margin:0;font-size:18px;line-height:1.65}
+.step .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--pri);color:var(--on-pri);font-size:16px}
+@media (max-width:600px){.step{grid-template-columns:1fr}}
+.remember{background:var(--sun-soft);border-radius:12px;padding:12px 14px;font-size:18px;line-height:1.6}
+.backq{background:var(--card);border-radius:12px;padding:12px 14px;display:grid;gap:4px;line-height:1.6}
+.alt{display:grid;gap:10px;border-top:1px dashed var(--line);padding-top:12px}
+.alt ul{margin:0;padding-left:22px;display:grid;gap:6px}
+.vids{display:grid;gap:8px;background:var(--card);border-radius:12px;padding:12px 14px}
+.vid{display:grid;gap:4px}
+.vframe{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
+.vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .prev{background:var(--card);border-radius:12px;padding:8px 12px;font-size:15px}
 .fig{width:100%;height:auto;display:block;border-radius:14px}
 /* 實驗室 */
@@ -194,7 +209,10 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 
 <!--@INLINE src/sun.js-->
 <!--@INLINE src/figs.js-->
+<!--@INLINE src/steps.js-->
+<!--@INLINE src/videos.js-->
 <!--@INLINE src/bank_extra.js-->
+<!--@INLINE src/merge.js-->
 <!--@INLINE src/core.js-->
 <script>
 (function(){
@@ -277,7 +295,11 @@ var BASE_CARDS = [
   {id:"s35",concept:"3-1",type:"choice",q:"同樣多的水，熱水和冷水，哪一個能讓方糖溶解得比較快？",opts:["熱水","冷水","一樣快","都不會溶解"],a:0,hint:"在實驗室試試看冷水和熱水",why:"水溫比較高，糖通常溶解得比較快。"},
   {id:"s36",concept:"3-1",type:"choice",q:"是非題：「糖攪拌溶解以後，糖水的總重量會變輕。」",opts:["對","錯"],a:1,hint:"糖還在不在水裡？",why:"糖還在水裡，總重量不變。"}
 ];
-var BANK = {cards:BASE_CARDS.concat(window.G5_EXTRA_CARDS||[]), concepts:{}, figs:FIGS};   // 加題在 src/bank_extra.js
+var ALL_CARDS = BASE_CARDS.concat(window.G5_EXTRA_CARDS||[]);   // 加題在 src/bank_extra.js
+// 重複題只留一題（src/merge.js）；被併掉的安親班題，由留下來的那一題代表進「安親班複習卷」
+var MERGED = window.G5_MERGED||{}, ANQIN_ALSO = {};
+ALL_CARDS.forEach(function(c){if(MERGED[c.id]&&c.set==="anqin")MERGED[c.id].keep.forEach(function(k){ANQIN_ALSO[k]=1;});});
+var BANK = {cards:ALL_CARDS.filter(function(c){return !MERGED[c.id];}), concepts:{}, figs:FIGS};
 CIDS.forEach(function(k){BANK.concepts[k]={unit:CONCEPTS[k].unit};});
 
 var ERRS = {concept:"還不懂這個觀念", reading:"看錯題目", slip:"知道但選錯了"};
@@ -608,18 +630,48 @@ function renderHome(){
 }
 // 小考複習：把整個單元（或一個觀念）排成一輪；作答照規則記分、隔天照樣複習，不改今天的計畫
 function unitCards(unit){return C.allCards(S(),BANK).filter(function(c){return CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
-function setCards(unit){return C.allCards(S(),BANK).filter(function(c){return c.set==="anqin"&&CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
+function setCards(unit){return C.allCards(S(),BANK).filter(function(c){return (c.set==="anqin"||ANQIN_ALSO[c.id])&&CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
+// 2026-10-11 律師：「每次複習都要從頭來一遍嗎？」「當天時間夠，想要全部做完，可以嗎？」
+// ⇒ 一段 20 題（排序在 core.js reviewOrder：答錯過的→沒練過的→已經會的），做完可以馬上再練一段；也可以一次做完全部。
+var SEG=20;   // 一段 20 題：每題約 40–60 秒 [推估]，一段約 15–20 分鐘，是五年級一次坐得住的長度；不是總量上限，可以一直接著練
+var lastReview=null;
+function reviewSets(){
+  var out={};
+  Object.keys(UNITS).forEach(function(u){
+    var ids=unitCards(u); if(!ids.length) return;
+    var n=setCards(u).length;
+    out["u"+u]={name:'第'+["","一","二","三"][+u]+'單元 '+UNITS[u].replace(/^.、/,""),note:n?'含安親班卷 '+n+' 題':'',ids:function(){return unitCards(u);}};
+  });
+  Object.keys(UNITS).forEach(function(u){
+    if(!setCards(u).length) return;
+    out["a"+u]={name:'安親班複習卷：'+UNITS[u].replace(/^.、/,""),note:'',ids:function(){return setCards(u);}};
+  });
+  return out;
+}
+function reviewStats(ids){
+  var s=S(),seen=0,weak=0;
+  ids.forEach(function(id){var cs=C.cardState(s,id);if(cs.seen>0){seen++;if(!cs.goodDays.length||cs.needsRecheck)weak++;}});
+  return {total:ids.length,seen:seen,weak:weak,fresh:ids.length-seen};
+}
+function statLine(st){return '練過 '+st.seen+'／'+st.total+' 題'+(st.weak?'・待加強 '+st.weak+' 題':'');}
+function startReview(key,all){
+  var r=reviewSets()[key]; if(!r) return;
+  lastReview=key;
+  beginRound(all?{type:"sessionStart",kind:"review",ids:r.ids()}:{type:"sessionStart",kind:"review",ids:r.ids(),size:SEG});
+}
 function reviewRow(){
-  var units=Object.keys(UNITS).filter(function(u){return unitCards(u).length;});
-  var sets=Object.keys(UNITS).filter(function(u){return setCards(u).length;});
-  return '<div style="display:grid;gap:8px;border-top:1px solid var(--line-soft);padding-top:14px"><div style="font-weight:700">小考前想全部練一次</div><div class="row">'+
-    units.map(function(u){return '<button class="btn ghost sm" type="button" data-unit="'+u+'">第'+["","一","二","三"][+u]+'單元 '+esc(UNITS[u].replace(/^.、/,""))+'（'+unitCards(u).length+' 題）</button>';}).join("")+'</div>'+
-    (sets.length?'<div class="row">'+sets.map(function(u){return '<button class="btn ghost sm" type="button" data-set="'+u+'">安親班複習卷：'+esc(UNITS[u].replace(/^.、/,""))+'（'+setCards(u).length+' 題）</button>';}).join("")+'</div>':'')+
-    '<span class="small muted">每題照樣記分、隔天照樣複習，不影響今天的計畫。</span></div>';
+  var rs=reviewSets(), keys=Object.keys(rs);
+  if(!keys.length) return '';
+  return '<div class="review" style="display:grid;gap:10px;border-top:1px solid var(--line-soft);padding-top:14px"><div style="font-weight:700">小考前想全部練一次</div>'+
+    keys.map(function(k){var r=rs[k], ids=r.ids(), st=reviewStats(ids);
+      return '<div class="rv"><div><b>'+esc(r.name)+'</b><span class="small muted">（'+ids.length+' 題'+(r.note?'，'+esc(r.note):'')+'）'+statLine(st)+'</span></div>'+
+        '<div class="row"><button class="btn ghost sm" type="button" data-rv="'+k+'">練一段 '+Math.min(SEG,ids.length)+' 題</button>'+
+        (ids.length>SEG?'<button class="btn ghost sm" type="button" data-rvall="'+k+'">一次做完全部 '+ids.length+' 題</button>':'')+'</div></div>';}).join("")+
+    '<span class="small muted">每一段先練答錯過的、再練還沒練過的，已經會的放最後；做完一段可以馬上再練一段，明天按也是接著練，不會從頭來。單元按鈕已經包含安親班卷的題目。</span></div>';
 }
 function wireReview(el){
-  el.querySelectorAll("button[data-unit]").forEach(function(b){b.onclick=function(){beginRound({type:"sessionStart",kind:"review",ids:unitCards(b.dataset.unit)});};});
-  el.querySelectorAll("button[data-set]").forEach(function(b){b.onclick=function(){beginRound({type:"sessionStart",kind:"review",ids:setCards(b.dataset.set)});};});
+  el.querySelectorAll("button[data-rv]").forEach(function(b){b.onclick=function(){startReview(b.dataset.rv,false);};});
+  el.querySelectorAll("button[data-rvall]").forEach(function(b){b.onclick=function(){startReview(b.dataset.rvall,true);};});
 }
 // 開始一輪：sessionStart 真的存進去才進練習畫面；沒存到就留在原畫面（提示列會出現「再存一次」）
 function beginRound(a){var r=act(a);if(r.ok)startRound();return r;}
@@ -813,18 +865,54 @@ function feedback(p,info){
     on("#next",renderPractice); $("#next").focus();
   };});
 }
-// 補救：第一次＝說法一＋觀察任務；同觀念再卡住＝帶出上次紀錄、換另一種說法；做完任務換一題確認
+// 補救（2026-10-11 律師：答錯後的解說要「白話易懂、圖多一些、有影片就附上」）：
+// 先畫這一題所屬「小題型」的逐格圖解（src/steps.js，一格一張圖配一句白話）＋回到這一題＋影片（src/videos.js）＋觀察任務；
+// 同觀念再卡住＝帶出上次紀錄、請她指出卡在第幾格，再加上另一種說法。對不到小題型的新匯入題，退回觀念總覽圖。
+function topicFor(c){return window.G5_STEPS?G5_STEPS.topicOf(c):null;}
+function mmss(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+("0"+s%60).slice(-2);}
+function stepsBlock(tp){
+  var T=G5_STEPS.topics[tp];
+  return '<strong style="font-size:19px">一步一步看：'+esc(T.title)+'</strong><ol class="steps">'+
+    T.steps.map(function(s,i){return '<li class="step"><div class="sfig">'+s.fig()+'</div><div class="say"><b class="n">'+(i+1)+'</b><p>'+esc(s.say)+'</p></div></li>';}).join("")+
+    '</ol><div class="remember"><strong>一句話記住：</strong>'+esc(T.remember)+'</div>';
+}
+function backToQ(c){return '<div class="backq"><strong>回到這一題</strong><span class="muted">'+esc(c.q)+'</span><span>答案是「'+esc(answerText(c))+'」。'+esc(c.why||"")+'</span></div>';}
+function exBlock(ex,alt){
+  return '<div class="alt"><strong style="font-size:'+(alt?17:19)+'px">'+(alt?'還是卡住？換個說法：'+esc(ex.name.replace(/^換個說法：|^看圖：/,"")):esc(ex.name))+'</strong>'+ex.svg()+'<ul>'+ex.lines.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ul></div>';
+}
+function videoBlock(tp){
+  var vs=(tp&&window.G5_VIDEOS&&G5_VIDEOS[tp])||[];
+  if(!vs.length) return '';
+  return '<div class="vids"><strong>看影片，聽老師講一次</strong>'+vs.map(function(v){
+    var st=v.start||0, len=v.end?Math.max(1,Math.round((v.end-st)/60)):null;
+    return '<div class="vid"><button class="btn ghost" type="button" data-play="'+esc(v.id)+'" data-start="'+st+'" data-end="'+(v.end||"")+'">播放：'+esc(v.title)+'</button>'+
+      '<span class="small muted">'+esc(v.channel)+(st?'・從 '+mmss(st)+' 開始':'')+(len?'・約 '+len+' 分鐘':'')+(v.note?'・'+esc(v.note):'')+
+      '・<a href="https://www.youtube.com/watch?v='+encodeURIComponent(v.id)+(st?'&t='+st:'')+'" target="_blank" rel="noopener">在 YouTube 開啟</a></span></div>';
+  }).join("")+'</div>';
+}
+function wireVideos(box){
+  if(!box) return;
+  box.querySelectorAll("button[data-play]").forEach(function(b){b.onclick=function(){
+    var src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(b.dataset.play)+'?rel=0&playsinline=1&autoplay=1&start='+(+b.dataset.start||0)+(b.dataset.end?'&end='+(+b.dataset.end):'');
+    var w=document.createElement("div"); w.className="vframe";
+    w.innerHTML='<iframe src="'+src+'" title="教學影片" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+    b.replaceWith(w);
+  };});
+}
 function remedy(c){
   var ways=EXPLAIN[c.concept].length;
   var r=act({type:"help",cid:c.concept,ways:ways});
   if(!r.ok) return;
-  var ex=EXPLAIN[c.concept][r.info.way], prev=r.info.previous;
+  var ex=EXPLAIN[c.concept][r.info.way], prev=r.info.previous, tp=topicFor(c), T=tp&&G5_STEPS.topics[tp];
   var h='<div class="remedy" id="remedy"><div class="sect-t">一起弄懂</div>'+
-    (prev?'<div class="prev">上次 '+md(prev.last)+' 你也在這個觀念卡住，那次看的是「'+esc(EXPLAIN[c.concept][prev.way].name)+'」。<br>先指給爸媽看：這一題是哪一步想不通？這次換一種說法：</div>':'')+
-    '<strong style="font-size:19px">'+esc(ex.name)+'</strong>'+ex.svg()+'<ul>'+ex.lines.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ul>'+askLine(ex)+
+    (prev?'<div class="prev">上次 '+md(prev.last)+' 你也在這個觀念卡住。<br>先指給爸媽看：是哪一步想不通？'+(T?'指出下面的第幾格。':'')+'</div>':'')+
+    (T?stepsBlock(tp)+backToQ(c):'')+
+    (!T?exBlock(ex,false):prev?exBlock(ex,true):'')+
+    videoBlock(tp)+askLine(T||ex)+
     '<div class="task"><strong>觀察任務</strong><span>'+esc(ex.task)+'</span></div>'+
     '<div class="row"><button class="btn" type="button" id="toLab">做觀察任務，再換一題確認</button><button class="btn ghost sm" type="button" id="skipRemedy">先跳過，下一題</button></div></div>';
   $("#ansBox").insertAdjacentHTML("beforeend",h);
+  wireVideos($("#remedy"));
   on("#toLab",function(){openLab(c.concept,{from:"wrong",card:c.id});});
   on("#skipRemedy",renderPractice);
   $("#remedy").scrollIntoView({behavior:"smooth",block:"start"});
@@ -852,14 +940,28 @@ function renderEnd(){
     '<div class="row" style="justify-content:center">'+(!v.completed&&v.remainingIds.length?'<button class="btn" type="button" id="goMore">繼續做剩下的 '+v.remainingIds.length+' 張</button>':'')+
     (se.wrong.length?'<button class="btn ghost" type="button" id="goRedo">再練答錯的 '+se.wrong.length+' 張</button>':'')+
     '<button class="btn ghost" type="button" id="goTeach">考考爸媽</button><button class="btn ghost" type="button" id="goHome">回首頁</button></div>'+
+    segMore(se)+
     '<div style="display:grid;gap:8px;justify-items:center"><span class="small muted">今天練習的感覺？（可以不選）</span><div class="moods" id="moods">'+
     ["good","ok","tired"].map(function(m){return '<button type="button" data-m="'+m+'" aria-label="'+MOOD_NAME[m]+'"'+(v.day.mood===m?' class="on"':'')+'>'+FACES[m]+'</button>';}).join("")+'</div></div></div>';
   on("#goMore",function(){beginRound({type:"sessionStart"});});
   on("#goRedo",function(){var w=V().session.wrong.slice();beginRound({type:"sessionStart",kind:"redo",ids:w});});
   on("#goTeach",function(){renderTeach();});
   on("#goHome",renderHome);
+  on("#goSeg",function(){startReview(lastReview,false);});
+  on("#goSegAll",function(){startReview(lastReview,true);});
   el.querySelectorAll("#moods button").forEach(function(b){b.onclick=function(){act({type:"mood",value:b.dataset.m});el.querySelectorAll("#moods button").forEach(function(x){x.classList.toggle("on",x===b);});};});
   renderSide();
+}
+
+// 小考複習一段做完：同一組可以馬上再練一段（同一天想全部做完就一直按）
+function segMore(se){
+  if(se.kind!=="review"||!lastReview) return '';
+  var r=reviewSets()[lastReview]; if(!r) return '';
+  var ids=r.ids(), st=reviewStats(ids);
+  var left=st.fresh?'還有 '+st.fresh+' 題沒練過'+(st.weak?'、'+st.weak+' 題待加強':''):st.weak?'每題都練過了，還有 '+st.weak+' 題待加強':'每題都練過，也都答對過了';
+  return '<div class="fb" style="justify-self:stretch;text-align:left;background:var(--sun-soft)"><strong>'+esc(r.name)+'：'+left+'</strong>'+
+    '<div class="row"><button class="btn" type="button" id="goSeg">再練一段 '+Math.min(SEG,ids.length)+' 題</button>'+
+    ((st.fresh+st.weak)>SEG?'<button class="btn ghost" type="button" id="goSegAll">剩下的一次做完</button>':'')+'</div></div>';
 }
 
 /* ---------- 考考爸媽 ---------- */

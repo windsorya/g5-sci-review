@@ -14,7 +14,7 @@ function grab(startMarker, endMarker) {
   assert.ok(i >= 0 && j > i, "找不到 " + startMarker);
   return html.slice(i + startMarker.length, j);
 }
-const base = vm.runInNewContext("(" + grab("var BASE_CARDS = ", ";\nvar BANK") + ")");
+const base = vm.runInNewContext("(" + grab("var BASE_CARDS = ", ";\nvar ALL_CARDS") + ")");
 const extra = require("../src/bank_extra.js");                     // 加題檔（考古卷改寫 k*、安親班卷 q*/p*）
 const cards = Array.from(base).concat(extra);
 const concepts = vm.runInNewContext("(" + grab("var CONCEPTS = ", ";\nvar CIDS") + ")");
@@ -44,8 +44,10 @@ test("每個觀念都有卡、都有出口題與兩種說法", () => {
   assert.deepEqual(explainKeys.sort(), Object.keys(concepts).sort());
 });
 
-test("加題檔有接進 app（BANK 用 BASE_CARDS.concat(G5_EXTRA_CARDS)），且 build 有內嵌它", () => {
-  assert.ok(/var BANK = \{cards:BASE_CARDS\.concat\(window\.G5_EXTRA_CARDS\|\|\[\]\)/.test(html));
+test("加題檔有接進 app（ALL_CARDS＝BASE_CARDS.concat(G5_EXTRA_CARDS)，BANK 濾掉重複題），且 build 有內嵌它", () => {
+  assert.ok(/var ALL_CARDS = BASE_CARDS\.concat\(window\.G5_EXTRA_CARDS\|\|\[\]\)/.test(html));
+  assert.ok(/var BANK = \{cards:ALL_CARDS\.filter\(function\(c\)\{return !MERGED\[c\.id\];\}\)/.test(html));
+  assert.ok(html.includes("<!--@INLINE src/merge.js-->"));
   assert.ok(html.includes("<!--@INLINE src/bank_extra.js-->"));
   assert.ok(extra.length >= 150, "加題只有 " + extra.length);
 });
@@ -81,4 +83,42 @@ test("選擇題的正解不能永遠在同一個位置（避免靠位置猜）",
   const choice = cards.filter((c) => c.type === "choice" || c.type === "figure");
   const firstShare = choice.filter((c) => c.a === 0).length / choice.length;
   assert.ok(firstShare < 0.6, "正解在第一個選項的比例 " + firstShare.toFixed(2));
+});
+
+// ---------- 重複題只留一題（2026-10-11 律師：「是否重複部分，只留一題」） ----------
+const merged = require("../src/merge.js");
+const byId = {}; cards.forEach((c) => { byId[c.id] = c; });
+const kept = cards.filter((c) => !merged[c.id]);
+
+test("重複題對照表：被併的題和留下的題都存在、同一個觀念、留下的題自己沒被併掉、每筆都寫了理由", () => {
+  Object.keys(merged).forEach((id) => {
+    const m = merged[id], c = byId[id];
+    assert.ok(c, id + " 不在題庫");
+    assert.ok(Array.isArray(m.keep) && m.keep.length >= 1, id + " 沒有留下的題");
+    assert.ok(typeof m.why === "string" && m.why.length >= 6, id + " 沒寫理由");
+    m.keep.forEach((k) => {
+      assert.ok(byId[k], id + " → " + k + " 不在題庫");
+      assert.ok(!merged[k], id + " → " + k + " 自己也被併掉了（不能接龍）");
+      assert.equal(byId[k].concept, c.concept, id + " → " + k + " 不同觀念");
+    });
+  });
+});
+
+test("看圖題一律保留（看圖是另一種考法）", () => {
+  const figDropped = Object.keys(merged).filter((id) => byId[id].type === "figure");
+  assert.deepEqual(figDropped, []);
+});
+
+test("合併後題數：第一單元 101、第二單元 96、第三單元 5；安親班卷每一題都還練得到（本身留下或由留下的題代表）", () => {
+  const unit = (c) => c.concept[0];
+  assert.deepEqual(["1", "2", "3"].map((u) => kept.filter((c) => unit(c) === u).length), [101, 96, 5]);
+  const anqinAll = cards.filter((c) => c.set === "anqin");
+  anqinAll.forEach((c) => {
+    if (!merged[c.id]) return;
+    assert.ok(merged[c.id].keep.every((k) => kept.some((x) => x.id === k)), c.id + " 的代表題不在合併後題庫");
+  });
+  const also = new Set(); anqinAll.forEach((c) => { if (merged[c.id]) merged[c.id].keep.forEach((k) => also.add(k)); });
+  const anqinSet = kept.filter((c) => c.set === "anqin" || also.has(c.id));
+  assert.ok(anqinSet.length < anqinAll.length, "合併後安親班卷應該變少");
+  assert.equal(new Set(anqinSet.map((c) => c.id)).size, anqinSet.length);
 });

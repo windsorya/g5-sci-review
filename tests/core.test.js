@@ -502,7 +502,8 @@ test("V1 小考複習回合：指定整個單元的題、作答照規則記分�
   let s = C.blankState();
   s.cards.s1 = learned(1, ["2026-10-19"], "2026-10-25");
   s = run(s, b, NOON(D), op("sessionStart", { kind: "review", ids: ["s1", "s2", "t1", "zz"] }));
-  assert.deepEqual([s.session.kind, s.session.queue], ["review", ["s1", "s2", "t1"]]);
+  // 2026-10-11 律師問「每次複習都要從頭來一遍嗎」後改：沒練過的排在已經會的前面（見 V2）
+  assert.deepEqual([s.session.kind, s.session.queue], ["review", ["s2", "t1", "s1"]]);
   const planBefore = s.days[D].planIds.slice();
   s = run(s, b, NOON(D), op("answer", { cardId: "s1", ok: true }));
   assert.deepEqual(s.cards.s1.goodDays, ["2026-10-19", D]);          // 第一次答對照樣算有效日
@@ -682,4 +683,56 @@ test("D10 schema：實驗任務 tasksDone 重複要拒絕", () => {
   s = run(s, b, NOON(D), op("labTask", { runId: "r1", task: 0 }));
   const o = JSON.parse(JSON.stringify(s)); o.labRuns.r1.tasksDone.push(0);
   assert.equal(C.decode(JSON.stringify(o), b).accepted, false);
+});
+
+// ---------- 小考複習分段（2026-10-11 律師：「每次複習都要從頭來一遍嗎？」「當天時間夠，想要全部做完，可以嗎？」） ----------
+const B6 = () => ({ cards: [card("a1"), card("a2"), card("a3"), card("b1", "1-2"), card("b2", "1-2"), card("b3", "1-2")], concepts: CONCEPTS, figs: FIGS });
+const ALL6 = ["a1", "a2", "a3", "b1", "b2", "b3"];
+
+test("V2 小考複習排序：答錯過的 → 沒練過的 → 已經會的（最久沒練的先）；同一層觀念交錯；size 只取前 N 題", () => {
+  const b = B6(); let s = C.blankState();
+  s = run(s, b, NOON("2026-10-15"), op("answer", { cardId: "b1", ok: true }));
+  s = run(s, b, NOON("2026-10-18"), op("answer", { cardId: "a1", ok: true }));
+  s = run(s, b, NOON("2026-10-19"), op("answer", { cardId: "a1", ok: true }));
+  s = run(s, b, NOON("2026-10-19"), op("answer", { cardId: "a2", ok: false }));
+  const full = run(s, b, NOON(D), op("sessionStart", { kind: "review", ids: ALL6 }));
+  assert.deepEqual(full.session.queue, ["a2", "a3", "b2", "b3", "b1", "a1"]);
+  const seg = run(s, b, NOON(D), op("sessionStart", { kind: "review", ids: ALL6, size: 4 }));
+  assert.deepEqual(seg.session.queue, ["a2", "a3", "b2", "b3"]);
+  assert.deepEqual(seg.days[D].planIds, full.days[D].planIds);     // 分段不改當日計畫
+  assert.deepEqual(C.checkState(seg, b), []);
+});
+
+test("V3 不用每次從頭：隔天再按同一個單元，接著練還沒練過的", () => {
+  const b = B6(); let s = C.blankState();
+  s = run(s, b, NOON("2026-10-19"), op("sessionStart", { kind: "review", ids: ALL6, size: 3 }));
+  const first = s.session.queue.slice();
+  assert.deepEqual(first, ["a1", "b1", "a2"]);
+  first.forEach((id, i) => { s = run(s, b, NOON("2026-10-19"), op("answer", { cardId: id, ok: i !== 1 })); });   // b1 答錯
+  s = run(s, b, NOON(D), op("sessionStart", { kind: "review", ids: ALL6, size: 3 }));
+  assert.deepEqual(s.session.queue, ["b1", "a3", "b2"]);                 // 答錯的先，其次沒練過的（觀念交錯）；昨天答對的 a1、a2 不重來
+});
+
+test("V4 當天時間夠想全部做完：同一天連續按「再練一段」，每一段都接著沒練過的，做完全部；不給 size 就一次排全部", () => {
+  const b = B6(); let s = C.blankState(); const done = new Set();
+  for (let k = 0; k < 3; k++) {
+    s = run(s, b, NOON(D), op("sessionStart", { kind: "review", ids: ALL6, size: 2 }));
+    const q = s.session.queue.slice();
+    assert.equal(q.filter((id) => done.has(id)).length, 0, "第 " + (k + 1) + " 段不該重複已經答對的題");
+    q.forEach((id) => { s = run(s, b, NOON(D), op("answer", { cardId: id, ok: true })); done.add(id); });
+  }
+  assert.equal(done.size, 6);
+  const all = run(C.blankState(), b, NOON(D), op("sessionStart", { kind: "review", ids: ALL6 }));
+  assert.equal(all.session.queue.length, 6);
+});
+
+test("V5 卡住（待協助）的觀念在小考複習排最後，一段 20 題取不到它；size 不合法（0、負數、小數）就當作全部", () => {
+  const b = B6(); let s = C.blankState();
+  s.help["1-1"] = { count: 2, last: "2026-10-19", way: 1, needsHelp: true };
+  s = run(s, b, NOON(D), op("sessionStart", { kind: "review", ids: ALL6, size: 3 }));
+  assert.deepEqual(s.session.queue, ["b1", "b2", "b3"]);
+  [0, -2, 1.5, "3"].forEach((bad) => {
+    const r = run(s, b, NOON(D), op("sessionStart", { kind: "review", ids: ALL6, size: bad }));
+    assert.equal(r.session.queue.length, 6, "size=" + bad);
+  });
 });

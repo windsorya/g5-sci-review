@@ -70,9 +70,10 @@ def flow_remedy(browser, label, device=None):
     shot(page, f"{label}_02_wrong")
     btn(page, "還不懂這個觀念").click()
     txt = page.inner_text("#remedy")
-    check(f"{label} 第一次求助＝說法一＋觀察任務", "影子在背對太陽的那一邊" in txt and "觀察任務" in txt and "上次" not in txt, txt[:80])
+    # 2026-10-11 律師：答錯後的解說要白話、圖多、有影片——第一次求助＝這一題所屬小題型的逐格圖解（s2→太陽一天怎麼走）
+    check(f"{label} 第一次求助＝小題型逐格圖解＋回到這一題＋觀察任務", "一步一步看：太陽一天怎麼走？" in txt and "回到這一題" in txt and "一句話記住" in txt and "觀察任務" in txt and "上次" not in txt, txt[:120])
     check(f"{label} 一起弄懂＋給爸媽追問（不直接報答案）", "一起弄懂" in txt and "給爸媽" in txt and "不直接報答案" in txt, txt[:200])
-    check(f"{label} 圖解有圖", page.locator("#remedy svg.fig").count() == 1)
+    check(f"{label} 圖解有 4 格圖、每格有編號和一句話", page.locator("#remedy .step svg.fig").count() == 4 and page.locator("#remedy .step .n").count() == 4, page.locator("#remedy svg.fig").count())
     shot(page, f"{label}_03_remedy")
     btn(page, "做觀察任務，再換一題確認").click()
     check(f"{label} 預測前實驗區隱藏", page.locator("#labBody").is_hidden())
@@ -136,9 +137,10 @@ def flow_review(browser, device=None):
     main = page.inner_text("#main")
     check("首頁有小考複習兩個單元、溶解未開放不出現", "第一單元 太陽與光" in main and "第二單元 植物世界" in main and "第三單元" not in main, main[-200:])
     n1 = int(main.split("第一單元 太陽與光（")[1].split(" 題")[0])
-    btn(page, "第一單元 太陽與光").click()
+    check("重複題只留一題：第一單元 101 題、含安親班卷 56 題；被併掉的 q8 不在題庫", n1 == 101 and "含安親班卷 56 題" in main and page.evaluate("!!(window.G5_MERGED && G5_MERGED.q8)") is True, main[-300:])
+    page.locator("button[data-rv='u1']").click()
     m = page.inner_text("#main")
-    check("小考複習回合＝第一單元全部題", "小考複習" in m and f"1 / {n1}" in m, m[:160])
+    check("小考複習一段＝20 題（不是從第 1 題排到最後一題）", "小考複習" in m and "1 / 20" in m, m[:160])
     btn(page, "東邊升起、西邊落下").click()
     s = state(page)
     check("複習作答照規則記分、不改今天計畫", s["session"]["kind"] == "review" and s["cards"]["s1"]["goodDays"] == ["2026-10-11"] and len(s["days"]["2026-10-11"]["planIds"]) == 10, json.dumps(s["session"])[:200])
@@ -150,18 +152,49 @@ def flow_review(browser, device=None):
     # R1／M20（4agent 2026-10-11）：小考複習做到一半，首頁仍要有「開始今天的練習」，複習另有續接鈕
     check("小考複習中首頁仍有「開始今天的練習」（M20）", "開始今天的練習" in home and "繼續小考複習（還有" in home and "繼續這一輪" not in home, home[:240])
     check("小考複習中首頁仍顯示今天要練幾張", "今天還有" in home or "今天要練" in home, home[:120])
+    check("首頁顯示練過幾題（隔天接著練，不會從頭來）", "練過 1／101 題" in home, home[-400:])
     btn(page, "開始今天的練習").click()
     check("從首頁開今天的練習＝計畫回合", state(page)["session"]["kind"] == "plan" and "小考複習" not in page.inner_text("#main")[:40], json.dumps(state(page)["session"])[:160])
     page.reload(); page.wait_for_selector("#main")
     home = page.inner_text("#main")
-    check("首頁有安親班複習卷兩顆按鈕", "安親班複習卷：太陽與光" in home and "安親班複習卷：植物世界" in home, home[-260:])
+    check("首頁有安親班複習卷兩組", "安親班複習卷：太陽與光" in home and "安親班複習卷：植物世界" in home, home[-260:])
     n2 = int(home.split("安親班複習卷：植物世界（")[1].split(" 題")[0])
-    btn(page, "安親班複習卷：植物世界").click()
+    page.locator("button[data-rvall='a2']").click()
     m = page.inner_text("#main")
-    check("安親班卷回合＝整份植物世界", f"1 / {n2}" in m and n2 >= 70 and "改寫自安親班複習卷" not in m, m[:160])
-    page.locator("#main .opt").first.click()
-    check("安親班題作答後顯示出處", "改寫自安親班複習卷（植物世界）" in page.inner_text("#ansBox"), page.inner_text("#ansBox")[:160])
+    check("安親班卷一次做完全部＝整份植物世界（重複題只留一題）", f"1 / {n2}" in m and n2 == 68, m[:160])
+    # 測試自己用公開的題庫檔＋合併表重算一次「安親班卷」的範圍，當獨立對照
+    ok_set = page.evaluate("""(() => { const M = window.G5_MERGED, X = window.G5_EXTRA_CARDS, ok = new Set();
+      X.forEach(c => { if (c.set !== 'anqin') return; if (M[c.id]) M[c.id].keep.forEach(k => ok.add(k)); else ok.add(c.id); });
+      const s = JSON.parse(localStorage.getItem('g5sci.v3')).session; return s.queue.length > 0 && s.queue.every(id => ok.has(id)); })()""")
+    check("安親班卷回合只出安親班卷的題（或代表被併掉那題的題）", ok_set is True)
     check("小考複習沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def flow_review_segments(browser):
+    """2026-10-11 律師：「每段 20 題、跨天接續——如果當天時間夠，想要全部做完，可以嗎？」一段做完可以馬上再練一段，不重複已答對的題。"""
+    ctx, page, errors = new_page(browser, "2026-10-11T20:30:00+08:00")
+    page.locator("button[data-rv='a1']").click()
+    first = state(page)["session"]["queue"][:]
+    check("安親班卷：太陽與光 一段 20 題", len(first) == 20, len(first))
+    for _ in range(20):
+        page.locator("#main .opt").nth(0).click() if page.locator("#main .opt").count() else btn(page, "想好了，看答案").click()
+        if page.locator("#selfGrade").count():
+            page.locator("#selfGrade button").first.click()
+        if page.locator("#errq").count():
+            page.locator("#errq button[data-k='']").click()
+        if page.locator("#next").count():
+            page.locator("#next").click()
+        else:
+            break
+    main = page.inner_text("#main")
+    check("一段做完：結束畫面有「再練一段」，並說還有幾題沒練過", "再練一段" in main and "還有" in main and "題沒練過" in main, main[:300])
+    shot(page, "review_segment_end")
+    page.locator("#goSeg").click()
+    second = state(page)["session"]["queue"][:]
+    right = [e["card"] for e in state(page)["log"] if e["ok"]]
+    check("再練一段：沒有重複已經答對的題", not (set(second) & set(right)) and len(second) == 20, (len(set(second) & set(right)), len(second)))
+    check("分段流程沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
 
@@ -274,7 +307,7 @@ def flow_review_after_plan_done(browser):
     ctx, page, errors = new_page(browser, "2026-10-11T20:00:00+08:00",
                                  init=f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', {json.dumps(json.dumps(seed))});}}")
     check("當日計畫已完成", "今天的卡片都做完了" in page.inner_text("#main"))
-    btn(page, "第一單元 太陽與光").click()
+    page.locator("button[data-rv='u1']").click()
     for _ in range(3):
         answer_and_next(page)
     before = state(page)["session"]["queue"]
@@ -432,6 +465,7 @@ def main():
         flow_comeback(ch)
         flow_review(ch)
         flow_review(wk, ipad)
+        flow_review_segments(ch)
         flow_short_round_and_teach(wk, dict(p.devices["iPad Mini"]))
         flow_save_fail(ch)
         flow_save_fail_then_tick(ch)

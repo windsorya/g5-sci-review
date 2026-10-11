@@ -108,6 +108,26 @@
     while (out.length < ids.length) order.forEach(function (k) { if (by[k].length) out.push(by[k].shift()); });
     return out;
   }
+  // 小考複習排序（2026-10-11 律師：「每次複習都要從頭來一遍嗎？」）：不再照題庫順序從第 1 題開始。
+  // 第 0 層＝練過但目前沒把握（答錯、提示、不確定後還沒答對過；或舊版畢業待確認）→ 第 1 層＝還沒練過 →
+  // 第 2 層＝已經會的，最久沒練的先、有效日少的先。每一層裡觀念交錯（不同觀念輪流出，練辨別）。
+  // 只用既有狀態（cards＋log）算，不新增存檔欄位；所以隔天、同一天再按都會「接著練」，不會從頭來。
+  function reviewOrder(state, bank, ids) {
+    var last = {};
+    state.log.forEach(function (e) { if (!last[e.card] || e.d > last[e.card]) last[e.card] = e.d; });
+    function tier(id) { var cs = cardState(state, id); return cs.seen === 0 ? 1 : (!cs.goodDays.length || cs.needsRecheck) ? 0 : 2; }
+    var rows = ids.map(function (id, i) { return { id: id, i: i, t: tier(id), d: last[id] || "", g: cardState(state, id).goodDays.length }; });
+    var out = [];
+    [0, 1, 2].forEach(function (t) {
+      var layer = rows.filter(function (r) { return r.t === t; })
+        .sort(function (a, b) { return t === 1 ? a.i - b.i : (a.d < b.d ? -1 : a.d > b.d ? 1 : 0) || a.g - b.g || a.i - b.i; });
+      var by = {}, order = [];
+      layer.forEach(function (r) { var c = cardById(state, bank, r.id), k = c ? c.concept : "?"; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(r.id); });
+      var n = out.length + layer.length;
+      while (out.length < n) order.forEach(function (k) { if (by[k].length) out.push(by[k].shift()); });
+    });
+    return out;
+  }
   // 待協助的觀念排到這一輪最後：先別再刷她卡住的觀念（補救分支三）；穩定排序，其餘順序不動
   function stuckLast(state, bank, ids) {
     var stuck = function (id) { var c = cardById(state, bank, id), h = c && state.help[c.concept]; return h && h.needsHelp ? 1 : 0; };
@@ -159,8 +179,10 @@
       case "sessionStart": {
         if (action.kind === "redo" || action.kind === "review") {
           // redo＝再練答錯的；review＝小考前把整個單元／觀念練一次。作答規則一樣，不改當日計畫與完成判定
-          var ids = (Array.isArray(action.ids) ? action.ids : []).filter(function (id) { return !!cardById(s, bank, id); });
-          s.session = { day: today, kind: action.kind, queue: stuckLast(s, bank, uniq(ids)), answered: [], wrong: [], kinds: {} };
+          var ids = uniq((Array.isArray(action.ids) ? action.ids : []).filter(function (id) { return !!cardById(s, bank, id); }));
+          var rq = stuckLast(s, bank, action.kind === "review" ? reviewOrder(s, bank, ids) : ids);
+          if (action.kind === "review" && isNat(action.size) && action.size > 0) rq = rq.slice(0, action.size);   // 一段幾題（畫面給 20）；不給＝全部
+          s.session = { day: today, kind: action.kind, queue: rq, answered: [], wrong: [], kinds: {} };
         } else {
           var sess = planSession(s, bank, today);
           var blocked = isStr(action.focus) && s.help[action.focus] && s.help[action.focus].needsHelp;
