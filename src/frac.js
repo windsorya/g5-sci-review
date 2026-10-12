@@ -14,6 +14,12 @@
   function txt(f) { return f.n + "/" + f.d; }
   function okNum(x) { return typeof x === "number" && isFinite(x) && x > 0 && Math.floor(x) === x; }
   function okFrac(f) { return !!f && okNum(f.n) && okNum(f.d); }
+  function filled(f) { return !!f && typeof f.n === "number" && typeof f.d === "number" && !isNaN(f.n) && !isNaN(f.d); }
+  // 有填、但不是正整數（例如 0）：算一次答錯，訊息講清楚錯在哪（Codex 2026-10-12 第 1 輪必修 3）
+  function invalid(f) {
+    var msg = f.d === 0 ? "分母不能是 0。" : f.n === 0 ? "分子是 0 的話，分數就變成 0，大小跟原來不一樣。" : "這裡要填正整數。";
+    return { ok: false, code: "invalid", msg: msg };
+  }
 
   // 整題的標準解：約分 → 通分（用最小公倍數）→ 比分子
   function solve(a, b) {
@@ -48,7 +54,8 @@
 
   // 練習題第①列：她把 orig 約分後寫成 inp
   function checkReduce(orig, inp) {
-    if (!okFrac(inp)) return { ok: false, code: "empty", msg: "分子和分母都要填數字喔。" };
+    if (!filled(inp)) return { ok: false, code: "empty", msg: "分子和分母都要填數字喔。" };
+    if (!okFrac(inp)) return invalid(inp);
     if (!same(orig, inp)) {
       if (orig.n % inp.n === 0 && orig.d % inp.d === 0 && orig.n / inp.n !== orig.d / inp.d)
         return { ok: false, code: "unequal-div", msg: "分子除以了 " + (orig.n / inp.n) + "，分母卻除以了 " + (orig.d / inp.d) + "。分子和分母要除以「同一個數」，大小才不會變。" };
@@ -63,7 +70,9 @@
 
   // 練習題第②列：把約分後的 sa、sb 通分成 ia、ib
   function checkCommon(sa, sb, ia, ib) {
-    if (!okFrac(ia) || !okFrac(ib)) return { ok: false, code: "empty", msg: "兩個分數的分子和分母都要填數字喔。" };
+    if (!filled(ia) || !filled(ib)) return { ok: false, code: "empty", msg: "兩個分數的分子和分母都要填數字喔。" };
+    if (!okFrac(ia)) return invalid(ia);
+    if (!okFrac(ib)) return invalid(ib);
     if (ia.d !== ib.d) return { ok: false, code: "diff-den", msg: "通分以後，兩個分數的分母要變成一樣（現在是 " + ia.d + " 和 " + ib.d + "）。" };
     if (!same(sa, ia)) return { ok: false, code: "left-changed", msg: "左邊的 " + txt(sa) + " 大小變了：分母乘幾，分子也要乘幾。" };
     if (!same(sb, ib)) return { ok: false, code: "right-changed", msg: "右邊的 " + txt(sb) + " 大小變了：分母乘幾，分子也要乘幾。" };

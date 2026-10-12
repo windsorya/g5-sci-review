@@ -157,6 +157,12 @@ details p{margin:0 0 10px}
   function txt(f) { return f.n + "/" + f.d; }
   function okNum(x) { return typeof x === "number" && isFinite(x) && x > 0 && Math.floor(x) === x; }
   function okFrac(f) { return !!f && okNum(f.n) && okNum(f.d); }
+  function filled(f) { return !!f && typeof f.n === "number" && typeof f.d === "number" && !isNaN(f.n) && !isNaN(f.d); }
+  // 有填、但不是正整數（例如 0）：算一次答錯，訊息講清楚錯在哪（Codex 2026-10-12 第 1 輪必修 3）
+  function invalid(f) {
+    var msg = f.d === 0 ? "分母不能是 0。" : f.n === 0 ? "分子是 0 的話，分數就變成 0，大小跟原來不一樣。" : "這裡要填正整數。";
+    return { ok: false, code: "invalid", msg: msg };
+  }
 
   // 整題的標準解：約分 → 通分（用最小公倍數）→ 比分子
   function solve(a, b) {
@@ -191,7 +197,8 @@ details p{margin:0 0 10px}
 
   // 練習題第①列：她把 orig 約分後寫成 inp
   function checkReduce(orig, inp) {
-    if (!okFrac(inp)) return { ok: false, code: "empty", msg: "分子和分母都要填數字喔。" };
+    if (!filled(inp)) return { ok: false, code: "empty", msg: "分子和分母都要填數字喔。" };
+    if (!okFrac(inp)) return invalid(inp);
     if (!same(orig, inp)) {
       if (orig.n % inp.n === 0 && orig.d % inp.d === 0 && orig.n / inp.n !== orig.d / inp.d)
         return { ok: false, code: "unequal-div", msg: "分子除以了 " + (orig.n / inp.n) + "，分母卻除以了 " + (orig.d / inp.d) + "。分子和分母要除以「同一個數」，大小才不會變。" };
@@ -206,7 +213,9 @@ details p{margin:0 0 10px}
 
   // 練習題第②列：把約分後的 sa、sb 通分成 ia、ib
   function checkCommon(sa, sb, ia, ib) {
-    if (!okFrac(ia) || !okFrac(ib)) return { ok: false, code: "empty", msg: "兩個分數的分子和分母都要填數字喔。" };
+    if (!filled(ia) || !filled(ib)) return { ok: false, code: "empty", msg: "兩個分數的分子和分母都要填數字喔。" };
+    if (!okFrac(ia)) return invalid(ia);
+    if (!okFrac(ib)) return invalid(ib);
     if (ia.d !== ib.d) return { ok: false, code: "diff-den", msg: "通分以後，兩個分數的分母要變成一樣（現在是 " + ia.d + " 和 " + ib.d + "）。" };
     if (!same(sa, ia)) return { ok: false, code: "left-changed", msg: "左邊的 " + txt(sa) + " 大小變了：分母乘幾，分子也要乘幾。" };
     if (!same(sb, ib)) return { ok: false, code: "right-changed", msg: "右邊的 " + txt(sb) + " 大小變了：分母乘幾，分子也要乘幾。" };
@@ -315,7 +324,8 @@ function bar(n, d, o){
 
 // ---------- 存檔（只放這一頁的練習紀錄；不碰自然複習的 g5sci.v3） ----------
 var KEY = "g5math.v1";
-function fresh(){ return {v:1, lessonDone:false, idx:0, seed:Math.floor(Math.random() * 1e6), streak:0, clean:0, solved:0, mastered:false, log:[]}; }
+function fresh(){ return {v:1, lessonDone:false, idx:0, seed:Math.floor(Math.random() * 1e6), streak:0, clean:0, solved:0, mastered:false, log:[], cur:null}; }
+function nat(x){ return typeof x === "number" && isFinite(x) && x >= 0; }
 function load(){
   var d = fresh();
   try {
@@ -324,6 +334,8 @@ function load(){
       ["idx","seed","streak","clean","solved"].forEach(function(k){ if (typeof s[k] === "number" && isFinite(s[k]) && s[k] >= 0) d[k] = Math.floor(s[k]); });
       d.lessonDone = s.lessonDone === true; d.mastered = s.mastered === true;
       if (Array.isArray(s.log)) d.log = s.log.slice(-100);
+      // 正在做的那一題：看過提示、答錯過幾次（Codex 2026-10-12 第 1 輪必修 1、2：重開練習不能洗掉、不能重複計分）
+      if (s.cur && nat(s.cur.idx) && nat(s.cur.hints) && nat(s.cur.wrongs)) d.cur = {idx:Math.floor(s.cur.idx), hints:Math.floor(s.cur.hints), wrongs:Math.floor(s.cur.wrongs)};
     }
   } catch (e) {}
   return d;
@@ -332,6 +344,13 @@ var st = load();
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(st)); return true; } catch (e) { return false; } }
 
 // ---------- 互動元件 ----------
+// iPad 中文鍵盤可能打出全形數字「１５」：先轉半形（Codex 第 1 輪必修 5）。回傳 {empty}、{bad}（不是整數）或 {v}
+function parseNum(raw){
+  var t = String(raw || "").replace(/[０-９]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }).replace(/\s+/g, "");
+  if (!t) return {empty:true};
+  if (!/^\d+$/.test(t)) return {bad:true};
+  return {v:parseInt(t, 10)};
+}
 // 選擇題：答錯會說明為什麼，可以再選；答對才往下
 function chipsAsk(body, q, opts, judge, onOk, cls){
   var box = add(body, '<div class="ask"><div class="qq">' + q + '</div><div class="chips">' + opts.map(function(o, i){ return '<button type="button" class="chip' + (cls ? " " + cls : "") + '" data-i="' + i + '">' + o.label + '</button>'; }).join("") + '</div><div class="fb" hidden></div></div>');
@@ -351,8 +370,8 @@ function numsAsk(body, q, items, onOk){
   var ins = box.querySelectorAll("input"), bt = $("button", box), out = $(".fb", box), tries = 0;
   function go(){
     for (var i = 0; i < items.length; i++) {
-      var it = items[i], raw = ins[i].value.trim(), v = /^\d+$/.test(raw) ? parseInt(raw, 10) : NaN;
-      var r = isNaN(v) ? {ok:false, msg:"先填一個數字。"} : it.check ? it.check(v) : v === it.ans ? {ok:true} : {ok:false, msg:"再算一次。" + (it.hint ? "提示：" + it.hint : "")};
+      var it = items[i], pn = parseNum(ins[i].value), v = pn.empty || pn.bad ? NaN : pn.v;
+      var r = pn.empty ? {ok:false, msg:"先填一個數字。"} : pn.bad ? {ok:false, msg:"只能填整數，例如 15。"} : it.check ? it.check(v) : v === it.ans ? {ok:true} : {ok:false, msg:"再算一次。" + (it.hint ? "提示：" + it.hint : "")};
       if (!r.ok) {
         if (!isNaN(v)) tries++;
         fb(out, false, r.msg + (tries >= 3 ? "　答案是 " + it.ans + "，把它填進去。" : ""));
@@ -457,6 +476,7 @@ function step4(){
   add(b, '<p>約分以後，題目變成 ' + fr(sa) + ' 和 ' + fr(sb) + '。分母 ' + sa.d + ' 和 ' + sb.d + ' 還是不一樣，現在才通分——數字小多了！</p>');
   numsAsk(b, sa.d + ' 和 ' + sb.d + ' 的最小公倍數是多少？', [{pre:"", ans:L, aria:"最小公倍數", check:function(v){
     if (v === L) return {ok:true};
+    if (v <= 0) return {ok:false, msg:"要找比 0 大的公倍數：從 " + sa.d + " 的倍數和 " + sb.d + " 的倍數裡，找第一個一樣的數。"};
     if (v % sa.d === 0 && v % sb.d === 0) return {ok:false, msg:v + " 也是 " + sa.d + " 和 " + sb.d + " 的公倍數，但還有更小的，再找找看。"};
     var ma = [], mb = []; for (var i = 1; i <= L / sa.d + 1; i++) ma.push(sa.d * i); for (var j = 1; j <= L / sb.d + 1; j++) mb.push(sb.d * j);
     return {ok:false, msg:sa.d + " 的倍數：" + ma.join("、") + "…；" + sb.d + " 的倍數：" + mb.join("、") + "…。第一個兩邊都有的數，就是最小公倍數。"};
@@ -513,15 +533,22 @@ function step6(ea, eb){
 // ---------- 練習 ----------
 function fin(key){ return '<span class="fin"><input class="num" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" data-k="' + key + '.n" aria-label="' + (key[0] === "a" ? "左邊" : "右邊") + '分子"><i></i><input class="num" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" data-k="' + key + '.d" aria-label="' + (key[0] === "a" ? "左邊" : "右邊") + '分母"></span>'; }
 function readFrac(box, key){
-  function num(k){ var x = $('input[data-k="' + key + '.' + k + '"]', box), raw = x ? x.value.trim() : ""; return /^\d+$/.test(raw) ? parseInt(raw, 10) : NaN; }
-  return {n:num("n"), d:num("d")};
+  var pn = parseNum(($('input[data-k="' + key + '.n"]', box) || {}).value), pd = parseNum(($('input[data-k="' + key + '.d"]', box) || {}).value);
+  return {n:pn.empty || pn.bad ? NaN : pn.v, d:pd.empty || pd.bad ? NaN : pd.v, empty:!!(pn.empty || pd.empty), bad:!!(pn.bad || pd.bad)};
 }
 function lock(box){ each(box.querySelectorAll("input,button[data-check],button[data-hint]"), function(x){ x.disabled = true; }); }
 function dots(){ var h = ""; for (var i = 0; i < 3; i++) h += '<i class="' + (i < Math.min(st.streak, 3) ? "on" : "") + '"></i>'; return '<span class="dots" aria-label="連續自己做對 ' + st.streak + ' 題">' + h + '</span>'; }
 function openPractice(){ var P = $("#practice"); P.hidden = false; renderPractice(); reveal(P); }
+// 填了字但不是整數、或還有格子沒填：講清楚，不算答錯
+function formCheck(fs){
+  if (fs.some(function(f){ return f.bad; })) return {ok:false, countable:false, msg:"只能填整數，例如 2、15。"};
+  if (fs.some(function(f){ return f.empty; })) return {ok:false, countable:false, msg:"還有格子沒填。"};
+  return null;
+}
 function renderPractice(){
   var P = $("#practice"), p = F.problem(st.idx, st.seed), a = p.a, b = p.b, s = F.solve(a, b);
-  var cur = {hints:0, wrongs:0}, sa = null, sb = null, ea = null, eb = null;
+  if (!st.cur || st.cur.idx !== st.idx) { st.cur = {idx:st.idx, hints:0, wrongs:0}; save(); }
+  var cur = st.cur, sa = null, sb = null, ea = null, eb = null;
   P.innerHTML = '<div class="row" style="justify-content:space-between"><h2 style="font-size:24px">練習第 ' + (st.idx + 1) + ' 題</h2><span class="small muted">連續自己做對' + dots() + '</span></div>' +
     '<div class="small muted">連續 3 題「沒看提示、每一格第一次就對」就算學會。看了提示也沒關係，弄懂最重要。</div>' +
     '<div class="prob">' + fr(a) + '<span class="box" id="pbox" role="img" aria-label="空格"></span>' + fr(b) + '</div>' +
@@ -530,7 +557,9 @@ function renderPractice(){
     '<div class="prow" id="r2" hidden></div><div class="prow" id="r3" hidden></div><div id="pend" style="display:grid;gap:12px" hidden></div>';
   var r1 = $("#r1", P), r2 = $("#r2", P), r3 = $("#r3", P);
   wireRow(r1, function(){
-    var ia = readFrac(r1, "a"), ib = readFrac(r1, "b"), x = F.checkReduce(a, ia), y = F.checkReduce(b, ib);
+    var ia = readFrac(r1, "a"), ib = readFrac(r1, "b"), form = formCheck([ia, ib]);
+    if (form) return form;
+    var x = F.checkReduce(a, ia), y = F.checkReduce(b, ib);
     if (x.ok && y.ok) { sa = ia; sb = ib; return {ok:true, msg:"對了：" + F.txt(a) + " = " + F.txt(sa) + "，" + F.txt(b) + " = " + F.txt(sb) + "。", next:row2}; }
     return {ok:false, countable:(!x.ok && x.code !== "empty") || (!y.ok && y.code !== "empty"), msg:(x.ok ? "" : "左邊：" + x.msg) + (!x.ok && !y.ok ? "\n" : "") + (y.ok ? "" : "右邊：" + y.msg)};
   }, [
@@ -542,7 +571,9 @@ function renderPractice(){
     r2.innerHTML = '<div class="qq">② 再通分，讓分母一樣</div><div class="eq"><span class="pair">' + fr(sa) + ' = ' + fin("c") + '</span><span class="pair">' + fr(sb) + ' = ' + fin("e") + '</span></div>' +
       '<div class="row"><button class="btn sm" type="button" data-check>檢查</button><button class="btn ghost sm" type="button" data-hint>給我提示</button></div><div class="fb" hidden></div><div class="hint" hidden></div>';
     wireRow(r2, function(){
-      var ia = readFrac(r2, "c"), ib = readFrac(r2, "e"), x = F.checkCommon(sa, sb, ia, ib);
+      var ia = readFrac(r2, "c"), ib = readFrac(r2, "e"), form = formCheck([ia, ib]);
+      if (form) return form;
+      var x = F.checkCommon(sa, sb, ia, ib);
       if (x.ok) { ea = ia; eb = ib; return {ok:true, msg:x.msg, next:row3}; }
       return {ok:false, countable:x.code !== "empty", msg:x.msg};
     }, [
@@ -560,13 +591,14 @@ function renderPractice(){
     each(bs, function(bt){ bt.onclick = function(){
       var r = F.checkSign(a, b, ea, eb, bt.dataset.s);
       if (r.ok) { each(bs, function(x){ x.disabled = true; }); bt.classList.add("picked"); fb(out, true, r.msg); $("#pbox", P).innerHTML = sym(s.sign); $("#pbox", P).classList.add("got"); finish(); }
-      else { cur.wrongs++; bt.classList.remove("shake"); void bt.offsetWidth; bt.classList.add("shake", "tried"); fb(out, false, r.msg); }
+      else { cur.wrongs++; save(); bt.classList.remove("shake"); void bt.offsetWidth; bt.classList.add("shake", "tried"); fb(out, false, r.msg); }
     }; });
     reveal(r3);
   }
   function finish(){
     var clean = cur.hints === 0 && cur.wrongs === 0, was = st.mastered;
     st.solved++; if (clean) { st.clean++; st.streak++; } else st.streak = 0;
+    st.idx++; st.cur = null;   // 做完就換下一題：重開練習不會再算一次同一題（Codex 第 1 輪必修 1）
     if (st.streak >= 3) st.mastered = true;
     st.log.push({t:Date.now(), a:F.txt(a), b:F.txt(b), clean:clean, hints:cur.hints, wrongs:cur.wrongs}); st.log = st.log.slice(-100);
     var saved = save();
@@ -575,7 +607,7 @@ function renderPractice(){
       '<div class="fb ok">' + (clean ? "完全自己做對！連續 " + st.streak + " 題。" : "做完了！" + (cur.hints ? "這題看了提示，" : "這題有改過答案，") + "下一題試試不看提示。") + '</div>') +
       (saved ? "" : '<p class="small muted">這台裝置存不了紀錄（可能是私密瀏覽），重新整理後會從頭開始，題目照常可以做。</p>') +
       '<div class="row"><button class="btn" type="button" id="nextQ">下一題</button><button class="btn ghost" type="button" id="toLesson">再看一次教學</button></div>';
-    $("#nextQ", E).onclick = function(){ st.idx++; save(); renderPractice(); reveal(P); };
+    $("#nextQ", E).onclick = function(){ renderPractice(); reveal(P); };
     $("#toLesson", E).onclick = function(){ startLesson(); };
     drawTopBtns(); drawRec(); reveal(E);
   }
@@ -584,11 +616,11 @@ function renderPractice(){
     function go(){
       var r = check();
       if (r.ok) { lock(row); fb(out, true, r.msg); r.next(); }
-      else { if (r.countable) cur.wrongs++; fb(out, false, r.msg); }
+      else { if (r.countable) { cur.wrongs++; save(); } fb(out, false, r.msg); }
     }
     $("button[data-check]", row).onclick = go;
     $("button[data-hint]", row).onclick = function(){
-      cur.hints++; hb.hidden = false; hb.textContent = hints[Math.min(lvl, hints.length - 1)](); lvl++;
+      cur.hints++; save(); hb.hidden = false; hb.textContent = hints[Math.min(lvl, hints.length - 1)](); lvl++;
       if (lvl >= hints.length) this.disabled = true;
     };
     each(row.querySelectorAll("input"), function(x){ x.addEventListener("keydown", function(e){ if (e.key === "Enter") go(); }); });

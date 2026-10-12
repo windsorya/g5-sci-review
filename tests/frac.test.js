@@ -66,9 +66,12 @@ test("checkReduce：分子分母除不同數、大小改變、還能再約、空
   assert.match(uneven.msg, /分子除以了 2，分母卻除以了 7/);
   assert.equal(F.checkReduce(fr(28, 42), fr(3, 5)).code, "changed");
   assert.equal(F.checkReduce(fr(28, 42), fr(NaN, 3)).code, "empty");
-  assert.equal(F.checkReduce(fr(28, 42), fr(0, 3)).code, "empty");
   assert.equal(F.checkReduce(fr(28, 42), null).code, "empty");
-  assert.equal(F.checkReduce(fr(28, 42), fr(2.5, 3)).code, "empty");
+  // 有填但不是正整數＝答錯（要計入、不能當沒填）：Codex 第 1 輪必修 3
+  assert.equal(F.checkReduce(fr(28, 42), fr(0, 3)).code, "invalid");
+  assert.match(F.checkReduce(fr(28, 42), fr(0, 3)).msg, /分子是 0/);
+  assert.match(F.checkReduce(fr(28, 42), fr(2, 0)).msg, /分母不能是 0/);
+  assert.equal(F.checkReduce(fr(28, 42), fr(2.5, 3)).code, "invalid");
 });
 
 test("checkCommon：分母不同、左右大小改變被抓；用公倍數但不是最小的也算對但提醒", () => {
@@ -82,6 +85,8 @@ test("checkCommon：分母不同、左右大小改變被抓；用公倍數但不
   assert.equal(F.checkCommon(sa, sb, fr(2, 15), fr(9, 15)).code, "left-changed");   // 只改分母沒改分子
   assert.equal(F.checkCommon(sa, sb, fr(10, 15), fr(3, 15)).code, "right-changed");
   assert.equal(F.checkCommon(sa, sb, fr(10, 15), {}).code, "empty");
+  assert.equal(F.checkCommon(sa, sb, fr(10, 15), fr(9, 0)).code, "invalid");
+  assert.equal(F.checkCommon(sa, sb, fr(0, 15), fr(9, 15)).code, "invalid");
 });
 
 test("checkSign：答對、答反、該填等號，訊息都指向「分母一樣比分子」", () => {

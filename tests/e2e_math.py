@@ -219,8 +219,97 @@ def flow_full(browser, label, device=None, width=None, shots=False):
         check(f"{label} 寬 {width} 沒有左右捲動", ok, sw)
     # 重新整理：接著第 10 題、首頁按鈕改成繼續練習
     page.reload(wait_until="domcontentloaded")
-    check(f"{label} 重新整理後顯示「繼續練習（第 9 題）」與已學會", page.get_by_role("button", name="繼續練習（第 9 題）").is_visible() and page.locator("#mastery").is_visible())
+    check(f"{label} 重新整理後顯示「繼續練習（第 10 題）」與已學會", page.get_by_role("button", name="繼續練習（第 10 題）").is_visible() and page.locator("#mastery").is_visible())
     check(f"{label} 沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def prob_text(page):
+    t = page.locator("#practice .prob").inner_text().split()
+    return (int(t[0]), int(t[1])), (int(t[-2]), int(t[-1]))
+
+
+def flow_codex_r1(browser):
+    """Codex 2026-10-12 第 1 輪五個必修，照它的重現步驟逐一打；拆三段、各開新頁，舊版在任一段卡住也不影響其他段。"""
+    for part in (codex_r1_lesson, codex_r1_inputs, codex_r1_reopen):
+        try:
+            part(browser)
+        except Exception as e:
+            check(f"{part.__name__} 跑完沒有卡住", False, str(e).splitlines()[0])
+
+
+def codex_r1_lesson(browser):
+    # 必修 4＋5：教學第 4 步最小公倍數填 0、填全形 １５
+    ctx, page, errors = open_page(browser)
+    page.get_by_role("button", name="開始學").click()
+    chip(page, "先約分：分子分母一起除以同一個數")
+    chip(page, "一起除以 2"); fill_nums(page, [14, 21])
+    chip(page, "一起除以 7"); fill_nums(page, [2, 3]); chip(page, "不能再約了")
+    chip(page, "一起除以 9"); fill_nums(page, [3, 5]); chip(page, "不能再約了")
+    fill_nums(page, [0])
+    check("必修4 最小公倍數填 0：說要找比 0 大的公倍數，不說「還有更小的」", "比 0 大" in fb_text(page) and "更小" not in fb_text(page), fb_text(page))
+    fill_nums(page, ["１５"])
+    check("必修5 最小公倍數填全形１５：判對、進到下一格", "分母 3 要乘多少" in last_ask(page).inner_text(), last_ask(page).inner_text()[:80])
+    check("必修4/5 教學段沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def codex_r1_inputs(browser):
+    # 必修 3＋5：練習填 0、空白、3.、全形數字
+    ctx, page, errors = open_page(browser)
+    page.get_by_role("button", name="我已經會了，直接練習").click()
+    r1 = page.locator("#practice #r1")
+    (a, b) = FIXED[0]
+    sa, sb, *_ = answers(a, b)
+    for k, v in (("a.n", 0), ("a.d", 3), ("b.n", sb[0]), ("b.d", sb[1])):
+        r1.locator(f'input[data-k="{k}"]').fill(str(v))
+    r1.get_by_role("button", name="檢查").click()
+    msg = r1.locator(".fb").inner_text()
+    check("必修3 填 0/3：說分子是 0、算一次答錯", "分子是 0" in msg and ((store(page) or {}).get("cur") or {}).get("wrongs") == 1, msg)
+    r1.locator('input[data-k="a.n"]').fill("")
+    r1.get_by_role("button", name="檢查").click()
+    msg = r1.locator(".fb").inner_text()
+    check("必修3 有格子空白：說還有格子沒填、不算答錯", "還有格子沒填" in msg and ((store(page) or {}).get("cur") or {}).get("wrongs") == 1, msg)
+    r1.locator('input[data-k="a.n"]').fill("3.")
+    r1.get_by_role("button", name="檢查").click()
+    msg = r1.locator(".fb").inner_text()
+    check("必修3 填 3.：說只能填整數、不算答錯", "只能填整數" in msg and ((store(page) or {}).get("cur") or {}).get("wrongs") == 1, msg)
+    full = lambda n: str(n).translate(str.maketrans("0123456789", "０１２３４５６７８９"))
+    for k, v in (("a.n", sa[0]), ("a.d", sa[1]), ("b.n", sb[0]), ("b.d", sb[1])):
+        r1.locator(f'input[data-k="{k}"]').fill(full(v))
+    r1.get_by_role("button", name="檢查").click()
+    check("必修5 練習填全形數字也判對", page.locator("#practice #r2").is_visible(), r1.locator(".fb").inner_text())
+    check("必修3/5 練習段沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def codex_r1_reopen(browser):
+    # 必修 1＋2：做完不按下一題、改按上方按鈕重開；看提示＋答錯後重開
+    ctx, page, errors = open_page(browser)
+    direct = lambda: page.get_by_role("button", name="我已經會了，直接練習").click()
+    direct()
+    solve_practice(page, *FIXED[0])
+    direct()
+    check("必修1 重開練習換成第 2 題，不是重做第 1 題", prob_text(page) == FIXED[1], prob_text(page))
+    for _ in range(2):   # Codex 的重現：重開後再把畫面上那題做完，連做兩次
+        direct()
+        a, b = prob_text(page)
+        if (a, b) == FIXED[0]:
+            solve_practice(page, a, b)
+    st = store(page)
+    check("必修1 重開兩次：第 1 題只算一次、沒有因重複計分而學會", sum(1 for x in st["log"] if x["a"] == "24/36") == 1 and not st["mastered"], st["log"])
+    r1 = page.locator("#practice #r1")
+    r1.get_by_role("button", name="給我提示").click()
+    for k, v in (("a.n", 1), ("a.d", 3), ("b.n", 2), ("b.d", 3)):
+        r1.locator(f'input[data-k="{k}"]').fill(str(v))
+    r1.get_by_role("button", name="檢查").click()
+    direct()
+    st = store(page)
+    check("必修2 重開後仍是第 2 題，且提示 1 次、答錯 1 次都還在", prob_text(page) == FIXED[1] and st.get("cur") == {"idx": 1, "hints": 1, "wrongs": 1}, st.get("cur"))
+    solve_practice(page, *prob_text(page))
+    st = store(page)
+    check("必修2 這題記成「不是自己一次做對」、連續歸零", st["log"][-1]["clean"] is False and st["log"][-1]["hints"] == 1 and st["streak"] == 0, st["log"][-1])
+    check("必修1/2 重開段沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
 
@@ -306,6 +395,7 @@ def main():
             flow_video_live(cr, "線上Chromium")
         flow_full(cr, "桌機", {"viewport": {"width": 1280, "height": 900}}, width=1280)
         flow_full(cr, "手機390", {"viewport": {"width": 390, "height": 844}, "is_mobile": True, "has_touch": True, "device_scale_factor": 2}, width=390, shots=True)
+        flow_codex_r1(cr)
         flow_storage_blocked(cr)
         flow_corrupt_store(cr)
         flow_entry_link(cr)
