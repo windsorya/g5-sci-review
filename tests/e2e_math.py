@@ -1,7 +1,8 @@
 #!/opt/homebrew/opt/python@3.12/bin/python3.12
 """數學小教室端到端驗收：Chromium（桌機、手機 390）＋WebKit iPad，照孩子會做的順序走完教學與練習。
 
-跑法：python3.12 tests/e2e_math.py [--shots DIR]
+跑法：python3.12 tests/e2e_math.py [--shots DIR] [--base https://windsorya.github.io/g5-sci-review/]
+（--base 給正式網址時改測線上版，並加測影片播放器是否真的載入）
 答案用 Python fractions 獨立算（不借用頁面裡的 G5Frac），頁面算錯就會對不上。
 """
 import json
@@ -13,7 +14,8 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
-URL = (ROOT / "math" / "index.html").as_uri()
+BASE = sys.argv[sys.argv.index("--base") + 1].rstrip("/") + "/" if "--base" in sys.argv else ROOT.as_uri() + "/"
+URL = BASE + "math/index.html"
 SHOTS = Path(sys.argv[sys.argv.index("--shots") + 1]) if "--shots" in sys.argv else None
 RESULTS = []
 FIXED = [((24, 36), (35, 50)), ((27, 36), (28, 42)), ((21, 35), (16, 24)),
@@ -246,7 +248,7 @@ def flow_corrupt_store(browser):
 
 
 def flow_entry_link(browser):
-    ctx, page, errors = open_page(browser, url=(ROOT / "index.html").as_uri())
+    ctx, page, errors = open_page(browser, url=BASE + "index.html")
     link = page.locator("#mathLink")
     check("自然複習首頁有數學小教室入口（href=math/index.html）", link.is_visible() and link.get_attribute("href") == "math/index.html")
     link.click()
@@ -255,7 +257,7 @@ def flow_entry_link(browser):
     page.get_by_role("link", name="回自然複習").click()
     page.wait_for_selector("#main")
     check("數學小教室「回自然複習」回得去", "五上自然複習" in page.title())
-    ctx2, page2, _ = open_page(browser, url=(ROOT / "v3" / "index.html").as_uri())
+    ctx2, page2, _ = open_page(browser, url=BASE + "v3/index.html")
     check("v3 預覽版的入口改指 ../math/index.html", page2.locator("#mathLink").get_attribute("href") == "../math/index.html")
     check("入口頁沒有 JS 錯誤", not errors, errors)
     ctx.close(); ctx2.close()
@@ -274,9 +276,34 @@ def flow_dark(browser):
     ctx.close()
 
 
+def flow_video_live(browser, label, device=None):
+    """只在線上版跑：按播放後 iframe 真的指向 youtube-nocookie、帶 referrerpolicy，播放器沒有出現錯誤 153。"""
+    ctx, page, errors = open_page(browser, device)
+    page.locator("#vidBox summary").click()
+    btns = page.locator("#vids button[data-v]")
+    check(f"{label} 影片區有 2 段", btns.count() == 2, btns.count())
+    for i in range(btns.count()):
+        btns.nth(i).click()
+        fr = page.locator("#vids iframe").nth(i)
+        src, rp = fr.get_attribute("src"), fr.get_attribute("referrerpolicy")
+        check(f"{label} 影片 {i + 1} iframe 指向 youtube-nocookie 並帶 referrerpolicy", "youtube-nocookie.com/embed/" in src and rp == "strict-origin-when-cross-origin", src)
+        page.wait_for_timeout(6000)
+        frame = page.frame_locator("#vids iframe").nth(i)
+        try:
+            body = frame.locator("body").inner_text(timeout=10000)
+        except Exception as e:
+            body = f"<讀不到：{e}>"
+        check(f"{label} 影片 {i + 1} 播放器沒有錯誤訊息", "153" not in body and "無法播放" not in body and "Error" not in body, body[:200])
+    if SHOTS:
+        shot(page, f"{label}-影片", full=False)
+    ctx.close()
+
+
 def main():
     with sync_playwright() as p:
         cr = p.chromium.launch()
+        if BASE.startswith("https:"):
+            flow_video_live(cr, "線上Chromium")
         flow_full(cr, "桌機", {"viewport": {"width": 1280, "height": 900}}, width=1280)
         flow_full(cr, "手機390", {"viewport": {"width": 390, "height": 844}, "is_mobile": True, "has_touch": True, "device_scale_factor": 2}, width=390, shots=True)
         flow_storage_blocked(cr)
@@ -287,6 +314,8 @@ def main():
         wk = p.webkit.launch()
         ipad = p.devices["iPad (gen 7)"]
         flow_full(wk, "iPad", ipad, width=ipad["viewport"]["width"], shots=True)
+        if BASE.startswith("https:"):
+            flow_video_live(wk, "線上iPad", ipad)
         wk.close()
     bad = [r for r in RESULTS if not r[1]]
     print(f"\n{len(RESULTS) - len(bad)}/{len(RESULTS)} PASS")
