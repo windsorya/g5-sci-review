@@ -1,0 +1,628 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="數學小教室"></head><body><title>數學小教室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Huninn&display=swap">
+<style>
+/* 數學小教室：沿用自然複習（A 晴空實驗室）的色票，建置時由 build.py 從 src/app.html 的 @TOKENS 區段帶入 */
+:root{
+  --bg:#f4f8fb; --card:#ffffff; --ink:#17324a; --muted:#4a6276; --line:#c9d7e2; --line-soft:#dde7ef;
+  --pri:#1f5f8b; --pri-soft:#e9f2f8; --on-pri:#ffffff;
+  --sun:#b4770c; --sun-deep:#8a5a0a; --sunball:#f2b632; --sun-soft:#f8ecd6;
+  --leaf:#2f7d4f; --leaf-soft:#e2efe6; --soil:#8a5a3b;
+  --bad:#b4442f; --bad-soft:#fbe7e2;
+  --sky1:#cfe6f5; --sky2:#b7d9ef; --grass:#8fc79a; --waterfill:#bcdcef; --red:#d23c3c;
+  --f-display:"Huninn","Noto Sans TC","PingFang TC","Heiti TC",sans-serif;
+  --f-body:"Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",sans-serif;
+  --r:18px; --shadow:0 2px 10px rgba(23,50,74,.08);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1a24; --card:#172634; --ink:#e4eef6; --muted:#9db3c4; --line:#2c4256; --line-soft:#223545;
+  --pri:#6fb0de; --pri-soft:#1a3347; --on-pri:#0b1620;
+  --sun:#e6b25a; --sun-deep:#f0c879; --sunball:#f2c14e; --sun-soft:#3a2f1b;
+  --leaf:#6cc08e; --leaf-soft:#1c3328; --soil:#b58660;
+  --bad:#ec8a74; --bad-soft:#3a221d;
+  --sky1:#1b3550; --sky2:#183047; --grass:#2f5a3a; --waterfill:#24506b; --red:#ff7a7a; --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1a24; --card:#172634; --ink:#e4eef6; --muted:#9db3c4; --line:#2c4256; --line-soft:#223545;
+  --pri:#6fb0de; --pri-soft:#1a3347; --on-pri:#0b1620;
+  --sun:#e6b25a; --sun-deep:#f0c879; --sunball:#f2c14e; --sun-soft:#3a2f1b;
+  --leaf:#6cc08e; --leaf-soft:#1c3328; --soil:#b58660;
+  --bad:#ec8a74; --bad-soft:#3a221d;
+  --sky1:#1b3550; --sky2:#183047; --grass:#2f5a3a; --waterfill:#24506b; --red:#ff7a7a; --shadow:none; color-scheme:dark}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:17px;line-height:1.6;margin:0;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:disabled{cursor:default}
+:focus-visible{outline:none;box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--pri)}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.03em}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 56px;display:grid;gap:18px}
+.muted{color:var(--muted)} .small{font-size:15px}
+.hero{margin:0 -16px;background:var(--sky1);padding:20px 24px 22px;display:grid;gap:4px}
+.hero h1{font-size:clamp(30px,6vw,42px);line-height:1.15}
+.hero a{color:var(--pri);font-size:16px;justify-self:start;min-height:40px;display:inline-flex;align-items:center}
+@media (min-width:821px){.hero{margin:0;border-radius:0 0 var(--r) var(--r)}}
+.panel{background:var(--card);border-radius:var(--r);padding:22px;display:grid;gap:16px;box-shadow:var(--shadow);min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{background:var(--pri);color:var(--on-pri);border:0;border-radius:14px;padding:12px 22px;font-size:19px;font-weight:700;min-height:52px}
+.btn.ghost{background:var(--card);color:var(--ink);border:2px solid var(--line);font-weight:500;font-size:17px}
+.btn.sm{font-size:17px;padding:9px 16px;min-height:46px;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:2px solid var(--line);background:var(--card);border-radius:999px;padding:9px 18px;min-height:48px;font-size:18px}
+.chip.sign{min-width:64px;font-size:26px;font-weight:700;padding:4px 18px}
+.chip.tried{border-style:dashed;color:var(--muted)}
+.chip.picked{border-color:var(--leaf);background:var(--leaf-soft);color:var(--ink)}
+.chip:disabled:not(.picked){opacity:.45}
+.chip.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.fb{border-radius:12px;padding:10px 14px;font-size:17px;line-height:1.6;white-space:pre-line}
+.fb.ok{background:var(--leaf-soft)} .fb.no{background:var(--bad-soft)}
+.hint{background:var(--sun-soft);border-radius:12px;padding:10px 14px;line-height:1.7}
+details{background:var(--card);border-radius:var(--r);padding:16px 20px;box-shadow:var(--shadow)}
+details>summary{cursor:pointer;font-family:var(--f-display);font-size:20px;min-height:32px}
+details[open]>summary{margin-bottom:12px}
+details p{margin:0 0 10px}
+/* 分數 */
+.fr{display:inline-grid;justify-items:center;vertical-align:middle;margin:0 .12em;line-height:1.15;font-variant-numeric:tabular-nums;font-weight:700}
+.fr>span{padding:0 .18em}
+.fr>span:first-child{border-bottom:2px solid currentColor}
+.fr.x>span{font-weight:500;white-space:nowrap}
+.prob{display:flex;align-items:center;justify-content:center;gap:20px;font-size:40px;font-family:var(--f-display);padding:6px 0}
+.prob .fr{font-weight:400}
+.box{width:62px;height:62px;border:3px solid var(--ink);border-radius:12px;display:grid;place-items:center;font-size:38px;line-height:1}
+.box.got{border-color:var(--leaf);color:var(--leaf);background:var(--leaf-soft)}
+.src{font-size:15px;color:var(--muted)}
+/* 教學步驟 */
+.lesson{display:grid;gap:18px}
+.lstep{background:var(--card);border-radius:var(--r);padding:20px;display:grid;gap:14px;box-shadow:var(--shadow);min-width:0;scroll-margin-top:12px}
+.lhead{display:flex;gap:12px;align-items:center}
+.lhead .n{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--pri);color:var(--on-pri);font-size:18px;flex:none}
+.lhead h2{font-size:23px}
+.lbody{display:grid;gap:12px;min-width:0}
+.lbody p{margin:0;font-size:18px;line-height:1.75}
+.ask{display:grid;gap:10px;background:var(--pri-soft);border-radius:14px;padding:14px;min-width:0}
+.qq{font-weight:700;font-size:19px;line-height:1.7}
+.eq{font-size:22px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
+.nl,.pair{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.num{width:3.4em;text-align:center;font-size:22px;padding:6px 4px;border:2px solid var(--line);border-radius:10px;background:var(--card);box-sizing:border-box}
+.num:disabled{border-color:var(--leaf);background:var(--leaf-soft);opacity:1;-webkit-text-fill-color:var(--ink)}
+.fin{display:inline-grid;gap:5px;justify-items:center;vertical-align:middle}
+.fin .num{width:2.9em}
+.fin i{display:block;width:100%;height:2px;background:var(--ink)}
+.pic{display:grid;gap:6px;background:var(--bg);border-radius:14px;padding:12px 14px;min-width:0}
+.cap{font-size:16px;line-height:1.6}
+.fbar{width:100%;height:auto;display:block}
+.mults{display:flex;flex-wrap:wrap;gap:6px}
+.mults span{background:var(--line-soft);border-radius:8px;padding:2px 9px;font-variant-numeric:tabular-nums;font-size:16px}
+.mults span.hit{background:var(--sun-soft);color:var(--sun-deep);font-weight:700}
+.note{border:2px dashed var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:12px;font-size:22px;background:var(--card)}
+.note .ln{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.tip{font-size:16px;color:var(--muted)}
+/* 練習 */
+.prow{display:grid;gap:10px;border-top:1px solid var(--line-soft);padding-top:14px;min-width:0}
+.dots{display:inline-flex;gap:6px;vertical-align:middle;margin-left:6px}
+.dots i{width:16px;height:16px;border-radius:50%;background:var(--line-soft);display:inline-block}
+.dots i.on{background:var(--leaf)}
+.win{display:grid;gap:8px;background:var(--leaf-soft);border-radius:14px;padding:16px}
+.win b.t{font-family:var(--f-display);font-weight:400;font-size:28px;color:var(--leaf)}
+.vframe{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
+.vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+@media (max-width:420px){.prob{gap:12px;font-size:34px}.box{width:54px;height:54px;font-size:32px}.eq{font-size:20px}.note{font-size:19px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <a href="../index.html">回自然複習</a>
+    <h1>數學小教室</h1>
+    <span class="muted">分數比大小：先約分，再通分</span>
+  </header>
+
+  <main class="panel" id="top">
+    <div class="src">習作第 38 頁・第 6 題②：先通分，再比較大小，在□中填入 &gt; 或 &lt;。</div>
+    <div class="prob" id="prob"></div>
+    <p style="margin:0" id="lead">這題的分母 42 和 45 都很大，直接通分會很辛苦。跟著下面一步一步做，每一步都要你自己動手算。</p>
+    <div class="row" id="topBtns"></div>
+    <div id="mastery" hidden></div>
+  </main>
+
+  <section class="lesson" id="lesson" hidden></section>
+
+  <section class="panel" id="practice" hidden></section>
+
+  <details id="vidBox" hidden><summary>看影片再聽一次</summary><div id="vids" style="display:grid;gap:12px"></div></details>
+
+  <details id="parentBox"><summary>給爸媽</summary>
+    <p><b>這題比同一頁其他題難在哪：</b>42 和 45 直接通分要用 630（最小公倍數），數字太大。關鍵是先約分：28/42 = 2/3、27/45 = 3/5，再用 15 通分：10/15 &gt; 9/15，所以□填「&gt;」。</p>
+    <p><b>這裡教的兩件事：</b>①數字大的時候先約分（約分不會改變分數大小，用長條圖讓她看到）；②怎麼找能一起除的數（從乘法表的 2、3、5、7、9 試）。同一頁①③④和第 7 題的通分寫法都對，所以不重教通分本身。</p>
+    <p><b>陪她時可以追問一句：</b>「為什麼這題要先約分？」聽到「數字太大，先約分比較好算；約分不會改變大小」就表示懂了。</p>
+    <p class="small muted" id="rec" style="margin:0"></p>
+  </details>
+</div>
+
+<script>
+// 數學小教室（分數比大小：先約分、再通分）的計算與判題核心。畫面在 src/math.html，只呼叫這裡的函式。
+// 2026-10-12 律師：習作 p.38 第 6 題②（28/42 □ 27/45）她不懂，「請建立教學機制」「教會她」。
+// 這題比①③④難的地方：42 和 45 的最小公倍數是 630，直接通分數字太大；先約分成 2/3、3/5，再用 15 通分。
+// 執行測試：node --test tests/frac.test.js
+(function (root) {
+  "use strict";
+
+  function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = a % b; a = b; b = t; } return a; }
+  function lcm(a, b) { return a / gcd(a, b) * b; }
+  function simplest(f) { var g = gcd(f.n, f.d); return { n: f.n / g, d: f.d / g, g: g }; }
+  function isSimplest(f) { return gcd(f.n, f.d) === 1; }
+  function same(a, b) { return a.n * b.d === b.n * a.d; }
+  function cmp(a, b) { var x = a.n * b.d, y = b.n * a.d; return x > y ? ">" : x < y ? "<" : "="; }
+  function txt(f) { return f.n + "/" + f.d; }
+  function okNum(x) { return typeof x === "number" && isFinite(x) && x > 0 && Math.floor(x) === x; }
+  function okFrac(f) { return !!f && okNum(f.n) && okNum(f.d); }
+
+  // 整題的標準解：約分 → 通分（用最小公倍數）→ 比分子
+  function solve(a, b) {
+    var sa = simplest(a), sb = simplest(b), L = lcm(sa.d, sb.d);
+    return {
+      a: a, b: b, sa: { n: sa.n, d: sa.d }, sb: { n: sb.n, d: sb.d }, ga: sa.g, gb: sb.g,
+      lcm: L, mulA: L / sa.d, mulB: L / sb.d,
+      ea: { n: sa.n * L / sa.d, d: L }, eb: { n: sb.n * L / sb.d, d: L },
+      rawLcm: lcm(a.d, b.d), sign: cmp(a, b)
+    };
+  }
+
+  // x 能不能被 k 整除，用乘法表講給五年級聽
+  function divText(k, x) {
+    if (x % k === 0) return x + " = " + k + " × " + (x / k);
+    var q = Math.floor(x / k);
+    return k + " × " + q + " = " + (k * q) + "、" + k + " × " + (q + 1) + " = " + (k * (q + 1)) + "，中間沒有 " + x + "，所以 " + x + " 不能被 " + k + " 整除";
+  }
+  function smallestCommon(f) { var g = gcd(f.n, f.d); for (var p = 2; p <= g; p++) if (g % p === 0) return p; return 0; }
+
+  // 教學步驟：她選「一起除以 k」
+  function pickDivisor(f, k) {
+    if (k === "none") {
+      if (isSimplest(f)) return { ok: true, done: true, msg: f.n + " 和 " + f.d + " 只剩 1 能一起除，" + txt(f) + " 已經是最簡分數。" };
+      var p = smallestCommon(f);
+      return { ok: false, msg: "還能再約喔：" + divText(p, f.n) + "、" + divText(p, f.d) + "，都在 " + p + " 的乘法表裡。" };
+    }
+    var bad = f.n % k !== 0 ? f.n : f.d % k !== 0 ? f.d : 0;
+    if (bad) return { ok: false, msg: divText(k, bad) + "。換一個數試試。" };
+    return { ok: true, done: false, next: { n: f.n / k, d: f.d / k }, msg: divText(k, f.n) + "、" + divText(k, f.d) + "，兩個都能被 " + k + " 整除。" };
+  }
+
+  // 練習題第①列：她把 orig 約分後寫成 inp
+  function checkReduce(orig, inp) {
+    if (!okFrac(inp)) return { ok: false, code: "empty", msg: "分子和分母都要填數字喔。" };
+    if (!same(orig, inp)) {
+      if (orig.n % inp.n === 0 && orig.d % inp.d === 0 && orig.n / inp.n !== orig.d / inp.d)
+        return { ok: false, code: "unequal-div", msg: "分子除以了 " + (orig.n / inp.n) + "，分母卻除以了 " + (orig.d / inp.d) + "。分子和分母要除以「同一個數」，大小才不會變。" };
+      return { ok: false, code: "changed", msg: inp.n + "/" + inp.d + " 和 " + txt(orig) + " 不一樣大。約分時，分子和分母要一起除以同一個數。" };
+    }
+    if (!isSimplest(inp)) {
+      var p = smallestCommon(inp);
+      return { ok: false, code: "not-simplest", msg: "大小對了！不過 " + inp.n + " 和 " + inp.d + " 還能一起除以 " + p + "，再約一次，變成最簡分數。" };
+    }
+    return { ok: true, code: "ok", msg: "對了：" + txt(orig) + " = " + txt(inp) + "。" };
+  }
+
+  // 練習題第②列：把約分後的 sa、sb 通分成 ia、ib
+  function checkCommon(sa, sb, ia, ib) {
+    if (!okFrac(ia) || !okFrac(ib)) return { ok: false, code: "empty", msg: "兩個分數的分子和分母都要填數字喔。" };
+    if (ia.d !== ib.d) return { ok: false, code: "diff-den", msg: "通分以後，兩個分數的分母要變成一樣（現在是 " + ia.d + " 和 " + ib.d + "）。" };
+    if (!same(sa, ia)) return { ok: false, code: "left-changed", msg: "左邊的 " + txt(sa) + " 大小變了：分母乘幾，分子也要乘幾。" };
+    if (!same(sb, ib)) return { ok: false, code: "right-changed", msg: "右邊的 " + txt(sb) + " 大小變了：分母乘幾，分子也要乘幾。" };
+    var L = lcm(sa.d, sb.d);
+    if (ia.d !== L) return { ok: true, code: "ok-not-lcm", msg: "也對！分母用 " + ia.d + " 可以；用 " + sa.d + " 和 " + sb.d + " 的最小公倍數 " + L + "，數字會最小、最好算。" };
+    return { ok: true, code: "ok", msg: "對了：分母都變成 " + L + "。" };
+  }
+
+  // 練習題第③列：ea、eb 是她通分後的分數（分母相同）
+  function checkSign(a, b, ea, eb, s) {
+    var want = cmp(a, b);
+    if (s === want) return { ok: true, msg: want === "=" ? "約分以後一模一樣！寫法不同，也可能是一樣大的分數。" : "對了：分母一樣時，分子大的分數比較大。" };
+    if (want === "=") return { ok: false, msg: "通分以後是 " + txt(ea) + " 和 " + txt(eb) + "，分子一樣，所以兩個分數一樣大。" };
+    return { ok: false, msg: "分母一樣時，比分子就好：" + ea.n + " 和 " + eb.n + " 哪個大？" };
+  }
+
+  // 練習題：前 6 題固定（照習作的數字大小挑，正確答案 > < = 都有，也有「分子大、分數反而小」的陷阱），之後亂數產生
+  var FIXED = [
+    { a: { n: 24, d: 36 }, b: { n: 35, d: 50 } },   // 2/3 < 7/10（20/30 < 21/30）
+    { a: { n: 27, d: 36 }, b: { n: 28, d: 42 } },   // 3/4 > 2/3（9/12 > 8/12）；分子 27 < 28 但分數比較大
+    { a: { n: 21, d: 35 }, b: { n: 16, d: 24 } },   // 3/5 < 2/3（9/15 < 10/15）；分子 21 > 16 但分數比較小
+    { a: { n: 18, d: 27 }, b: { n: 28, d: 42 } },   // 2/3 = 2/3
+    { a: { n: 36, d: 54 }, b: { n: 20, d: 32 } },   // 2/3 > 5/8（16/24 > 15/24）
+    { a: { n: 45, d: 63 }, b: { n: 32, d: 40 } }    // 5/7 < 4/5（25/35 < 28/35）
+  ];
+  var KS = [2, 3, 4, 5, 6, 7, 8, 9, 12];
+  function rng(seed) {
+    var s = seed >>> 0;
+    return function () { s = (s + 0x6D2B79F5) >>> 0; var t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  // 產生條件（tests/frac.test.js 逐條驗）：兩個都能約分、約分後分母不同且 ≤10、約分後通分的分母 ≤60、
+  // 原本的數字都是兩位數、原分母的最小公倍數 ≥100（直接通分很麻煩，才看得出先約分的好處）、兩個分數不一樣大
+  function genOne(r) {
+    for (var t = 0; t < 5000; t++) {
+      var q1 = 2 + Math.floor(r() * 9), q2 = 2 + Math.floor(r() * 9);
+      if (q1 === q2) continue;
+      var p1 = 1 + Math.floor(r() * (q1 - 1)), p2 = 1 + Math.floor(r() * (q2 - 1));
+      if (gcd(p1, q1) !== 1 || gcd(p2, q2) !== 1 || p1 * q2 === p2 * q1 || lcm(q1, q2) > 60) continue;
+      var k1 = KS[Math.floor(r() * KS.length)], k2 = KS[Math.floor(r() * KS.length)];
+      var a = { n: p1 * k1, d: q1 * k1 }, b = { n: p2 * k2, d: q2 * k2 };
+      if (a.n < 10 || b.n < 10 || a.d > 99 || b.d > 99 || lcm(a.d, b.d) < 100) continue;
+      return { a: a, b: b };
+    }
+    return null;
+  }
+  function problem(i, seed) {
+    if (i < FIXED.length) return FIXED[i];
+    return genOne(rng(((seed || 0) * 1000003 + i * 7919) >>> 0)) || FIXED[i % FIXED.length];
+  }
+
+  // 「如果直接通分」：大的分母的倍數要數到第幾個，才同時是另一個分母的倍數
+  function multiplesUntil(a, b) {
+    var big = Math.max(a.d, b.d), L = lcm(a.d, b.d), out = [];
+    for (var m = big; m <= L; m += big) out.push(m);
+    return { big: big, small: Math.min(a.d, b.d), list: out, lcm: L };
+  }
+
+  var api = {
+    gcd: gcd, lcm: lcm, simplest: simplest, isSimplest: isSimplest, same: same, cmp: cmp, txt: txt,
+    solve: solve, divText: divText, smallestCommon: smallestCommon, pickDivisor: pickDivisor,
+    checkReduce: checkReduce, checkCommon: checkCommon, checkSign: checkSign,
+    FIXED: FIXED, genOne: genOne, rng: rng, problem: problem, multiplesUntil: multiplesUntil
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = api; else root.G5Frac = api;
+})(typeof window !== "undefined" ? window : this);
+
+</script>
+<script>
+(function(){
+"use strict";
+var F = window.G5Frac;
+var A = {n:28, d:42}, B = {n:27, d:45}, SOL = F.solve(A, B);
+var SIGNS = [{label:"&gt;", value:">"}, {label:"&lt;", value:"<"}, {label:"=", value:"="}];
+// 影片：比照自然複習 src/videos.js，每段都讀過字幕、抽格看過才放；按了才載入 youtube-nocookie
+var VIDS = [
+  // 2026-10-12 驗證：whisper 轉全片逐字讀過＋抽格看過（7/9、10/12 → 10/12 = 5/6 = 15/18、7/9 = 14/18，字幕「先約分 再擴分」）；playable_in_embed=True
+  {id:"XIdh6AxYItA", start:662, end:748, len:"約 1 分半", title:"先約分，再通分（臺北酷課雲・濱江國小吳政達老師）",
+   note:"比 7/9 和 10/12：先把 10/12 約分成 5/6，再用 9 和 6 的最小公倍數 18 通分，14/18 < 15/18。跟習作這題的做法一樣。"},
+  // 同上驗證方式（8/12 = 4/6 = 2/3、6/18 = 3/9 = 1/3，畫面燒錄繁體字幕）；playable_in_embed=True
+  {id:"xdAu15d7MRs", start:158, end:224, len:"約 1 分鐘", title:"用約分讓分母變一樣（均一教育平台）",
+   note:"8/12 一路約成 2/3、6/18 約成 1/3，約完分母一樣就能比。這段只約分，沒有再通分。"}
+];
+var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function $(s, el){ return (el || document).querySelector(s); }
+function each(list, fn){ Array.prototype.forEach.call(list, fn); }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function fr(f){ return '<span class="fr" role="img" aria-label="' + f.d + ' 分之 ' + f.n + '"><span>' + f.n + '</span><span>' + f.d + '</span></span>'; }
+function frx(f, m){ return '<span class="fr x" role="img" aria-label="' + f.d + '乘' + m + ' 分之 ' + f.n + '乘' + m + '"><span>' + f.n + '×' + m + '</span><span>' + f.d + '×' + m + '</span></span>'; }
+function isPrime(x){ if (x < 2) return false; for (var i = 2; i * i <= x; i++) if (x % i === 0) return false; return true; }
+function sym(s){ return s === ">" ? "&gt;" : s === "<" ? "&lt;" : "="; }
+function add(el, html){ var d = document.createElement("div"); d.style.display = "contents"; d.innerHTML = html; var first = d.firstElementChild; while (d.firstChild) el.appendChild(d.firstChild); return first; }
+function fb(el, ok, msg){ el.hidden = false; el.className = "fb " + (ok ? "ok" : "no"); el.textContent = msg; }
+function reveal(el){ setTimeout(function(){ if (el.scrollIntoView) el.scrollIntoView({behavior: reduceMotion ? "auto" : "smooth", block: "start"}); }, 40); }
+
+// 長條圖：d 小格塗 n 格；group＝每幾小格畫一條粗線（圈成一大塊）
+function bar(n, d, o){
+  o = o || {};
+  var W = 600, H = o.h || 46, w = (W - 4) / d, fill = o.c === "b" ? "var(--grass)" : "var(--sunball)", s = "";
+  var big = !o.group && d <= 12;   // 大塊（例如 2/3 的 3 塊）：格線用深色，才數得出幾塊
+  for (var i = 0; i < d; i++) s += '<rect x="' + (2 + i * w).toFixed(2) + '" y="2" width="' + w.toFixed(2) + '" height="' + (H - 4) + '" fill="' + (i < n ? fill : "var(--card)") + '" stroke="' + (big ? "var(--ink)" : "var(--line)") + '" stroke-width="' + (big ? 2.5 : 1) + '"/>';
+  if (o.group) for (var j = o.group; j < d; j += o.group) { var x = (2 + j * w).toFixed(2); s += '<line x1="' + x + '" y1="0" x2="' + x + '" y2="' + H + '" stroke="var(--ink)" stroke-width="3.5"/>'; }
+  s += '<rect x="2" y="2" width="' + (W - 4) + '" height="' + (H - 4) + '" fill="none" stroke="var(--ink)" stroke-width="2.5"/>';
+  return '<svg class="fbar" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.label || ("切成 " + d + " 格，塗了 " + n + " 格")) + '">' + s + '</svg>';
+}
+
+// ---------- 存檔（只放這一頁的練習紀錄；不碰自然複習的 g5sci.v3） ----------
+var KEY = "g5math.v1";
+function fresh(){ return {v:1, lessonDone:false, idx:0, seed:Math.floor(Math.random() * 1e6), streak:0, clean:0, solved:0, mastered:false, log:[]}; }
+function load(){
+  var d = fresh();
+  try {
+    var s = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (s && s.v === 1) {
+      ["idx","seed","streak","clean","solved"].forEach(function(k){ if (typeof s[k] === "number" && isFinite(s[k]) && s[k] >= 0) d[k] = Math.floor(s[k]); });
+      d.lessonDone = s.lessonDone === true; d.mastered = s.mastered === true;
+      if (Array.isArray(s.log)) d.log = s.log.slice(-100);
+    }
+  } catch (e) {}
+  return d;
+}
+var st = load();
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(st)); return true; } catch (e) { return false; } }
+
+// ---------- 互動元件 ----------
+// 選擇題：答錯會說明為什麼，可以再選；答對才往下
+function chipsAsk(body, q, opts, judge, onOk, cls){
+  var box = add(body, '<div class="ask"><div class="qq">' + q + '</div><div class="chips">' + opts.map(function(o, i){ return '<button type="button" class="chip' + (cls ? " " + cls : "") + '" data-i="' + i + '">' + o.label + '</button>'; }).join("") + '</div><div class="fb" hidden></div></div>');
+  var out = $(".fb", box), bs = box.querySelectorAll(".chip");
+  each(bs, function(b){ b.onclick = function(){
+    var o = opts[+b.dataset.i], r = judge(o.value);
+    if (r.ok) { each(bs, function(x){ x.disabled = true; }); b.classList.add("picked"); fb(out, true, r.msg || "對了！"); if (onOk) onOk(o.value, r); }
+    else { b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake", "tried"); fb(out, false, r.msg); }
+  }; });
+  return box;
+}
+// 填數字：答錯先給提示，錯第 3 次直接告訴答案、請她填進去
+function numsAsk(body, q, items, onOk){
+  var box = add(body, '<div class="ask">' + (q ? '<div class="qq">' + q + '</div>' : '') + '<div class="eq">' + items.map(function(it, i){
+    return '<label class="nl">' + (it.pre || "") + '<input class="num" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" data-i="' + i + '" aria-label="' + esc(it.aria || "答案") + '">' + (it.post || "") + '</label>';
+  }).join("") + '</div><div class="row"><button class="btn sm" type="button">檢查</button></div><div class="fb" hidden></div></div>');
+  var ins = box.querySelectorAll("input"), bt = $("button", box), out = $(".fb", box), tries = 0;
+  function go(){
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i], raw = ins[i].value.trim(), v = /^\d+$/.test(raw) ? parseInt(raw, 10) : NaN;
+      var r = isNaN(v) ? {ok:false, msg:"先填一個數字。"} : it.check ? it.check(v) : v === it.ans ? {ok:true} : {ok:false, msg:"再算一次。" + (it.hint ? "提示：" + it.hint : "")};
+      if (!r.ok) {
+        if (!isNaN(v)) tries++;
+        fb(out, false, r.msg + (tries >= 3 ? "　答案是 " + it.ans + "，把它填進去。" : ""));
+        ins[i].focus(); return;
+      }
+    }
+    each(ins, function(x){ x.disabled = true; }); bt.hidden = true; out.hidden = true;
+    onOk();
+  }
+  bt.onclick = go;
+  each(ins, function(x){ x.addEventListener("keydown", function(e){ if (e.key === "Enter") go(); }); });
+  return box;
+}
+function stepCard(n, title){
+  var s = add($("#lesson"), '<section class="lstep" data-step="' + n + '"><div class="lhead"><span class="n">' + n + '</span><h2>' + title + '</h2></div><div class="lbody"></div></section>');
+  reveal(s);
+  return $(".lbody", s);
+}
+
+// ---------- 題目列 ----------
+function setBox(s){ var b = $("#box"); b.innerHTML = s ? sym(s) : ""; b.classList.toggle("got", !!s); b.setAttribute("aria-label", s ? "答案 " + s : "空格"); }
+function drawProb(){ $("#prob").innerHTML = fr(A) + '<span class="box" id="box" role="img" aria-label="空格"></span>' + fr(B); }
+
+// ---------- 教學（習作那一題） ----------
+function startLesson(){
+  var L = $("#lesson"); L.innerHTML = ""; L.hidden = false; setBox("");
+  step1();
+}
+function step1(){
+  var b = stepCard(1, "先看分母"), m = F.multiplesUntil(A, B);
+  add(b, '<p>兩個分數的分母是 <b>' + A.d + '</b> 和 <b>' + B.d + '</b>，不一樣，要先通分才能比。</p>' +
+    '<p>如果直接通分，要找 ' + A.d + ' 和 ' + B.d + ' 的公倍數。把 ' + m.big + ' 的倍數一個一個寫出來：</p>' +
+    '<div class="mults">' + m.list.map(function(x, i){ return '<span' + (i === m.list.length - 1 ? ' class="hit"' : '') + '>' + x + '</span>'; }).join("") + '</div>' +
+    '<p>要寫到第 ' + m.list.length + ' 個 <b>' + m.lcm + '</b>，才剛好也是 ' + m.small + ' 的倍數。分數會變成「？/' + m.lcm + '」，數字太大，很容易算錯。</p>');
+  chipsAsk(b, '第①題的 18/32 和 21/48 數字也很大，你是怎麼讓它們變小的？', [
+    {label:"分子分母一起乘大一點", value:"mul"},
+    {label:"先約分：分子分母一起除以同一個數", value:"red"},
+    {label:"直接比分子，28 比 27 大", value:"num"}
+  ], function(v){
+    if (v === "red") return {ok:true, msg:"對！第①題你把 18/32 約成 9/16。這題也一樣：先約分，數字變小，再通分。"};
+    if (v === "mul") return {ok:false, msg:"一起乘，數字只會更大喔。想想第①題你是怎麼把 18/32 變成 9/16 的。"};
+    return {ok:false, msg:"分母不一樣的時候，分子大的不一定比較大（等一下練習題就有反例）。要先讓分母一樣。"};
+  }, step2);
+}
+function reduceLoop(b, f, color, done){
+  var chain = [f], cur = f;
+  function round(){
+    var opts = [2, 3, 5, 7, 9].map(function(k){ return {label:"一起除以 " + k, value:k}; });
+    var g = F.gcd(cur.n, cur.d);   // 2、3、5、7 以外的因數（例如 11、13）也要選得到
+    for (var p = 11; p <= g; p++) if (g % p === 0 && isPrime(p)) opts.push({label:"一起除以 " + p, value:p});
+    opts.push({label:"不能再約了", value:"none"});
+    chipsAsk(b, fr(cur) + ' 的分子和分母，可以一起除以哪個數？', opts, function(v){ return F.pickDivisor(cur, v); }, function(v, r){
+      if (r.done) return finish();
+      numsAsk(b, "算算看：", [
+        {pre:cur.n + " ÷ " + v + " =", ans:r.next.n, hint:v + " × 多少 = " + cur.n + "？", aria:cur.n + " 除以 " + v},
+        {pre:cur.d + " ÷ " + v + " =", ans:r.next.d, hint:v + " × 多少 = " + cur.d + "？", aria:cur.d + " 除以 " + v}
+      ], function(){
+        add(b, '<div class="eq">' + fr(cur) + ' = ' + fr(r.next) + '</div>');
+        cur = r.next; chain.push(cur); round();
+      });
+    });
+  }
+  function finish(){
+    var last = cur, g = f.n / last.n;
+    add(b, '<div class="eq">' + chain.map(fr).join(" = ") + '</div>');
+    if (chain.length > 2) add(b, '<p class="tip">也可以一次除以 ' + g + '（就是 ' + chain.slice(1).map(function(x, i){ return chain[i].n / x.n; }).join(" × ") + '），一步就變成 ' + F.txt(last) + '。</p>');
+    add(b, '<div class="pic"><div class="cap">' + F.txt(f) + '：切成 ' + f.d + ' 小格，塗 ' + f.n + ' 格。粗線把每 ' + g + ' 小格圈成 1 大塊。</div>' +
+      bar(f.n, f.d, {group:g, c:color, label:F.txt(f) + "，每 " + g + " 小格圈成一大塊"}) +
+      bar(last.n, last.d, {c:color, label:F.txt(last)}) +
+      '<div class="cap">' + F.txt(last) + '：一共 ' + last.d + ' 大塊，塗 ' + last.n + ' 塊。兩條塗色的長度一模一樣——約分不會改變分數的大小。</div></div>');
+    done(last);
+  }
+  round();
+}
+function step2(){
+  var b = stepCard(2, "約分左邊的 " + F.txt(A));
+  add(b, '<p>約分＝分子和分母<b>一起除以同一個數</b>，分數的大小不變。從乘法表裡的小數字開始試，選對一個就好，不用一次除到底。</p>');
+  reduceLoop(b, A, "a", step3);
+}
+function step3(){
+  var b = stepCard(3, "約分右邊的 " + F.txt(B));
+  add(b, '<p>右邊也一樣，分子和分母一起除以同一個數，除到不能再約為止。</p>');
+  reduceLoop(b, B, "b", step4);
+}
+function convert(b, f, L, done){
+  var m = L / f.d;
+  numsAsk(b, fr(f) + ' 要變成分母 ' + L + '：分母 ' + f.d + ' 要乘多少？', [
+    {pre:f.d + " ×", post:"= " + L, ans:m, hint:f.d + " 的乘法表裡，哪一個是 " + L + "？", aria:f.d + " 乘多少等於 " + L}
+  ], function(){
+    numsAsk(b, '分母乘 ' + m + '，分子也要乘 ' + m + '：', [
+      {pre:f.n + " × " + m + " =", ans:f.n * m, hint:"", aria:f.n + " 乘 " + m}
+    ], function(){
+      var e = {n:f.n * m, d:L};
+      add(b, '<div class="eq">' + fr(f) + ' = ' + frx(f, m) + ' = ' + fr(e) + '</div>');
+      done(e);
+    });
+  });
+}
+function step4(){
+  var sa = SOL.sa, sb = SOL.sb, L = SOL.lcm;
+  var b = stepCard(4, "再通分 " + F.txt(sa) + " 和 " + F.txt(sb));
+  add(b, '<p>約分以後，題目變成 ' + fr(sa) + ' 和 ' + fr(sb) + '。分母 ' + sa.d + ' 和 ' + sb.d + ' 還是不一樣，現在才通分——數字小多了！</p>');
+  numsAsk(b, sa.d + ' 和 ' + sb.d + ' 的最小公倍數是多少？', [{pre:"", ans:L, aria:"最小公倍數", check:function(v){
+    if (v === L) return {ok:true};
+    if (v % sa.d === 0 && v % sb.d === 0) return {ok:false, msg:v + " 也是 " + sa.d + " 和 " + sb.d + " 的公倍數，但還有更小的，再找找看。"};
+    var ma = [], mb = []; for (var i = 1; i <= L / sa.d + 1; i++) ma.push(sa.d * i); for (var j = 1; j <= L / sb.d + 1; j++) mb.push(sb.d * j);
+    return {ok:false, msg:sa.d + " 的倍數：" + ma.join("、") + "…；" + sb.d + " 的倍數：" + mb.join("、") + "…。第一個兩邊都有的數，就是最小公倍數。"};
+  }}], function(){
+    convert(b, sa, L, function(ea){
+      convert(b, sb, L, function(eb){
+        add(b, '<div class="pic"><div class="cap">' + F.txt(sa) + ' 的每 1 大塊再切成 ' + (L / sa.d) + ' 小格，就是 ' + F.txt(ea) + '：</div>' +
+          bar(sa.n, sa.d, {label:F.txt(sa)}) + bar(ea.n, L, {group:L / sa.d, label:F.txt(ea)}) +
+          '<div class="cap">' + F.txt(sb) + ' 的每 1 大塊再切成 ' + (L / sb.d) + ' 小格，就是 ' + F.txt(eb) + '：</div>' +
+          bar(sb.n, sb.d, {c:"b", label:F.txt(sb)}) + bar(eb.n, L, {c:"b", group:L / sb.d, label:F.txt(eb)}) + '</div>');
+        step5(ea, eb);
+      });
+    });
+  });
+}
+function step5(ea, eb){
+  var b = stepCard(5, "比大小");
+  add(b, '<p>現在兩個分數的分母都是 ' + ea.d + '，就像兩條一樣長的巧克力都切成 ' + ea.d + ' 小塊，比誰拿的塊數多。</p>' +
+    '<div class="pic"><div class="cap">' + F.txt(ea) + '：塗 ' + ea.n + ' 格</div>' + bar(ea.n, ea.d, {label:F.txt(ea)}) +
+    '<div class="cap">' + F.txt(eb) + '：塗 ' + eb.n + ' 格</div>' + bar(eb.n, eb.d, {c:"b", label:F.txt(eb)}) + '</div>');
+  var s1 = F.cmp(ea, eb);
+  chipsAsk(b, fr(ea) + ' ○ ' + fr(eb) + '，○ 裡要填什麼？', SIGNS, function(v){
+    return v === s1 ? {ok:true, msg:"對！分母一樣，比分子：" + ea.n + " 比 " + eb.n + " 大，所以 " + F.txt(ea) + " 比較大。"} : {ok:false, msg:"看塗色的格子：" + ea.n + " 格和 " + eb.n + " 格，哪個多？"};
+  }, function(){
+    chipsAsk(b, '所以 ' + fr(A) + ' ○ ' + fr(B) + '？', SIGNS, function(v){
+      return v === SOL.sign ? {ok:true, msg:F.txt(A) + " 和 " + F.txt(ea) + " 一樣大、" + F.txt(B) + " 和 " + F.txt(eb) + " 一樣大，所以答案一樣是「" + SOL.sign + "」。"} :
+        {ok:false, msg:F.txt(A) + " = " + F.txt(ea) + "，" + F.txt(B) + " = " + F.txt(eb) + "。剛剛比出來哪個大？"};
+    }, function(){ setBox(SOL.sign); step6(ea, eb); }, "sign");
+  }, "sign");
+}
+function step6(ea, eb){
+  var b = stepCard(6, "寫進習作");
+  add(b, '<p>照這樣寫在習作上，跟你第①題的寫法一樣：</p>' +
+    '<div class="note"><div class="ln">' + fr(A) + ' = ' + fr(SOL.sa) + ' = ' + fr(ea) + '，</div>' +
+    '<div class="ln">' + fr(B) + ' = ' + fr(SOL.sb) + ' = ' + fr(eb) + '</div>' +
+    '<div class="ln">' + fr(ea) + ' ' + sym(SOL.sign) + ' ' + fr(eb) + '　∴ ' + fr(A) + ' ' + sym(SOL.sign) + ' ' + fr(B) + '</div></div>');
+  chipsAsk(b, '最後確認：遇到分母很大的分數比大小，順序是？', [
+    {label:"先通分，再約分", value:"x"}, {label:"先約分，再通分", value:"ok"}, {label:"直接比分子", value:"n"}
+  ], function(v){
+    if (v === "ok") return {ok:true, msg:"對！先約分讓數字變小（大小不變），再通分，最後比分子。"};
+    if (v === "x") return {ok:false, msg:"先通分的話，要用 " + SOL.rawLcm + " 那麼大的數。先把數字變小比較好算。"};
+    return {ok:false, msg:"分母不一樣時，不能直接比分子。"};
+  }, function(){
+    add(b, '<details class="alt"><summary>另一種做法：直接通分（答案一樣，但數字很大）</summary><div class="eq">' +
+      fr(A) + ' = ' + frx(A, SOL.rawLcm / A.d) + ' = ' + fr({n:A.n * SOL.rawLcm / A.d, d:SOL.rawLcm}) + '</div><div class="eq">' +
+      fr(B) + ' = ' + frx(B, SOL.rawLcm / B.d) + ' = ' + fr({n:B.n * SOL.rawLcm / B.d, d:SOL.rawLcm}) + '</div><p class="tip">' +
+      (A.n * SOL.rawLcm / A.d) + ' ' + sym(SOL.sign) + ' ' + (B.n * SOL.rawLcm / B.d) + '，答案也是「' + SOL.sign + '」。可是要算 28 × 15、27 × 14，比先約分辛苦很多。</p></details>');
+    var go = add(b, '<div class="row"><button class="btn" type="button" id="toPractice">換你自己做一題</button></div>');
+    st.lessonDone = true; save(); drawTopBtns();
+    $("#toPractice", go).onclick = function(){ openPractice(); };
+  });
+}
+
+// ---------- 練習 ----------
+function fin(key){ return '<span class="fin"><input class="num" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" data-k="' + key + '.n" aria-label="' + (key[0] === "a" ? "左邊" : "右邊") + '分子"><i></i><input class="num" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" data-k="' + key + '.d" aria-label="' + (key[0] === "a" ? "左邊" : "右邊") + '分母"></span>'; }
+function readFrac(box, key){
+  function num(k){ var x = $('input[data-k="' + key + '.' + k + '"]', box), raw = x ? x.value.trim() : ""; return /^\d+$/.test(raw) ? parseInt(raw, 10) : NaN; }
+  return {n:num("n"), d:num("d")};
+}
+function lock(box){ each(box.querySelectorAll("input,button[data-check],button[data-hint]"), function(x){ x.disabled = true; }); }
+function dots(){ var h = ""; for (var i = 0; i < 3; i++) h += '<i class="' + (i < Math.min(st.streak, 3) ? "on" : "") + '"></i>'; return '<span class="dots" aria-label="連續自己做對 ' + st.streak + ' 題">' + h + '</span>'; }
+function openPractice(){ var P = $("#practice"); P.hidden = false; renderPractice(); reveal(P); }
+function renderPractice(){
+  var P = $("#practice"), p = F.problem(st.idx, st.seed), a = p.a, b = p.b, s = F.solve(a, b);
+  var cur = {hints:0, wrongs:0}, sa = null, sb = null, ea = null, eb = null;
+  P.innerHTML = '<div class="row" style="justify-content:space-between"><h2 style="font-size:24px">練習第 ' + (st.idx + 1) + ' 題</h2><span class="small muted">連續自己做對' + dots() + '</span></div>' +
+    '<div class="small muted">連續 3 題「沒看提示、每一格第一次就對」就算學會。看了提示也沒關係，弄懂最重要。</div>' +
+    '<div class="prob">' + fr(a) + '<span class="box" id="pbox" role="img" aria-label="空格"></span>' + fr(b) + '</div>' +
+    '<div class="prow" id="r1"><div class="qq">① 先約分，變成最簡分數</div><div class="eq"><span class="pair">' + fr(a) + ' = ' + fin("a") + '</span><span class="pair">' + fr(b) + ' = ' + fin("b") + '</span></div>' +
+    '<div class="row"><button class="btn sm" type="button" data-check>檢查</button><button class="btn ghost sm" type="button" data-hint>給我提示</button></div><div class="fb" hidden></div><div class="hint" hidden></div></div>' +
+    '<div class="prow" id="r2" hidden></div><div class="prow" id="r3" hidden></div><div id="pend" style="display:grid;gap:12px" hidden></div>';
+  var r1 = $("#r1", P), r2 = $("#r2", P), r3 = $("#r3", P);
+  wireRow(r1, function(){
+    var ia = readFrac(r1, "a"), ib = readFrac(r1, "b"), x = F.checkReduce(a, ia), y = F.checkReduce(b, ib);
+    if (x.ok && y.ok) { sa = ia; sb = ib; return {ok:true, msg:"對了：" + F.txt(a) + " = " + F.txt(sa) + "，" + F.txt(b) + " = " + F.txt(sb) + "。", next:row2}; }
+    return {ok:false, countable:(!x.ok && x.code !== "empty") || (!y.ok && y.code !== "empty"), msg:(x.ok ? "" : "左邊：" + x.msg) + (!x.ok && !y.ok ? "\n" : "") + (y.ok ? "" : "右邊：" + y.msg)};
+  }, [
+    function(){ return "從 2、3、5、7、9 開始試：分子和分母都在同一個乘法表裡，就能一起除。" + [a, b].map(function(f){ var q = F.smallestCommon(f); return F.txt(f) + "：" + F.divText(q, f.n) + "、" + F.divText(q, f.d) + "，可以先一起除以 " + q + "。"; }).join(" "); },
+    function(){ return [a, b].map(function(f){ var t = F.simplest(f); return F.txt(f) + "：" + f.n + " = " + t.g + " × " + t.n + "、" + f.d + " = " + t.g + " × " + t.d + "，一起除以 " + t.g + "，變成 " + t.n + "/" + t.d + "。"; }).join(" "); }
+  ]);
+  function row2(){
+    r2.hidden = false;
+    r2.innerHTML = '<div class="qq">② 再通分，讓分母一樣</div><div class="eq"><span class="pair">' + fr(sa) + ' = ' + fin("c") + '</span><span class="pair">' + fr(sb) + ' = ' + fin("e") + '</span></div>' +
+      '<div class="row"><button class="btn sm" type="button" data-check>檢查</button><button class="btn ghost sm" type="button" data-hint>給我提示</button></div><div class="fb" hidden></div><div class="hint" hidden></div>';
+    wireRow(r2, function(){
+      var ia = readFrac(r2, "c"), ib = readFrac(r2, "e"), x = F.checkCommon(sa, sb, ia, ib);
+      if (x.ok) { ea = ia; eb = ib; return {ok:true, msg:x.msg, next:row3}; }
+      return {ok:false, countable:x.code !== "empty", msg:x.msg};
+    }, [
+      function(){ var ma = [], mb = []; for (var i = 1; i <= s.lcm / sa.d; i++) ma.push(sa.d * i); for (var j = 1; j <= s.lcm / sb.d; j++) mb.push(sb.d * j);
+        return "先找 " + sa.d + " 和 " + sb.d + " 的最小公倍數。" + sa.d + " 的倍數：" + ma.join("、") + "…；" + sb.d + " 的倍數：" + mb.join("、") + "…，第一個兩邊都有的就是。"; },
+      function(){ return "最小公倍數是 " + s.lcm + "。" + F.txt(sa) + " 的分子分母都乘 " + (s.lcm / sa.d) + " → " + F.txt(s.ea) + "；" + F.txt(sb) + " 的分子分母都乘 " + (s.lcm / sb.d) + " → " + F.txt(s.eb) + "。"; }
+    ]);
+    reveal(r2);
+  }
+  function row3(){
+    r3.hidden = false;
+    r3.innerHTML = '<div class="qq">③ 比大小：' + fr(ea) + ' 和 ' + fr(eb) + '</div><div class="qq">所以 ' + fr(a) + ' ○ ' + fr(b) + '？</div><div class="chips">' +
+      SIGNS.map(function(o){ return '<button type="button" class="chip sign" data-s="' + esc(o.value) + '">' + o.label + '</button>'; }).join("") + '</div><div class="fb" hidden></div>';
+    var out = $(".fb", r3), bs = r3.querySelectorAll(".chip");
+    each(bs, function(bt){ bt.onclick = function(){
+      var r = F.checkSign(a, b, ea, eb, bt.dataset.s);
+      if (r.ok) { each(bs, function(x){ x.disabled = true; }); bt.classList.add("picked"); fb(out, true, r.msg); $("#pbox", P).innerHTML = sym(s.sign); $("#pbox", P).classList.add("got"); finish(); }
+      else { cur.wrongs++; bt.classList.remove("shake"); void bt.offsetWidth; bt.classList.add("shake", "tried"); fb(out, false, r.msg); }
+    }; });
+    reveal(r3);
+  }
+  function finish(){
+    var clean = cur.hints === 0 && cur.wrongs === 0, was = st.mastered;
+    st.solved++; if (clean) { st.clean++; st.streak++; } else st.streak = 0;
+    if (st.streak >= 3) st.mastered = true;
+    st.log.push({t:Date.now(), a:F.txt(a), b:F.txt(b), clean:clean, hints:cur.hints, wrongs:cur.wrongs}); st.log = st.log.slice(-100);
+    var saved = save();
+    var E = $("#pend", P); E.hidden = false;
+    E.innerHTML = (st.mastered && !was ? '<div class="win"><b class="t">這種題你會了！</b><span>連續 3 題自己做對。回到習作，把第 6 題②寫完吧。</span></div>' :
+      '<div class="fb ok">' + (clean ? "完全自己做對！連續 " + st.streak + " 題。" : "做完了！" + (cur.hints ? "這題看了提示，" : "這題有改過答案，") + "下一題試試不看提示。") + '</div>') +
+      (saved ? "" : '<p class="small muted">這台裝置存不了紀錄（可能是私密瀏覽），重新整理後會從頭開始，題目照常可以做。</p>') +
+      '<div class="row"><button class="btn" type="button" id="nextQ">下一題</button><button class="btn ghost" type="button" id="toLesson">再看一次教學</button></div>';
+    $("#nextQ", E).onclick = function(){ st.idx++; save(); renderPractice(); reveal(P); };
+    $("#toLesson", E).onclick = function(){ startLesson(); };
+    drawTopBtns(); drawRec(); reveal(E);
+  }
+  function wireRow(row, check, hints){
+    var out = $(".fb", row), hb = $(".hint", row), lvl = 0;
+    function go(){
+      var r = check();
+      if (r.ok) { lock(row); fb(out, true, r.msg); r.next(); }
+      else { if (r.countable) cur.wrongs++; fb(out, false, r.msg); }
+    }
+    $("button[data-check]", row).onclick = go;
+    $("button[data-hint]", row).onclick = function(){
+      cur.hints++; hb.hidden = false; hb.textContent = hints[Math.min(lvl, hints.length - 1)](); lvl++;
+      if (lvl >= hints.length) this.disabled = true;
+    };
+    each(row.querySelectorAll("input"), function(x){ x.addEventListener("keydown", function(e){ if (e.key === "Enter") go(); }); });
+  }
+}
+
+// ---------- 首頁按鈕、紀錄、影片 ----------
+function drawTopBtns(){
+  var T = $("#topBtns");
+  T.innerHTML = st.lessonDone ?
+    '<button class="btn" type="button" id="goPractice">' + (st.solved ? "繼續練習（第 " + (st.idx + 1) + " 題）" : "換你自己做練習題") + '</button><button class="btn ghost" type="button" id="goLesson">再看一次教學</button>' :
+    '<button class="btn" type="button" id="goLesson">開始學</button><button class="btn ghost" type="button" id="goPractice">我已經會了，直接練習</button>';
+  $("#goLesson").onclick = startLesson;
+  $("#goPractice").onclick = openPractice;
+  var M = $("#mastery");
+  M.hidden = !st.mastered;
+  if (st.mastered) M.innerHTML = '<div class="win"><b class="t">這種題你已經會了</b><span>連續 3 題自己做對。想多練可以繼續做。</span></div>';
+}
+function drawRec(){
+  $("#rec").textContent = st.solved ? "這台裝置上的練習紀錄：做完 " + st.solved + " 題，其中 " + st.clean + " 題沒看提示、一次就對；目前連續 " + st.streak + " 題。" + (st.mastered ? "已達「連續 3 題自己做對」。" : "") : "這台裝置上還沒有練習紀錄。";
+}
+function drawVids(){
+  if (!VIDS.length) return;
+  $("#vidBox").hidden = false;
+  $("#vids").innerHTML = VIDS.map(function(v, i){ return '<div style="display:grid;gap:6px"><b>' + esc(v.title) + '</b><span class="small muted">' + esc(v.note) + '</span><div class="row"><button class="btn ghost sm" type="button" data-v="' + i + '">播放（' + esc(v.len) + '）</button></div><div class="vslot"></div></div>'; }).join("");
+  each($("#vids").querySelectorAll("button[data-v]"), function(b){ b.onclick = function(){
+    var v = VIDS[+b.dataset.v], slot = b.parentNode.nextElementSibling;
+    slot.innerHTML = '<div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(v.id) + '?rel=0&playsinline=1&autoplay=1&start=' + v.start + (v.end ? '&end=' + v.end : '') + '" title="' + esc(v.title) + '" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>';
+    b.disabled = true;
+  }; });
+}
+
+drawProb(); drawTopBtns(); drawRec(); drawVids();
+window.G5MathPage = {state:function(){ return JSON.parse(JSON.stringify(st)); }};
+})();
+</script>
+</body></html>
