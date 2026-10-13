@@ -3252,17 +3252,22 @@ function archiveRetry(){var r=store.retryArchive();if(r.error==="STATE_CHANGED")
 /* ---------- 探險地圖＋成長植物（#1725） ---------- */
 // 走過一站＝觀念卡到「開花了」以上（view().stages ≥ 3，與觀念卡同一份 stageOf）；只讀，不寫 g5sci.v3。
 // 「上次看到第幾階」存在獨立 key g5sci.mapSeen（每台裝置的觀看紀錄）；store.watches() 只看 g5sci.v3，不會觸發外部變更偵測。
-var MAPX=window.G5Map, mapSeenMem=null;
+// mapSeenMem：這一頁自己記得的「看過第幾階」——mapSeen 寫不進去時也靠它，同一頁不重播（Codex 審 7d8b243 ②）
+// mapKey：地圖上次畫出來的內容；沒變就不重畫，正在播的動畫不會被下一次 renderSide() 蓋掉
+var MAPX=window.G5Map, mapSeenMem=null, mapKey=null;
 var MAP_CHECK='<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 var MAP_LOCK='<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
 var MAP_CUP='<svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5A3.5 3.5 0 0 1 16.5 11" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 14v3M8 20h8M9.5 17h5v3h-5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
 var MAP_STARS='<svg class="stars" viewBox="0 0 150 180" aria-hidden="true">'+[[30,40],[118,30],[18,110],[128,96],[75,8]].map(function(p){var x=p[0],y=p[1];return '<path d="M'+x+' '+(y-9)+'l2.6 6.2 6.4.4-4.9 4.1 1.6 6.3-5.7-3.5-5.7 3.5 1.6-6.3-4.9-4.1 6.4-.4z"/>';}).join("")+'</svg>';
 function seenStorage(){try{return window.localStorage;}catch(e){return null;}}
 function showMap(on){var b=$("#mapBox");if(b)b.hidden=!on;}
+function mapStill(box){box.querySelectorAll("svg.pl.grow").forEach(function(e){e.classList.remove("grow");});box.querySelectorAll(".stars").forEach(function(e){e.remove();});}
 function renderMap(){
   var box=$("#mapBox"); if(!box||!MAPX) return;
-  var v=V(), t=MAPX.trail({cids:CIDS, stages:v.stages, on:conceptOn});
-  var seen=MAPX.readSeen(seenStorage()); if(seen===null) seen=mapSeenMem;
+  var v=V(), t=MAPX.trail({cids:CIDS, stages:v.stages, on:conceptOn}), key=JSON.stringify(t);
+  // 內容沒變：不重畫；從別的畫面回來（地圖原本收著）時先拿掉動畫 class——display:none 再出現會讓 CSS 動畫重播
+  if(key===mapKey&&box.firstChild){if(box.hidden)mapStill(box);showMap(true);return;}
+  var seen=mapSeenMem!==null?mapSeenMem:MAPX.readSeen(seenStorage());
   var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var fx=MAPX.growth(seen,t.level,t.allDone), anim=fx.grow&&!reduce;
   var head='走過 '+t.walked+' 站／共 '+t.total+' 站・'+(t.allDone?'全部走完了':t.left?'再 '+t.left+' 站到考試':'等老師教完'+CONCEPTS[CIDS[CIDS.length-1]].short+'再開放下一站');
@@ -3281,7 +3286,7 @@ function renderMap(){
     (t.allDone?'<div class="mapwin" role="status">探險地圖全部走完了！去跟爸媽說</div>'+(fx.celebrate&&!reduce?MAP_STARS.replace('class="stars"','class="stars go"'):''):
      t.level<MAPX.PLANT.length-1?'<div class="next"><span class="ghostbox">'+MAPX.plantSvg(t.level+1,{ghost:true})+'<b aria-hidden="true">？</b></span><span>再走過一站，看看它會變成什麼</span></div>':'')+'</div>';
   box.innerHTML='<div class="maphead"><h2 id="mapT">探險地圖</h2><span id="mapCount">'+head+'</span></div><div class="mapbody"><ol class="trail" aria-label="'+["","一","二","三","四","五","六","七","八","九","十"][CIDS.length]+'個觀念的路線">'+lis+'</ol>'+plant+'</div>';
-  mapSeenMem=t.level; MAPX.writeSeen(seenStorage(),t.level);
+  mapKey=key; mapSeenMem=t.level; MAPX.writeSeen(seenStorage(),t.level);
   box.querySelectorAll("button.stn").forEach(function(b){b.onclick=function(){
     var cid=b.dataset.cid;
     if(!conceptOn(cid)){toast("老師教完溶解以後，到「設定與題庫」打勾，隔天就會開放。");return;}
@@ -3322,7 +3327,6 @@ function renderHome(){
   }
   el.innerHTML=h+reviewRow();
   wireReview(el);
-  renderMap();
   on("#goAll",function(){beginRound({type:"sessionStart"});});
   on("#goLight",function(){beginRound({type:"sessionStart",size:3});});
   on("#goOn",startRound);
@@ -4014,7 +4018,8 @@ function renderSummary(){
     try{navigator.clipboard.writeText(t).then(done,fail);}catch(e){fail();}
   });
 }
-function renderSide(){header();banners();renderConcepts();renderCal();renderExit();renderSummary();renderSettings();}
+// 地圖跟著 renderSide() 更新（Codex 審 7d8b243 ①）：出口題答得出來／還不行／再考一次等改變觀念階段的操作都會經過這裡；只在首頁畫
+function renderSide(){header();banners();renderConcepts();renderCal();renderExit();renderSummary();renderSettings();if(screen==="home")renderMap();}
 
 /* ---------- 設定 ---------- */
 function renderSettings(){

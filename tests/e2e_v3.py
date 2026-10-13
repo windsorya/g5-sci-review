@@ -829,9 +829,10 @@ def map_card_ids(cid):
     return sorted(set(re.findall(r'id:"(\w+)",concept:"' + re.escape(cid) + '"', html)) | set(re.findall(r'\b\w+\("(\w+)", "' + re.escape(cid) + '"', html)))
 
 
-def map_seed(n, unit3=True, seen=None, seen_throws=False, grown=False):
+def map_seed(n, unit3=True, seen=None, seen_throws=False, grown=False, pending=False):
     """前 n 個觀念出口題通過（＝觀念卡「開花了」）；grown＝第 n+1 個觀念全部題卡都見過（＝「長葉了」，還不算走過）。
-    同時記下這一頁對每個 key 的 setItem 次數（window.__mw）。"""
+    pending＝第 n+1 個觀念的出口題今天要問（出口題區有「答得出來」）。
+    同時記下這一頁對每個 key 的 setItem 次數（window.__mw）；seen_throws＝這一頁寫 g5sci.mapSeen 一律丟例外（種資料用原本的 setItem，不受影響）。"""
     s = {"v": 3, "cards": {}, "exits": {}, "days": {}, "labRuns": {}, "session": None, "log": [], "ops": [], "help": {}, "extra": [],
          "settings": {"unit3": unit3, "sound": False}}
     for cid in MAP_ORDER[:n]:
@@ -839,11 +840,13 @@ def map_seed(n, unit3=True, seen=None, seen_throws=False, grown=False):
     if grown:
         for k in map_card_ids(MAP_ORDER[n]):
             s["cards"][k] = {"seen": 1, "goodDays": [], "blockedDay": None, "due": "2026-10-14"}
-    js = ("window.__mw={};(function(){var o=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){"
+    if pending:
+        s["exits"][MAP_ORDER[n]] = {"status": "pending", "due": "2026-10-13", "opened": "2026-10-12", "last": None}
+    js = ("window.__mw={};(function(){var o=window.__o=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){"
           + ("if(k==='g5sci.mapSeen')throw new Error('QuotaExceededError');" if seen_throws else "")
           + "window.__mw[k]=(window.__mw[k]||0)+1;return o.call(this,k,v);};})();"
-          + "if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', %s);" % json.dumps(json.dumps(s))
-          + ("localStorage.setItem('g5sci.mapSeen','%d');" % seen if seen is not None else "localStorage.removeItem('g5sci.mapSeen');")
+          + "if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');window.__o.call(localStorage,'g5sci.v3', %s);" % json.dumps(json.dumps(s))
+          + ("window.__o.call(localStorage,'g5sci.mapSeen','%d');" % seen if seen is not None else "localStorage.removeItem('g5sci.mapSeen');")
           + "window.__mw={};}")
     return js
 
@@ -946,6 +949,45 @@ def flow_map_more(browser):
     ctx.close()
 
 
+def flow_map_after_exit(browser, device=None, label="chromium"):
+    """Codex 審 7d8b243 ①：在首頁按出口題「答得出來」＝破關，地圖要當下更新並播那一次的長大＋全破動畫；「再考一次」要退回。"""
+    ctx, page, errors = new_page(browser, "2026-10-13T19:00:00+08:00", device, init=map_seed(6, seen=6, pending=True))
+    i = page.evaluate(MAP_INFO_JS)
+    check(f"{label} 地圖（出口題前）：走過 6 站、還沒全破", i["count"] == "走過 6 站／共 7 站・再 1 站到考試" and not i["won"], i["count"])
+    page.locator("#exitBox > summary").click()
+    page.locator('#exitList button[data-c="3-1"][data-r="pass"]').click()
+    i = page.evaluate(MAP_INFO_JS)
+    check(f"{label} 地圖：首頁按出口題「答得出來」後當下變成全破（7 站、獎盃、結果、全破訊息）",
+          i["count"] == "走過 7 站／共 7 站・全部走完了" and i["won"] and i["plant"] == "植物：結果" and "探險地圖全部走完了！去跟爸媽說" in i["text"], (i["count"], i["won"], i["plant"]))
+    check(f"{label} 地圖：這一次破關當下播長大＋星星", i["grow"] and i["stars"], (i["grow"], i["stars"]))
+    page.locator('#exitList button[data-retest="3-1"]').click()
+    i = page.evaluate(MAP_INFO_JS)
+    check(f"{label} 地圖：「再考一次」後退回 6 站、不是全破、不動畫", i["count"] == "走過 6 站／共 7 站・再 1 站到考試" and not i["won"] and not i["grow"] and not i["stars"], (i["count"], i["won"]))
+    page.locator('#exitList button[data-c="3-1"][data-r="fail"]').click()
+    i = page.evaluate(MAP_INFO_JS)
+    check(f"{label} 地圖：出口題「還不行」仍是 6 站", i["count"] == "走過 6 站／共 7 站・再 1 站到考試" and not i["won"], i["count"])
+    check(f"{label} 地圖（出口題）：沒有 pageerror", not errors, errors)
+    ctx.close()
+
+
+def flow_map_seen_unwritable(browser):
+    """Codex 審 7d8b243 ②：mapSeen 寫不進去時，同一頁回首頁不能每次重播長大／星星。"""
+    label = "chromium"
+    for n, seen, stars in ((3, 2, False), (7, 6, True)):
+        ctx, page, errors = new_page(browser, "2026-10-13T19:00:00+08:00", init=map_seed(n, seen=seen, seen_throws=True))
+        i = page.evaluate(MAP_INFO_JS)
+        check(f"{label} 地圖（mapSeen 寫不進、上次 {seen}、現在 {n}）：第一次回首頁播一次", i["grow"] and i["stars"] == stars and i["seen"] == str(seen), (i["grow"], i["stars"], i["seen"]))
+        replay = []
+        for _ in range(2):
+            page.locator('#mapBox button.stn[data-cid="1-1"]').click()
+            btn(page, "回首頁").click()
+            j = page.evaluate(MAP_INFO_JS)
+            replay.append((j["grow"], j["stars"]))
+        check(f"{label} 地圖（mapSeen 寫不進、現在 {n}）：同一頁再回首頁兩次都不重播", replay == [(False, False), (False, False)], replay)
+        check(f"{label} 地圖（mapSeen 寫不進）：沒有 pageerror", not errors, errors)
+        ctx.close()
+
+
 def flow_map_layout(browser, label):
     # 手機 390 直排、不橫向捲動；iPad 810 橫排；深色模式文字對比 ≥4.5
     for name, dev, scheme, vertical in (("phone390", {"viewport": {"width": 390, "height": 844}, "is_mobile": True, "has_touch": True}, "light", True),
@@ -1002,6 +1044,9 @@ def main():
         flow_map(ch, "chromium")
         flow_map(wk, "webkit_ipad", ipad)
         flow_map_more(ch)
+        flow_map_after_exit(ch)
+        flow_map_after_exit(wk, ipad, "webkit_ipad")
+        flow_map_seen_unwritable(ch)
         flow_map_layout(ch, "chromium")
         flow_map_layout(wk, "webkit")
         if SHOTS:
