@@ -32,30 +32,11 @@ def inline(body: str) -> str:
     return out
 
 
-TOKENS = re.compile(r"/\*@TOKENS-BEGIN[^*]*\*/(.*?)/\*@TOKENS-END\*/", re.S)
-
-
-def build_math(app_src: str) -> None:
-    """數學小教室（math/index.html）：色票只維護 src/app.html 那一份，建置時複製進來。"""
-    m = TOKENS.search(app_src)
-    if not m:
-        raise SystemExit("src/app.html 找不到 @TOKENS-BEGIN／@TOKENS-END 區段")
-    src = (ROOT / "src" / "math.html").read_text(encoding="utf-8")
-    if src.count("/*@TOKENS*/") != 1:
-        raise SystemExit("src/math.html 要有一個 /*@TOKENS*/")
-    body = inline(src.replace("/*@TOKENS*/", m.group(1).strip()))
-    out = ROOT / "math" / "index.html"
-    out.parent.mkdir(exist_ok=True)
-    out.write_text(HEAD.replace('content="自然複習"', 'content="數學小教室"') + body + "</body></html>", encoding="utf-8")
-    print(f"built math/index.html ({len(body)} chars)")
-
-
 def main() -> None:
     app_src = (ROOT / "src" / "app.html").read_text(encoding="utf-8")
     body = inline(app_src)
     (ROOT / "index.html").write_text(HEAD + body + "</body></html>", encoding="utf-8")
     print(f"built index.html ({len(body)} chars)")
-    build_math(app_src)
 
 
 if __name__ == "__main__":
