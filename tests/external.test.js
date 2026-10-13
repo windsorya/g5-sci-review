@@ -239,10 +239,10 @@ test("T09 結束畫面留著「再練答錯的」、別處清除：tick 與舊�
     const a = mk(B);
     mem.f.write = true;
     const r = B.dispatch(a); assert.equal(r.ok, false); assert.equal(r.error, "SAVE_FAILED"); assert.equal(B.get().pendingAction.id, a.id);
-    assert.equal(B.dispatch({ type: "tick" }).error, "SAVE_PENDING"); assert.equal(B.accepted(a.id), false);
+    assert.equal(B.dispatch({ type: "tick" }).error, "BLOCKED"); assert.equal(B.accepted(a.id), false);   // 4agent 方案 (a)：有待存時一律拒收
     mem.f.write = false;
     const w0 = mem.writes();
-    assert.ok(B.retry().ok); assert.equal(B.accepted(a.id), true); assert.equal(mem.writes(), w0 + 1);
+    assert.ok(B.retry().ok); assert.equal(B.accepted(a.id), true); assert.equal(mem.writes(), w0 + 2);   // 4agent 方案 (a)：resume＝補寫這一筆＋tick
     assert.equal(B.retry().nothing, true);
     assert.ok(B.dispatch(a).dup, "同一個操作 ID 再送只算一次");
     const onDisk = JSON.parse(mem.raw[C.LS_KEY]);
@@ -267,7 +267,10 @@ Object.keys(CHANGES).forEach((how) => {
         mem.f.write = true; assert.equal(B.dispatch(a).ok, false); mem.f.write = false;
         CHANGES[how](mem, b);
         const before = mem.raw[C.LS_KEY], w0 = mem.writes();
-        const r = trigger === "retry" ? B.retry() : trigger === "tick" ? B.dispatch({ type: "tick" }) : B.dispatch(op("answer", { cardId: "s2", ok: false }));
+        // 4agent 方案 (a)：有待存時 tick／新操作一律拒收（BLOCKED、零讀零寫，不靜默丟待存）；之後的 retry 才發現換代
+        const r0 = trigger === "retry" ? null : trigger === "tick" ? B.dispatch({ type: "tick" }) : B.dispatch(op("answer", { cardId: "s2", ok: false }));
+        if (r0) { assert.equal(r0.error, "BLOCKED", "得到 " + JSON.stringify([r0.ok, r0.error])); assert.equal(mem.writes(), w0); }
+        const r = B.retry();
         assert.ok(isChanged(r), "得到 " + JSON.stringify([r.ok, r.error]));
         assert.equal(r.pending, true, "要告訴畫面「有一步需要重做」"); assert.equal(B.get().pendingAction.id, a.id, "待存操作被靜默丟掉了");
         assert.equal(mem.writes(), w0, "偷偷補寫了"); assert.equal(mem.raw[C.LS_KEY], before);
@@ -386,21 +389,17 @@ const RESUME_SHA = "0c4586ff0fe28e4020fe3c4f0cbae37279c73ac1b8ba533f83759e774fa0
 const SS = (r) => r && r.storageStatus;
 function okStore(b, init) { const mem = disk2(init); const st = open2(mem, b, sess()); return { mem, st }; }
 
-test("R09 讀取失敗一律回 READ（C2）：dispatch 直接讀失敗／既有待存在補寫時讀失敗／retry 有無待存——待存 id 不被新操作取代、零寫入", () => {
+test("R09 讀取失敗一律回 READ（C2）；4agent 方案 (a)：已有待存時新操作被拒收（BLOCKED、零讀寫、待存 id 不換）；retry／resume 讀失敗回 READ", () => {
   const b = bank(["s1", "s2"]);
-  // dispatch 直接讀失敗：回 READ、這筆留成待存
   let { mem, st } = okStore(b); const a = op("answer", { cardId: "s1", ok: true });
   mem.fail("get", C.LS_KEY, { once: true });
   let r = st.dispatch(a);
   assert.deepEqual([r.ok, r.error, SS(r), r.pendingId], [false, "READ", "readFailed", a.id]); assert.equal(mem.muts(), 0);
-  assert.equal(st.get().storageStatus, "readFailed");
-  // 既有待存 A 補寫時讀失敗，再送 B：回 READ（不是 SAVE_PENDING／SAVE_FAILED），待存仍是 A
   ({ mem, st } = okStore(b)); const A1 = op("answer", { cardId: "s1", ok: true }), B1 = op("answer", { cardId: "s2", ok: true });
   mem.fail("set", C.LS_KEY, { once: true }); assert.equal(st.dispatch(A1).error, "SAVE_FAILED"); assert.equal(st.get().storageStatus, "saveFailed");
-  const m0 = mem.muts(); mem.fail("get", C.LS_KEY, { once: true });
+  const m0 = mem.muts(), t0 = mem.touched.length;
   r = st.dispatch(B1);
-  assert.deepEqual([r.ok, r.error, SS(r), r.pendingId], [false, "READ", "readFailed", A1.id]); assert.equal(mem.muts(), m0);
-  // retry 有待存讀失敗／無待存讀失敗
+  assert.deepEqual([r.ok, r.error, SS(r), r.pendingId], [false, "BLOCKED", "saveFailed", A1.id]); assert.equal(mem.muts(), m0); assert.equal(mem.touched.length, t0, "拒收時還讀了");
   mem.fail("get", C.LS_KEY, { once: true }); r = st.retry();
   assert.deepEqual([r.ok, r.error, SS(r), r.pendingId], [false, "READ", "readFailed", A1.id]); assert.equal(mem.muts(), m0);
   assert.ok(st.retry().ok); assert.ok(st.accepted(A1.id)); assert.equal(st.get().storageStatus, "ok");
@@ -421,17 +420,17 @@ test("R10 真正寫入失敗後單獨 check() 成功不清「沒存」；無 id 
   r = st.resume(); assert.ok(r.ok); assert.equal(SS(r), "ok");
 });
 
-test("R03 答案寫失敗→設定操作補存了答案、但設定自己寫失敗→retry 讀失敗：回 READ、待存是設定、零寫入、答案已存但這輪不公布", () => {
+test("R03（4agent 方案 (a)）答案寫失敗成為待存後，設定操作被拒收（不補寫答案、不收設定）；讀不到時 retry 回 READ；恢復後 resume 補寫答案", () => {
   const b = bank(["s1"]); const { mem, st } = okStore(b);
   const ans = op("answer", { cardId: "s1", ok: true }), set = op("settings", { sound: false });
   mem.fail("set", C.LS_KEY, { once: true }); st.dispatch(ans);
-  mem.fail("set", C.LS_KEY, { once: true, skip: 1 });          // 補寫答案成功，接著設定那次寫入失敗
+  const m0 = mem.muts();
   const rs = st.dispatch(set);
-  assert.equal(rs.ok, false); assert.equal(st.accepted(ans.id), true); assert.equal(st.get().pendingAction.id, set.id);
-  const m0 = mem.muts(); mem.fail("get", C.LS_KEY, { once: true });
+  assert.deepEqual([rs.ok, rs.error, rs.pendingId], [false, "BLOCKED", ans.id]); assert.equal(mem.muts(), m0); assert.equal(st.accepted(ans.id), false);
+  mem.fail("get", C.LS_KEY, { once: true });
   const r = st.retry();
-  assert.deepEqual([r.ok, r.error, SS(r), r.pendingId], [false, "READ", "readFailed", set.id]); assert.equal(mem.muts(), m0);
-  const r2 = st.resume(); assert.ok(r2.ok); assert.equal(SS(r2), "ok"); assert.ok(st.accepted(set.id));
+  assert.deepEqual([r.ok, r.error, SS(r), r.pendingId], [false, "READ", "readFailed", ans.id]); assert.equal(mem.muts(), m0);
+  const r2 = st.resume(); assert.ok(r2.ok); assert.equal(SS(r2), "ok"); assert.equal(r2.acceptedId, ans.id); assert.equal(st.accepted(set.id), false, "被拒收的設定不該被偷偷補上");
 });
 
 test("R04／R05 resume：前置檢查成功、tick 讀 V 失敗——回 READ、不算成功；待存答案已補存的不回滾，下次 resume 同 id 不重複", () => {
@@ -508,26 +507,27 @@ test("R25 交付產物與來源一致：依 build.py 的組裝規則在記憶體
 
 
 /* ---------- 第 3 輪（Codex 審 9b88c94／1e51dc0／47486df／55509eb）四站共同：待存 ID 分離、tick 未完成不前進 ---------- */
-test("R27 待存 ID 分離：核心另有待存（設定）時作答遇 READ——回 READ、pendingId 仍是設定（不是本次作答）；resume(本次作答) 依序補存設定再存答案，同一 id 只存一次、infos 帶答案的結果", () => {
+test("R27（4agent 方案 (a)）待存 ID 不再分離：核心另有待存（設定）時，作答被拒收（BLOCKED、零讀寫、待存仍是設定）；resume 只補寫那唯一一筆，作答由畫面在恢復後重做", () => {
   const b = bank(["s1"]); const { mem, st } = okStore(b);
   const set = op("settings", { sound: false }), ans = op("answer", { cardId: "s1", ok: true });
   mem.fail("set", C.LS_KEY, { once: true }); assert.equal(st.dispatch(set).error, "SAVE_FAILED");
-  mem.fail("get", C.LS_KEY, { once: true });
+  const t0 = mem.touched.length;
   const r = st.dispatch(ans);
-  assert.deepEqual([r.ok, r.error, r.pendingId], [false, "READ", set.id]); assert.equal(st.accepted(ans.id), false);
-  const z = st.resume(ans);
-  assert.ok(z.ok); assert.equal(z.storageStatus, "ok"); assert.deepEqual(z.acceptedIds.sort(), [ans.id, set.id].sort());
-  assert.ok(z.infos && z.infos[ans.id], "沒有帶回本次作答的結果");
-  const s = JSON.parse(mem.raw[C.LS_KEY]); assert.equal(s.settings.sound, false); assert.equal(s.log.length, 1);
-  const z2 = st.resume(ans); assert.ok(z2.ok); assert.equal(JSON.parse(mem.raw[C.LS_KEY]).log.length, 1, "同一題記了兩次");
+  assert.deepEqual([r.ok, r.error, r.pendingId], [false, "BLOCKED", set.id]); assert.equal(mem.touched.length, t0); assert.equal(st.accepted(ans.id), false);
+  const z = st.resume();
+  assert.ok(z.ok); assert.equal(z.storageStatus, "ok"); assert.equal(z.acceptedId, set.id);
+  const s = JSON.parse(mem.raw[C.LS_KEY]); assert.equal(s.settings.sound, false); assert.equal(s.log.length, 0, "被拒收的作答不該被補上");
+  assert.ok(st.dispatch(ans).ok); assert.equal(JSON.parse(mem.raw[C.LS_KEY]).log.length, 1);
 });
 
-test("R28 tick 沒做完（tickDue）時，其他操作寫入成功也不算整體 ok：storageStatus 維持 saveFailed，resume 補完 tick 才回 ok", () => {
+test("R28（4agent 方案 (a)）tick 沒做完（tickDue）時其他操作被拒收（BLOCKED、零寫入）；resume 補完 tick 才回 ok，之後才收新操作", () => {
   const b = bank(["s1"]); const { mem, st } = okStore(b);
   mem.fail("set", C.LS_KEY, { once: true }); assert.equal(st.dispatch({ type: "tick" }).error, "SAVE_FAILED");
+  const m0 = mem.muts();
   const r = st.dispatch(op("answer", { cardId: "s1", ok: true }));
-  assert.equal(r.ok, true); assert.equal(r.storageStatus, "saveFailed", "tick 沒做完卻回整體 ok"); assert.equal(st.get().tickDue, true);
+  assert.equal(r.error, "BLOCKED"); assert.equal(r.storageStatus, "saveFailed"); assert.equal(st.get().tickDue, true); assert.equal(mem.muts(), m0);
   const z = st.resume(); assert.ok(z.ok); assert.equal(z.storageStatus, "ok"); assert.equal(st.get().tickDue, false);
+  assert.ok(st.dispatch(op("answer", { cardId: "s1", ok: true })).ok);
 });
 
 /* ---------- 自然站舊版功能縮範圍（4agent 最終方案 (a)，docs/design-storage-scopecut-20261014.md）：L01–L16 ----------
@@ -630,7 +630,7 @@ test("L13 原始 makeStorage（vm 執行）：probe 寫不進時只讀新版 key
 test("L15 自然站也跑 T17（不碰舊版與標記 key）：T17 的 skip 條件在本站為 false", () => {
   assert.equal(C.LS_V1, null); assert.equal(C.LS_V1 !== null && ONLY_THREE, false);
 });
-test("L16 設計文件：原兩份 SHA 不變；縮範圍文件受 Git 追蹤，含 29 條處置表與 owner 決定", () => {
+test("L16 設計文件：原兩份 SHA 不變；縮範圍文件受 Git 追蹤，含 29 條處置表與 owner 決定", { skip: !SCI && "自然站專屬（縮範圍文件只在自然站）" }, () => {
   const fs = require("fs"), path = require("path"), cp = require("child_process"), crypto = require("crypto"); const root = path.join(__dirname, "..");
   const sha = (f) => crypto.createHash("sha256").update(fs.readFileSync(path.join(root, f))).digest("hex");
   assert.equal(sha("docs/design-storage-base-20261013.md"), "46f8cca9d044122a01b8244228018c0e2634566c8cb9d36dbcc0fd16ad6b4c73");
@@ -641,4 +641,134 @@ test("L16 設計文件：原兩份 SHA 不變；縮範圍文件受 Git 追蹤，
   const t = fs.readFileSync(path.join(root, f), "utf8");
   assert.ok(/owner 決定/.test(t) && /只剩 O／A 的裝置從空白開始/.test(t), "缺 owner 決定");
   assert.equal((t.match(/^\| D\d{2} /gm) || []).length, 29, "處置表不是 29 條");
+});
+
+/* ---------- 4agent 最終方案 (a)「存檔一不正常就整頁暫停，核心只留一筆」（docs/design-storage-pause-20261014.md）：A 列（核心） ----------
+   狀態不是 ok（有待存、tick 沒做完、讀不到、開頁封鎖、已失效）時，核心拒收任何新操作（BLOCKED、零讀零寫）；只有 resume() 能補存唯一那一筆。 */
+function pdisk(init) {   // 計次替身：讀、寫分開數；f.read／f.write 持續故障；failNth(op, n) 讓第 n 次（從 0 起）讀或寫失敗一次
+  const m = Object.assign({}, init || {}); const f = { read: false, write: false }; let reads = 0, writes = 0; const nth = { get: -1, set: -1 };
+  return {
+    getItem: (k) => { k = String(k); if (k === C.LS_KEY) { if (nth.get === 0) { nth.get = -1; reads++; throw new Error("SecurityError"); } if (nth.get > 0) nth.get--; } reads++; if (f.read) throw new Error("SecurityError"); return has(m, k) ? m[k] : null; },
+    setItem: (k, v) => { k = String(k); if (k === C.LS_KEY) { if (nth.set === 0) { nth.set = -1; throw new Error("QuotaExceededError"); } if (nth.set > 0) nth.set--; } if (f.write) throw new Error("QuotaExceededError"); writes++; m[k] = String(v); },
+    removeItem: (k) => { writes++; delete m[k]; }, raw: m, f, reads: () => reads, writes: () => writes,
+    failNth: (o, n) => { nth[o] = n; }
+  };
+}
+const ALL_OPS = () => [op("answer", { cardId: "s1", ok: true }), op("settings", { sound: false }), { type: "tick" }, op("sessionStart"), op("labStart", { runId: "rz", lab: "x", tasks: 2, answer: 0, from: "menu" }),
+  op("labPredict", { runId: "rz", choice: 0 }), op("labTask", { runId: "rz", task: 0 }), op("labComplete", { runId: "rz" }), op("help", { cid: "1-1", ways: 2 }), op("mood", { value: "good" }),
+  op("teach", { cardId: "s1" }), op("exit", { cid: "1-1", result: "pass" }), op("exitRetest", { cid: "1-1" }), op("helped", { cid: "1-1" }), op("reset"), op("import", { cards: [] })];
+
+test("A01 設定寫失敗成為待存後：直接送作答、tick、任何操作都 BLOCKED，零讀零寫、待存仍是設定", () => {
+  const b = bank(["s1"]); const mem = pdisk(); const st = open(mem, b, sess());
+  const set = op("settings", { sound: false }); mem.f.write = true; assert.equal(st.dispatch(set).error, "SAVE_FAILED"); mem.f.write = false;
+  const r0 = mem.reads(), w0 = mem.writes();
+  const r = st.dispatch(op("answer", { cardId: "s1", ok: true }));
+  assert.deepEqual([r.ok, r.error, r.pendingId, r.storageStatus], [false, "BLOCKED", set.id, "saveFailed"]);
+  assert.equal(st.dispatch({ type: "tick" }).error, "BLOCKED");
+  assert.deepEqual([mem.reads() - r0, mem.writes() - w0], [0, 0], "拒收時還讀寫了");
+});
+
+test("A17 讀取失敗一律回 READ：狀態 ok 時 dispatch 讀失敗；resume 的前置讀、補存讀、tick 讀各自失敗——都是 READ、待存 id 不變、不改報 SAVE_*", () => {
+  const b = bank(["s1"]);
+  let mem = pdisk(); let st = open(mem, b, sess()); const a = op("answer", { cardId: "s1", ok: true });
+  mem.failNth("get", 0); let r = st.dispatch(a);
+  assert.deepEqual([r.ok, r.error, r.pendingId, r.storageStatus], [false, "READ", a.id, "readFailed"]);
+  for (const k of [0, 1, 2]) {   // resume：0＝前置讀、1＝補存前讀、2＝tick 前讀
+    mem = pdisk(); st = open(mem, b, sess()); const x = op("answer", { cardId: "s1", ok: true });
+    mem.f.write = true; st.dispatch(x); mem.f.write = false;
+    mem.failNth("get", k); r = st.resume();
+    assert.deepEqual([r.ok, r.error, r.storageStatus], [false, "READ", "readFailed"], "第 " + k + " 次讀");
+    assert.equal(st.get().pendingAction ? st.get().pendingAction.id : null, k < 2 ? x.id : null, "待存被換掉");
+  }
+});
+
+test("A18 讀不到之後單獨 check() 讀成功：storageStatus 仍是 readFailed，只有 resume() 整條成功才解除", () => {
+  const b = bank(["s1"]); const mem = pdisk(); const st = open(mem, b, sess());
+  mem.failNth("get", 0); st.dispatch(op("answer", { cardId: "s1", ok: true }));
+  const c = st.check(); assert.equal(c.storageStatus, "readFailed"); assert.equal(st.get().storageStatus, "readFailed");
+  const r = st.resume(); assert.ok(r.ok); assert.equal(r.storageStatus, "ok");
+});
+
+test("A14／A15 開頁就讀不到：狀態是 blocked、resume 回 RELOAD_REQUIRED（不回 ok）、零寫入；重載後照常載入原文", () => {
+  const b = bank(["s1"]);
+  for (const init of [{}, null]) {
+    const seed = pdisk(); if (init === null) { const s0 = open(seed, b); assert.ok(s0.dispatch(op("answer", { cardId: "s1", ok: true })).ok); }
+    const mem = pdisk(seed.raw); mem.f.read = true; const st = open(mem, b, sess()); mem.f.read = false;
+    assert.equal(st.get().storageStatus, "blocked"); const w0 = mem.writes();
+    const r = st.resume(); assert.equal(r.ok, false); assert.equal(r.error, "RELOAD_REQUIRED");
+    assert.equal(st.dispatch(op("answer", { cardId: "s1", ok: true })).error, "BLOCKED"); assert.equal(mem.writes(), w0);
+    st.prepareReload(); const st2 = open(mem, b, sess()); assert.equal(st2.get().storageStatus, "ok");
+    assert.deepEqual(Object.keys(st2.get().state.cards), init === null ? ["s1"] : []);
+  }
+});
+
+test("A16 壞檔（SCHEMA）：狀態是 blocked、作答 BLOCKED；家長清除寫空白一次、狀態回 ok", () => {
+  const b = bank(["s1"]); const mem = pdisk({ [C.LS_KEY]: "{壞" }); const st = open(mem, b, sess());
+  assert.equal(st.get().storageStatus, "blocked"); assert.equal(st.dispatch(op("answer", { cardId: "s1", ok: true })).error, "BLOCKED"); assert.equal(mem.writes(), 0);
+  assert.equal(st.discardBroken(), true); assert.equal(mem.writes(), 1); assert.equal(st.get().storageStatus, "ok");
+  assert.ok(st.dispatch(op("answer", { cardId: "s1", ok: true })).ok);
+});
+
+test("A07 待存答案在 resume 中補存成功、接著 tick 讀失敗：答案已存但不算成功；回饋資訊留在核心，下次 resume 成功後 takeInfo 取得一次（畢業）", () => {
+  const b = bank(["s1"]); const mem = pdisk(); const st = open(mem, b, sess());
+  const s = JSON.parse(JSON.stringify(C.blankState())); s.cards.s1 = { seen: 2, goodDays: ["2026-10-17", "2026-10-18"], blockedDay: null, due: D };
+  mem.raw[C.LS_KEY] = JSON.stringify(s); const st2 = open(mem, b, sess()); void st;
+  const a = op("answer", { cardId: "s1", ok: true });
+  mem.f.write = true; st2.dispatch(a); mem.f.write = false;
+  mem.failNth("get", 2); const r = st2.resume();
+  assert.equal(r.error, "READ"); assert.equal(st2.accepted(a.id), true, "答案被回滾");
+  const r2 = st2.resume(); assert.ok(r2.ok);
+  const info = st2.takeInfo(a.id); assert.ok(info && info.graduated, "畢業資訊遺失：" + JSON.stringify(info)); assert.equal(st2.takeInfo(a.id), null, "取了兩次");
+});
+
+test("A19 狀態不是 ok 時，16 種操作逐一送進核心：全部 BLOCKED、零讀零寫、磁碟原文不變", () => {
+  const b = bank(["s1"]);
+  for (const how of ["saveFailed", "readFailed", "tickDue"]) {
+    const mem = pdisk(); const st = open(mem, b, sess()); assert.ok(st.dispatch(op("sessionStart")).ok);
+    if (how === "saveFailed") { mem.f.write = true; st.dispatch(op("answer", { cardId: "s1", ok: true })); mem.f.write = false; }
+    if (how === "readFailed") { mem.failNth("get", 0); st.dispatch(op("answer", { cardId: "s1", ok: true })); }
+    if (how === "tickDue") { mem.f.write = true; st.dispatch({ type: "tick" }); mem.f.write = false; }
+    const d0 = mem.raw[C.LS_KEY], r0 = mem.reads(), w0 = mem.writes();
+    for (const a of ALL_OPS()) assert.equal(st.dispatch(a).error, "BLOCKED", how + " " + a.type);
+    assert.deepEqual([mem.reads() - r0, mem.writes() - w0, mem.raw[C.LS_KEY] === d0], [0, 0, true], how);
+  }
+});
+
+test("A20 列舉：長度 ≤4 的操作序列（作答／設定／tick／離開題目）× 每步故障（無／讀／寫），恢復後 resume 兩次——沒有任何作答默默遺失、狀態組合 ≤7", () => {
+  const b = { cards: ["s1", "s2", "s3"].map(card), concepts: CONCEPTS, figs: {} };
+  const STEPS = ["A", "S", "T", "N"], FAULTS = ["none", "read", "write"]; const states = new Set(); let seqs = 0, lost = 0;
+  const all = []; const rec = (pre, d) => { if (pre.length) all.push(pre); if (!d) return; for (const s of STEPS) for (const f of FAULTS) rec(pre.concat([[s, f]]), d - 1); }; rec([], 4);
+  for (const seq of all) {
+    seqs++; const mem = pdisk(); const st = open(mem, b); st.dispatch(op("sessionStart")); const submitted = [], rejected = new Set();
+    for (const [s, f] of seq) {
+      mem.f.read = f === "read"; mem.f.write = f === "write";
+      if (s === "T") st.dispatch({ type: "tick" });
+      else if (s !== "N") { const a = op(s === "A" ? "answer" : "settings", s === "A" ? { cardId: "s1", ok: true } : { sound: false }); if (s === "A") submitted.push(a.id);
+        const r = st.dispatch(a); if (r.error === "BLOCKED") rejected.add(a.id); }
+      const g = st.get(); states.add([g.pendingAction ? g.pendingAction.type : "-", g.tickDue ? 1 : 0, g.readFailed ? 1 : 0, g.storageStatus].join("|"));
+    }
+    mem.f.read = false; mem.f.write = false; st.resume(); st.resume();
+    const saved = mem.raw[C.LS_KEY] ? JSON.parse(mem.raw[C.LS_KEY]).ops : [];
+    if (submitted.some((id) => !saved.includes(id) && !rejected.has(id))) lost++;
+    assert.equal(st.get().storageStatus, "ok", "恢復後卡住：" + JSON.stringify(seq));
+  }
+  assert.equal(seqs, 22620); assert.equal(lost, 0, "有作答默默遺失"); assert.ok(states.size <= 7, "狀態組合 " + states.size + "：" + JSON.stringify([...states]));
+});
+
+test("A21 恢復後連按兩次再試一次：答案只記一次、回饋資訊只給一次", () => {
+  const b = bank(["s1"]); const mem = pdisk(); const st = open(mem, b, sess()); const a = op("answer", { cardId: "s1", ok: true });
+  mem.f.write = true; st.dispatch(a); mem.f.write = false;
+  const r1 = st.resume(), r2 = st.resume(); assert.ok(r1.ok && r2.ok); assert.equal(r1.acceptedId, a.id);
+  assert.equal(JSON.parse(mem.raw[C.LS_KEY]).log.length, 1); assert.ok(st.takeInfo(a.id)); assert.equal(st.takeInfo(a.id), null);
+});
+
+test("N24 四站 createStore 逐字相同（SHA-256）；本站 docs 有暫停規格全文（四站相同）", () => {
+  const fs = require("fs"), path = require("path"), crypto = require("crypto"), cp = require("child_process"); const root = path.join(__dirname, "..");
+  const src = fs.readFileSync(path.join(root, "src/core.js"), "utf8");
+  const a = src.indexOf("  function createStore(opt) {"), b = src.indexOf("  /* ---------- 溶解帳本");
+  assert.ok(a > 0 && b > a, "找不到 createStore");
+  assert.equal(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex"), "9aafb142692cfdd58eb38b4029de6ac7b8e8ee8c67e122594ef69a6eabebe4f5", "本站 createStore 和四站共同版本不同");
+  const f = "docs/design-storage-pause-20261014.md";
+  assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(root, f))).digest("hex"), "e94b2a92632bb7a1a699b512ac2dd99480c2a9792b314c714858e993a91405cf", f + " 和四站不一致");
+  assert.equal(cp.execFileSync("git", ["ls-files", "--error-unmatch", f], { cwd: root }).toString().trim(), f);
 });

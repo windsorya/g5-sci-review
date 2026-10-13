@@ -487,12 +487,12 @@ def t10(browser, label, dev, kind):
             sel = prep_answer(B)
             B.ev("() => { window.__failSet = true; }")
             B.p.locator(sel).click()
-            failed = B.has("#saveAgain") and log_len(B) == l0
+            failed = B.has("#retrySave") and log_len(B) == l0
             B.ev("() => { window.__failSet = false; }")
-            B.p.locator("#saveAgain").click()
+            B.p.locator("#retrySave").click()
             s = B.state()
             ops = s["ops"]
-            ok = failed and len(s["log"]) == l0 + 1 and len(ops) == len(set(ops)) and not B.has("#saveFail") and (B.has("#main .fb.ok") or B.has("#errq") or B.has("#next"))
+            ok = failed and len(s["log"]) == l0 + 1 and len(ops) == len(set(ops)) and not B.has("#storeMask") and (B.has("#main .fb.ok") or B.has("#errq") or B.has("#next"))
             detail = {"失敗時": failed, "log": [l0, len(s["log"])]}
         else:
             if not open_lab(B):
@@ -523,7 +523,7 @@ def pending_answer(B):
     B.ev("() => { window.__failSet = true; }")
     B.p.locator(sel).click()
     B.ev("() => { window.__failSet = false; window.__w = 0; }")   # 之後 B 對存檔的寫入從 0 數
-    return B.has("#saveAgain")
+    return B.has("#retrySave")
 
 
 def t11_event(browser, label, dev, how):
@@ -546,7 +546,7 @@ def t11_event(browser, label, dev, how):
         quiet = B.quiet(1000)
         check(f"{label} T11 待存的作答遇到別頁「{how}」：B 停下說「這一步需要重做」、不自動重載、不偷偷補寫",
               has_pending and overlay_ok(snap, True) and quiet and snap["w"] == 0 and B.raw() == after_a, {"待存": has_pending, "snap": snap, "安靜": quiet})
-        B.ev("() => { ['#saveAgain', '#retrySave'].forEach((s) => { const b = document.querySelector(s); if (b) b.click(); }); document.dispatchEvent(new Event('visibilitychange')); }")
+        B.ev("() => { ['#retrySave', '#retrySave'].forEach((s) => { const b = document.querySelector(s); if (b) b.click(); }); document.dispatchEvent(new Event('visibilitychange')); }")
         check(f"{label} T11 「{how}」後舊的再存一次、切回頁面都不補寫", B.ev("window.__w") == 0 and B.raw() == after_a and B.navs == b0, {"w": B.ev("window.__w")})
         B.p.locator("#loadLatest").click()
         reloaded = B.wait_reload(b0)
@@ -578,7 +578,9 @@ def t11_trigger(browser, label, dev, trigger):
         elif trigger == "tick":
             snap = B.ev(SYNC_VIS)
         else:
-            snap = B.ev(SYNC_CLICK, task_sel(B, 1))
+            snap0 = B.ev(SYNC_CLICK, task_sel(B, 1))   # 4agent 方案 (a)：暫停中新操作被拒收——不寫、還沒失效
+            assert snap0.get("dw") == 0 and snap0.get("overlay") == 0, snap0
+            snap = B.ev(SYNC_CLICK, "#retrySave")
         quiet = B.quiet(800)
         check(f"{label} T11 待存的 labTask、存檔被刪後觸發 {trigger}：先進衝突提示、不補寫、不回假成功、不自動重載",
               has_pending and overlay_ok(snap, True) and snap.get("dw") == 0 and snap.get("raw") is None and quiet, {"待存": has_pending, "snap": snap, "安靜": quiet})
@@ -652,11 +654,8 @@ def t14_broken(browser, label, dev):
         banner = "存檔讀不出來" in B.p.locator("body").inner_text()
         check(f"{label} T14 開頁後存檔變壞：B 重載一次、看得見問題、沒有重載循環、不覆寫原文",
               reloaded and quiet and banner and B.navs == b0 + 1 and B.raw() == "{壞掉", {"重載": reloaded, "安靜": quiet, "看得見": banner, "navs": B.navs - b0})
-        if B.has("#goAll"):
-            B.p.locator("#goAll").click()   # 壞存檔時開始一輪也存不進去，畫面留在首頁
-            B.p.wait_for_timeout(500)
-        if B.has("#main .q"):
-            answer(B)
+        B.ev("() => { const b = document.querySelector('#goAll'); if (b) b.click(); }")   # 4agent 方案 (a)：壞檔時整頁暫停；繞過遮罩直接觸發也不寫
+        B.p.wait_for_timeout(500)
         check(f"{label} T14 壞存檔時作答不寫入、不當空白、不要求重載", B.raw() == "{壞掉" and not B.has("#outdated") and B.quiet(500), B.raw())
         open_settings(B)
         B.p.locator("#discard").click(); B.p.locator("#discardYes").click()
@@ -679,10 +678,10 @@ def t14_read(browser, label, dev):
         snap = {"overlay": B.ev("document.querySelectorAll('#outdated').length")}   # 讀取還在丟錯，不讀存檔
         quiet = B.quiet(800)
         B.ev("() => { window.__failGet = false; }")
-        failed = snap["overlay"] == 0 and quiet and B.has("#saveAgain")
-        B.p.locator("#saveAgain").click()
+        failed = snap["overlay"] == 0 and quiet and B.has("#retrySave")
+        B.p.locator("#retrySave").click()
         check(f"{label} T14 讀取拋錯：不當空白、不失效重載、看得見；恢復可讀後重試只存一次",
-              failed and log_len(B) == l0 + 1 and not B.has("#saveFail") and not B.errors, {"失敗時": failed, "snap": snap, "log": [l0, log_len(B)], "errors": B.errors})
+              failed and log_len(B) == l0 + 1 and not B.has("#storeMask") and not B.errors, {"失敗時": failed, "snap": snap, "log": [l0, log_len(B)], "errors": B.errors})
     finally:
         ctx.close()
 
@@ -698,7 +697,7 @@ def t15_pending(browser, label, dev):
         b0 = B.navs
         start(A)
         B.p.wait_for_selector("#outdated")
-        B.ev("""() => { for (let i = 0; i < 5; i++) ['#saveAgain', '#retrySave', '#main .opt', '#goAll', '#goOn'].forEach((s) => { const b = document.querySelector(s); if (b) b.click(); });
+        B.ev("""() => { for (let i = 0; i < 5; i++) ['#retrySave', '#retrySave', '#main .opt', '#goAll', '#goOn'].forEach((s) => { const b = document.querySelector(s); if (b) b.click(); });
           if (window.G5Outdated) { window.G5Outdated(); window.G5Outdated(); }
           document.dispatchEvent(new Event('visibilitychange')); }""")
         snap = B.ev(SNAP, "")
@@ -744,11 +743,12 @@ def m_save_fail(browser, label, dev):
         predict(B)
         n = n_tasks(B)
         B.ev("() => { window.__failSet = true; }")
-        for _ in range(2):
-            B.p.locator("#mNext").click()
+        B.p.locator("#mNext").click()
+        B.ev("() => { const b = document.querySelector('#mNext'); if (b) b.click(); }")   # 暫停中再觸發一次（繞過遮罩）：不得前進
         shown = B.p.locator("#mSteps li").count()
         retry = B.has("#retrySave")
         B.ev("() => { window.__failSet = false; }")
+        B.p.locator("#retrySave").click()   # 4agent 方案 (a)：恢復後按遮罩的再試一次
         k = 0
         while B.p.locator("#mNext").is_visible() and k < 30:
             B.p.locator("#mNext").click(); k += 1
@@ -804,11 +804,12 @@ def m_last_resume(browser, label, dev):
         B.p.locator("#mNext").click()
         failed_shown = B.p.locator("#mSteps li").count()
         B.ev("() => { window.__failSet = false; }")
-        B.ev("() => document.dispatchEvent(new Event('visibilitychange'))")
+        B.ev("() => document.dispatchEvent(new Event('visibilitychange'))")   # 4agent 方案 (a)：暫停中切回分頁只檢查，不補存
+        B.p.locator("#retrySave").click()                                     # 補存靠遮罩的再試一次
         if B.p.locator("#mNext").is_visible():
             B.p.locator("#mNext").click()
         run = B.ev(LAST_RUN)
-        check(f"{label} M 最後一句存檔失敗→切回分頁補存：每一句都記到、畫面句數齊全、完成鈕可按",
+        check(f"{label} M 最後一句存檔失敗→恢復後再試一次補存：每一句都記到、畫面句數齊全、完成鈕可按",
               failed_shown == n - 1 and run["tasksDone"] == list(range(n)) and B.p.locator("#mSteps li").count() == n and B.p.locator("#labDone").is_enabled() and not B.errors,
               {"失敗時句數": failed_shown, "run": run, "li": B.p.locator("#mSteps li").count(), "errors": B.errors})
     finally:
@@ -817,7 +818,8 @@ def m_last_resume(browser, label, dev):
 
 # ---------------------------------------------------------------- 第 2 輪（Codex 審 812ca9b／04f1e26／889660d／c10c0f9）
 def t08b(browser, label, dev):
-    """已補存的那一步（設定操作順便補存、句數還沒前進），同頁刪檔後按「下一句／下一步」：不得前進。"""
+    """（4agent 方案 (a) 改寫）下一步存檔失敗 → 暫停；同頁刪檔後按「再試一次」：句數不增、進失效流程（這一步需要重做）、不寫入。
+    舊前提「設定操作順便補存」在新契約不存在（暫停中設定被拒收），由 A01 守。"""
     ctx = new_ctx(browser, dev)
     try:
         B = Tab(ctx)
@@ -828,17 +830,13 @@ def t08b(browser, label, dev):
         B.ev("() => { window.__failSet = true; }")
         B.p.locator("#mNext").click()
         B.ev("() => { window.__failSet = false; }")
-        B.ev("() => { const s = document.querySelector('#snd'); s.value = s.value === 'off' ? '0' : 'off'; s.dispatchEvent(new Event('change')); }")
-        run = B.ev(LAST_RUN)
-        pre = run and run["tasksDone"] == [0] and B.p.locator("#mSteps li").count() == 0
+        pre = B.has("#storeMask") and B.p.locator("#mSteps li").count() == 0
         B.ev("() => localStorage.removeItem(G5Core.LS_KEY)")
-        b0 = B.navs
-        snap = B.ev(SYNC_CLICK, "#mNext")
-        reloaded = B.wait_reload(b0)
-        check(f"{label} T08b 前提：設定操作補存了第一步、畫面句數仍是 0", pre, {"run": run})
-        check(f"{label} T08b 已補存的一步、同頁刪檔後按下一句：不前進、進入恢復流程、不寫入",
-              snap.get("li") == 0 and overlay_ok(snap, False) and snap.get("dw") == 0 and reloaded and B.raw() is None and not B.errors,
-              {"snap": snap, "重載": reloaded, "errors": B.errors})
+        snap = B.ev(SYNC_CLICK, "#retrySave")
+        check(f"{label} T08b 前提：下一步存不進去就暫停、句數仍是 0", pre, {"mask": B.has("#storeMask")})
+        check(f"{label} T08b 暫停中同頁刪檔再按再試一次：不前進、進失效流程（這一步需要重做）、不寫入",
+              snap.get("li") == 0 and overlay_ok(snap, True) and snap.get("dw") == 0 and B.raw() is None and not B.errors,
+              {"snap": snap, "errors": B.errors})
     finally:
         ctx.close()
 
@@ -875,7 +873,8 @@ def t15_anim(browser, label, dev):
         B.p.locator("#dsSalt").click()          # 第 6 匙溶不下：任務寫入失敗＝待存
         B.ev("() => { window.__failSet = false; }")
         B.ev("() => localStorage.removeItem(G5Core.LS_KEY)")
-        B.p.locator("#dsSalt").click()          # 再加一匙：偵測失效
+        B.ev(SYNC_CLICK, "#retrySave")          # 4agent 方案 (a)：暫停中按再試一次才偵測到失效
+        B.ev("() => document.querySelector('#dsSalt').click()")   # 失效後再加一匙（繞過遮罩）
         B.p.wait_for_timeout(100)
         r0 = B.ev("window.__raf")
         B.p.wait_for_timeout(600)
@@ -891,7 +890,7 @@ def t15_anim(browser, label, dev):
 # 用 LS_KEY 認站（不用 LS_V1：舊碼三站的 LS_V1 是假 key）。站別專屬流程在別站印 SKIP。
 O_KEY, A_KEY = "g5sci.v1", "g5sci.v1.archived"
 V1 = '{"v":1,"cards":{},"unit3":true}'   # 恢復後 settings.unit3＝true（空白新版是 false），看得出是不是真的從舊版恢復
-READ_TXT = "暫時讀不到紀錄，先停在這裡，請再試一次"   # 補充設計 C1 文案
+READ_TXT = "暫時讀不到紀錄，先停在這裡"   # 補充設計 C1 文案
 
 
 def is_sci(t):
@@ -942,7 +941,7 @@ def t17(browser, label, dev):
 
 
 def t27(browser, label, dev, how):
-    """三站逐句解說：已補存的那一步，讀存檔拋錯時按「下一句」：不前進、顯示「暫時讀不到」、不寫、不重載；恢復後未變可續接、已刪則失效。"""
+    """（4agent 方案 (a) 改寫）逐句解說按下一句時讀不到：不前進、暫停顯示「暫時讀不到」、不寫、不重載；恢復後按再試一次：未變就續接、已刪就失效。"""
     ctx = new_ctx(browser, dev)
     try:
         B = Tab(ctx)
@@ -950,30 +949,26 @@ def t27(browser, label, dev, how):
             print(f"SKIP {label} T27 本站沒有逐句解說（#mNext）")
             return
         predict(B)
-        B.ev("() => { window.__failSet = true; }")
         B.p.locator("#mNext").click()
-        B.ev("() => { window.__failSet = false; }")
-        B.ev("() => { const s = document.querySelector('#snd'); s.value = s.value === 'off' ? '0' : 'off'; s.dispatchEvent(new Event('change')); }")
-        run = B.ev(LAST_RUN)
-        pre = run and run["tasksDone"] == [0] and B.p.locator("#mSteps li").count() == 0
-        if how == "已刪":
-            B.ev("() => localStorage.removeItem(G5Core.LS_KEY)")
+        li0 = B.p.locator("#mSteps li").count()
         raw0 = B.raw()
         B.ev("() => { window.__failGet = true; }")
         b0 = B.navs
         snap = B.ev(SYNC_CLICK, "#mNext")
         quiet = B.quiet(800)
         txt = B.p.locator("#readNote").inner_text() if B.has("#readNote") else ""
-        check(f"{label} T27 V {how}、讀取拋錯時按下一句：句數不增、零寫入、不失效、看得到「{READ_TXT}」",
-              pre and snap.get("li") == 0 and snap.get("dw") == 0 and snap.get("overlay") == 0 and quiet and READ_TXT in txt and B.raw() == raw0,
-              {"pre": pre, "snap": snap, "安靜": quiet, "提示": txt})
+        check(f"{label} T27 讀不到時按下一句：句數不增、零寫入、不失效、暫停顯示「{READ_TXT}」",
+              snap.get("li") == li0 and snap.get("dw") == 0 and snap.get("overlay") == 0 and quiet and READ_TXT in txt and B.raw() == raw0,
+              {"snap": snap, "安靜": quiet, "提示": txt})
         B.ev("() => { window.__failGet = false; }")
-        snap2 = B.ev(SYNC_CLICK, "#mNext")
+        if how == "已刪":
+            B.ev("() => localStorage.removeItem(G5Core.LS_KEY)")
+        snap2 = B.ev(SYNC_CLICK, "#retrySave")
         if how == "未變":
-            ok = snap2.get("li") == 1 and snap2.get("overlay") == 0 and snap2.get("read") == 0
+            ok = snap2.get("li") == li0 + 1 and snap2.get("overlay") == 0 and not B.has("#storeMask")
         else:
-            ok = snap2.get("li") == 0 and overlay_ok(snap2, False) and snap2.get("dw") == 0 and B.wait_reload(b0) and B.raw() is None
-        check(f"{label} T27 V {how}、讀取恢復後再按：{'續接下一句' if how == '未變' else '進入失效流程、不寫入'}", ok and not B.errors, {"snap": snap2, "errors": B.errors})
+            ok = snap2.get("li") == li0 and overlay_ok(snap2, True) and snap2.get("dw") == 0 and B.raw() is None
+        check(f"{label} T27 V {how}、讀取恢復後按再試一次：{'補存這一句並續接' if how == '未變' else '進入失效流程、不寫入'}", ok and not B.errors, {"snap": snap2, "errors": B.errors})
     finally:
         ctx.close()
 
@@ -991,7 +986,7 @@ def t28(browser, label, dev):
         quiet = B.quiet(800)
         txt = B.p.locator("#readNote").inner_text() if B.has("#readNote") else ""
         B.ev("() => { window.__failGet = false; }")
-        snap2 = B.ev(SYNC_VIS)
+        snap2 = B.ev(SYNC_CLICK, "#retrySave")   # 4agent 方案 (a)：暫停只由再試一次解除
         check(f"{label} T28 沒有待存時切回分頁讀不到：不失效、不重載、零寫入、看得到「{READ_TXT}」；恢復後切回提示消失",
               snap.get("overlay") == 0 and snap.get("dw") == 0 and quiet and READ_TXT in txt and B.raw() == raw0 and snap2.get("read") == 0 and snap2.get("overlay") == 0 and B.navs == b0,
               {"snap": snap, "安靜": quiet, "提示": txt, "snap2": snap2})
@@ -1004,12 +999,12 @@ def t28(browser, label, dev):
         B.ev("() => { window.__failSet = true; }")
         B.p.locator(sel).click()
         B.ev("() => { window.__failSet = false; window.__failGet = true; }")
-        snap = B.ev(SYNC_CLICK, "#saveAgain")
-        still = B.has("#saveFail") and log_len(B) == l0
+        snap = B.ev(SYNC_CLICK, "#retrySave")
+        still = B.has("#storeMask") and log_len(B) == l0
         B.ev("() => { window.__failGet = false; }")
-        B.p.locator("#saveAgain").click()
+        B.p.locator("#retrySave").click()
         check(f"{label} T28 讀不到時按「再存一次」：不公布、不寫入；恢復後只存一次",
-              snap.get("dw") == 0 and snap.get("overlay") == 0 and still and log_len(B) == l0 + 1 and not B.has("#saveFail") and not B.errors,
+              snap.get("dw") == 0 and snap.get("overlay") == 0 and still and log_len(B) == l0 + 1 and not B.has("#storeMask") and not B.errors,
               {"snap": snap, "still": still, "log": [l0, log_len(B)], "errors": B.errors})
         # 逐句解說最後一步存不進 → 讀取也壞 → 切回分頁：不補存、句數不增（labRefresh 也要先查）；恢復後切回才補上
         B.p.close()
@@ -1026,7 +1021,7 @@ def t28(browser, label, dev):
         B.ev("() => { window.__failSet = false; window.__failGet = true; }")
         snap = B.ev(SYNC_VIS)
         B.ev("() => { window.__failGet = false; }")
-        snap2 = B.ev(SYNC_VIS)
+        snap2 = B.ev(SYNC_CLICK, "#retrySave")
         run = B.ev(LAST_RUN)
         check(f"{label} T28 逐句解說讀不到時切回分頁：句數不增、零寫入；恢復後切回才補存並補上最後一句",
               snap.get("li") == n - 1 and snap.get("dw") == 0 and snap.get("read") == 1 and snap2.get("li") == n and run["tasksDone"] == list(range(n)) and not B.errors,
@@ -1038,7 +1033,7 @@ def t28(browser, label, dev):
 
 # ---------------------------------------------------------------- 補充設計 task-mv6ujb6v-51m58n（單一存檔狀態＋resume）；R 編號＝補充矩陣 Txx
 FB = "() => !!(document.querySelector('#main .fb.ok') || document.querySelector('#errq') || document.querySelector('#next'))"
-CLEAN = "() => { const t = document.querySelector('#banners').innerText; return !/沒有存|讀不到|還沒存/.test(t) && !document.querySelector('#saveFail'); }"
+CLEAN = "() => { const t = document.querySelector('#banners').innerText; return !/沒有存|讀不到|還沒存/.test(t) && !document.querySelector('#storeMask'); }"
 
 
 def r01(browser, label, dev):
@@ -1049,9 +1044,9 @@ def r01(browser, label, dev):
         start(B); l0 = log_len(B); sel = prep_answer(B)
         B.ev("() => { window.__failSet = true; }"); B.p.locator(sel).click(); B.ev("() => { window.__failSet = false; window.__failGet = true; }")
         snap = B.ev(SYNC_VIS)
-        mid = B.has("#saveFail") and not B.ev(FB) and snap.get("read") == 1 and snap.get("dw") == 0
+        mid = B.has("#storeMask") and not B.ev(FB) and snap.get("read") == 1 and snap.get("dw") == 0
         B.ev("() => { window.__failGet = false; }")
-        B.p.locator("#saveAgain").click()
+        B.p.locator("#retrySave").click()
         check(f"{label} R01 寫失敗→切回分頁讀不到→解除→再存一次：只存一次、公布回饋、READ／沒存提示一起清掉",
               mid and log_len(B) == l0 + 1 and B.ev(FB) and B.ev(CLEAN) and not B.errors, {"mid": mid, "snap": snap, "log": [l0, log_len(B)], "clean": B.ev(CLEAN), "errors": B.errors})
     finally:
@@ -1066,9 +1061,9 @@ def r02(browser, label, dev):
         start(B); l0 = log_len(B); raw0 = B.raw(); sel = prep_answer(B)
         B.ev("() => { window.__failGet = true; }"); B.p.locator(sel).click()
         snap = B.ev(SYNC_VIS)
-        held = B.has("#saveFail") and not B.ev(FB) and snap.get("dw") == 0 and B.raw() == raw0 and READ_TXT in B.p.locator("#banners").inner_text()
+        held = B.has("#storeMask") and not B.ev(FB) and snap.get("dw") == 0 and B.raw() == raw0 and READ_TXT in B.p.locator("#storeMask").inner_text()
         B.ev("() => { window.__failGet = false; }")
-        B.p.locator("#saveAgain").click()
+        B.p.locator("#retrySave").click()
         s = B.state(); ops = s["ops"]
         check(f"{label} R02 作答就讀不到→切回分頁仍讀不到→恢復→再存一次：失敗時留原題、恢復後同 id 只接受一次、提示一致",
               held and log_len(B) == l0 + 1 and len(ops) == len(set(ops)) and B.ev(FB) and B.ev(CLEAN) and not B.errors,
@@ -1084,13 +1079,13 @@ def r03(browser, label, dev):
         B = Tab(ctx)
         start(B); l0 = log_len(B); sel = prep_answer(B)
         B.ev("() => { window.__failSet = true; }"); B.p.locator(sel).click(); B.ev("() => { window.__failSet = false; window.__failSetV = 1; }")
-        B.ev("() => { const s = document.querySelector('#snd'); s.value = s.value === 'off' ? '0' : 'off'; s.dispatchEvent(new Event('change')); }")
-        pre = log_len(B) == l0 + 1 and B.has("#saveFail")
+        B.ev("() => { const s = document.querySelector('#snd'); s.value = s.value === 'off' ? '0' : 'off'; s.dispatchEvent(new Event('change')); window.__failSetV = -1; }")   # 4agent 方案 (a)：設定被拒收、沒寫，計數器歸零
+        pre = log_len(B) == l0 and B.has("#storeMask")   # 4agent 方案 (a)：暫停中設定被拒收，不會順便補存答案
         B.ev("() => { window.__failGet = true; }")
-        snap = B.ev(SYNC_CLICK, "#saveAgain")
-        held = B.has("#saveFail") and not B.ev(FB) and snap.get("dw") == 0
+        snap = B.ev(SYNC_CLICK, "#retrySave")
+        held = B.has("#storeMask") and not B.ev(FB) and snap.get("dw") == 0
         B.ev("() => { window.__failGet = false; }")
-        B.p.locator("#saveAgain").click()
+        B.p.locator("#retrySave").click()
         check(f"{label} R03 其他操作待存＋讀不到時按再存一次：不公布答案、零寫入；恢復後才公布、答案只記一次",
               pre and held and B.ev(FB) and log_len(B) == l0 + 1 and B.ev(CLEAN) and not B.errors,
               {"pre": pre, "held": held, "snap": snap, "log": [l0, log_len(B)], "errors": B.errors})
@@ -1115,8 +1110,8 @@ def r04(browser, label, dev, when):
         check(f"{label} R04 {when}切回分頁、tick 讀不到：留在原實驗畫面、零寫入、看得到「{READ_TXT}」",
               still and snap.get("dw") == 0 and snap.get("read") == 1 and snap.get("overlay") == 0 and not B.errors,
               {"still": still, "snap": snap, "errors": B.errors})
-        B.ev("() => document.dispatchEvent(new Event('visibilitychange'))")
-        check(f"{label} R04 {when}讀取恢復後再切回：提示消失、畫面照常", B.ev("document.querySelectorAll('#readNote').length") == 0 and not B.errors, B.errors)
+        B.p.locator("#retrySave").click()   # 4agent 方案 (a)：暫停只由再試一次解除
+        check(f"{label} R04 {when}讀取恢復後按再試一次：提示消失、畫面照常", B.ev("document.querySelectorAll('#readNote').length") == 0 and not B.errors, B.errors)
     finally:
         ctx.close()
 
@@ -1128,9 +1123,9 @@ def r05(browser, label, dev):
         B = Tab(ctx)
         start(B); l0 = log_len(B); sel = prep_answer(B)
         B.ev("() => { window.__failSet = true; }"); B.p.locator(sel).click(); B.ev("() => { window.__failSet = false; window.__failGetV = 2; }")
-        snap = B.ev(SYNC_CLICK, "#saveAgain")
-        held = log_len(B) == l0 + 1 and B.has("#saveFail") and not B.ev(FB) and snap.get("read") == 1
-        B.p.locator("#saveAgain").click()
+        snap = B.ev(SYNC_CLICK, "#retrySave")
+        held = log_len(B) == l0 + 1 and B.has("#storeMask") and not B.ev(FB) and snap.get("read") == 1
+        B.p.locator("#retrySave").click()
         check(f"{label} R05 補存成功但 tick 讀不到：答案已存、這輪不公布；再按一次才公布、只記一次",
               held and B.ev(FB) and log_len(B) == l0 + 1 and B.ev(CLEAN) and not B.errors, {"held": held, "snap": snap, "log": [l0, log_len(B)], "errors": B.errors})
     finally:
@@ -1141,27 +1136,29 @@ def r05(browser, label, dev):
 
 # ---------------------------------------------------------------- 第 3 輪（四站共同）：待存 ID 分離、tick 未完成不前進、READ 時不先標答案
 def r27(browser, label, dev):
-    """R27：設定寫失敗成為待存 → 作答時讀不到（核心待存仍是設定）→ 恢復後再存一次：先補存設定、再存這一題（只存一次），公布回饋、提示清掉。"""
+    """R27（4agent 方案 (a) 改寫）：設定寫失敗成為唯一待存 → 整頁暫停（作答被遮住、繞過也拒收）→ 再試一次補存設定 → 之後作答只記一次。"""
     ctx = new_ctx(browser, dev)
     try:
         B = Tab(ctx)
         start(B); l0 = log_len(B); sel = prep_answer(B)
         snd0 = B.state()["settings"]["sound"]
-        B.ev("() => { window.__failSet = true; const s = document.querySelector('#snd'); s.value = s.value === 'off' ? '0' : 'off'; s.dispatchEvent(new Event('change')); window.__failSet = false; window.__failGet = true; }")
-        B.p.locator(sel).click()
-        held = B.has("#saveFail") and not B.ev(FB)
-        B.ev("() => { window.__failGet = false; }")
-        B.p.locator("#saveAgain").click()
-        s = B.state()
-        check(f"{label} R27 另一筆待存＋作答讀不到→再存一次：設定與這一題都存到（這一題只一次）、公布回饋、提示清掉",
-              held and log_len(B) == l0 + 1 and s["settings"]["sound"] != snd0 and B.ev(FB) and B.ev(CLEAN) and not B.errors,
-              {"held": held, "log": [l0, log_len(B)], "sound": [snd0, s["settings"]["sound"]], "clean": B.ev(CLEAN), "errors": B.errors})
+        B.ev("() => { window.__failSet = true; const s = document.querySelector('#snd'); s.value = s.value === 'off' ? '0' : 'off'; s.dispatchEvent(new Event('change')); window.__failSet = false; }")
+        held = B.has("#storeMask")
+        B.ev("(s) => document.querySelector(s).click()", sel)
+        rejected = log_len(B) == l0 and not B.ev(FB)
+        B.p.locator("#retrySave").click()
+        s1 = B.state()
+        B.p.wait_for_selector("#main .q")
+        answer(B)
+        check(f"{label} R27 設定待存時暫停、作答被拒收；再試一次補存設定；之後作答只記一次",
+              held and rejected and s1["settings"]["sound"] != snd0 and log_len(B) == l0 + 1 and B.ev(FB) and B.ev(CLEAN) and not B.errors,
+              {"held": held, "rejected": rejected, "log": [l0, log_len(B)], "errors": B.errors})
     finally:
         ctx.close()
 
 
 def r28(browser, label, dev):
-    """R28：切回分頁時 tick 寫失敗（維護沒做完）→ 恢復後按下一步／完成鈕：先補完 tick 再前進，前進後沒有殘留「沒有存」。"""
+    """R28（4agent 方案 (a) 改寫）：切回分頁時 tick 寫失敗 → 暫停；繞過遮罩按下一步／完成鈕都不動；再試一次補完 tick 後才前進。"""
     ctx = new_ctx(browser, dev)
     try:
         B = Tab(ctx)
@@ -1169,32 +1166,38 @@ def r28(browser, label, dev):
             check(f"{label} R28 找得到實驗", False, "沒有"); return
         predict(B); n = n_tasks(B)
         B.ev("() => { window.__failSetV = 0; }"); B.ev(SYNC_VIS)
-        pre = B.has("#retrySave")
+        pre = B.has("#storeMask")
+        B.ev("(s) => { const b = document.querySelector(s); if (b) b.click(); }", task_sel(B, 0))
+        blocked = B.ev(LAST_RUN)["tasksDone"] == []
+        B.p.locator("#retrySave").click()
         do_task(B, 0)
         run = B.ev(LAST_RUN)
-        check(f"{label} R28 tick 沒做完時按下一步：先補完 tick 再存這一步、提示清掉", pre and run["tasksDone"] == [0] and not B.has("#retrySave") and not B.errors,
-              {"pre": pre, "run": run, "retry": B.has("#retrySave")})
+        check(f"{label} R28 tick 沒做完時暫停、下一步被拒收；再試一次後才前進、提示清掉", pre and blocked and run["tasksDone"] == [0] and not B.has("#storeMask") and not B.errors,
+              {"pre": pre, "blocked": blocked, "run": run})
         for i in range(1, n):
             do_task(B, i)
         B.ev("() => { window.__failSetV = 0; }"); B.ev(SYNC_VIS)
-        pre2 = B.has("#retrySave")
-        B.p.locator("#labDone").click()
-        done = not B.has("#labNav") and not B.has("#retrySave")
-        check(f"{label} R28 tick 沒做完時按完成鈕：先補完 tick 再完成、提示清掉", pre2 and done and not B.errors, {"pre": pre2, "labNav": B.has("#labNav"), "retry": B.has("#retrySave"), "errors": B.errors})
+        pre2 = B.has("#storeMask")
+        B.ev("() => { const d = document.querySelector('#labDone'); if (d) d.click(); }")
+        stay = B.has("#labNav")
+        B.p.locator("#retrySave").click(); B.p.locator("#labDone").click()
+        done = not B.has("#labNav") and not B.has("#storeMask")
+        check(f"{label} R28 tick 沒做完時完成鈕被拒收；再試一次後才完成、提示清掉", pre2 and stay and done and not B.errors, {"pre": pre2, "stay": stay, "done": done, "errors": B.errors})
     finally:
         ctx.close()
 
 
 def r29(browser, label, dev):
-    """R29：題目畫面切回分頁時 tick 寫失敗 → 恢復後作答：先補完 tick 再公布答案，公布時沒有殘留「沒有存」。"""
+    """R29（4agent 方案 (a) 改寫）：題目畫面切回分頁時 tick 寫失敗 → 暫停（作答被遮住）；再試一次補完 tick 後作答，公布時沒有殘留提示、只記一次。"""
     ctx = new_ctx(browser, dev)
     try:
         B = Tab(ctx)
         start(B); l0 = log_len(B)
         B.ev("() => { window.__failSetV = 0; }"); B.ev(SYNC_VIS)
-        pre = B.has("#retrySave")
+        pre = B.has("#storeMask") and "還沒整理好" in B.p.locator("#storeMask").inner_text()
+        B.p.locator("#retrySave").click()
         answer(B)
-        check(f"{label} R29 tick 沒做完時作答：先補完 tick 再公布、提示清掉、只記一次", pre and B.ev(FB) and B.ev(CLEAN) and log_len(B) == l0 + 1 and not B.errors,
+        check(f"{label} R29 tick 沒做完時暫停（說還沒整理好）；再試一次後作答才公布、提示清掉、只記一次", pre and B.ev(FB) and B.ev(CLEAN) and log_len(B) == l0 + 1 and not B.errors,
               {"pre": pre, "clean": B.ev(CLEAN), "log": [l0, log_len(B)], "errors": B.errors})
     finally:
         ctx.close()
@@ -1220,7 +1223,7 @@ def r30(browser, label, dev):
         B.p.locator("#main .opt").first.click()
         marked = B.ev("document.querySelectorAll('#main .opt.right, #main .opt.wrong').length")
         B.ev("() => { window.__failGet = false; }")
-        B.p.locator("#saveAgain").click()
+        B.p.locator("#retrySave").click()
         after = B.ev("document.querySelectorAll('#main .opt.right').length")
         check(f"{label} R30 讀不到時點選項：確認存好前不標正解；存好後才標", marked == 0 and after == 1 and B.ev(FB) and not B.errors, {"未存時標了": marked, "存好後正解": after, "errors": B.errors})
     finally:
@@ -1238,11 +1241,266 @@ def r31(browser, label, dev):
         for i in range(n - 1):
             do_task(B, i)
         B.ev("() => { window.__failSet = true; }"); do_task(B, n - 1); B.ev("() => { window.__failSet = false; }")
-        B.ev("() => document.dispatchEvent(new Event('visibilitychange'))")
+        B.p.locator("#retrySave").click()   # 4agent 方案 (a)：補存靠遮罩的再試一次
         run = B.ev(LAST_RUN)
         ok = B.has("#labPredict") and run["tasksDone"] == list(range(n)) and B.p.locator("#labDone").is_enabled() and B.p.locator("#labTask .ck.got").count() == n
-        check(f"{label} R31 實驗補存後切回分頁：留在實驗、任務全打勾、完成鈕可按", ok and not B.errors,
+        check(f"{label} R31 實驗最後一步補存（再試一次）後：留在實驗、任務全打勾、完成鈕可按", ok and not B.errors,
               {"run": run, "got": B.p.locator("#labTask .ck.got").count(), "enabled": B.has("#labDone") and B.p.locator("#labDone").is_enabled(), "errors": B.errors})
+    finally:
+        ctx.close()
+
+
+# ---------------------------------------------------------------- 4agent 最終方案 (a)「存檔一不正常就整頁暫停」：A 列（真實瀏覽器、原始 handler）
+MASK = "#storeMask"
+QTXT = "() => { const q = document.querySelector('#main .q'); return q ? q.innerText : ''; }"
+MARKS = "document.querySelectorAll('#main .opt.right, #main .opt.wrong').length"
+
+
+def first_choice(t):
+    """開始一輪並停在選擇題（需要 .opt）；找不到回 False。"""
+    start(t)
+    for _ in range(30):
+        if t.has("#main .opt"):
+            return True
+        answer(t)
+        if t.has("#next"):
+            t.p.locator("#next").click()
+        else:
+            start(t)
+    return t.has("#main .opt")
+
+
+def a01(browser, label, dev):
+    """A01：設定寫失敗成為待存 → 整頁暫停；直接觸發作答（繞過遮罩用 JS click）：不寫、不公布、題目不變。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        if not first_choice(B):
+            print(f"SKIP {label} A01 這一輪沒有選擇題"); return
+        l0 = log_len(B); q0 = B.ev(QTXT)
+        B.ev("() => { window.__failSet = true; const s = document.querySelector('#snd'); s.value = s.value === 'off' ? '0' : 'off'; s.dispatchEvent(new Event('change')); window.__failSet = false; window.__w = 0; }")
+        masked = B.has(MASK)
+        B.ev("() => document.querySelector('#main .opt').click()")
+        check(f"{label} A01 設定待存時整頁暫停；直接觸發作答也不寫、不公布、題目不變",
+              masked and B.ev("window.__w") == 0 and log_len(B) == l0 and B.ev(QTXT) == q0 and B.ev(MARKS) == 0 and not B.ev(FB) and not B.errors,
+              {"遮罩": masked, "w": B.ev("window.__w"), "log": [l0, log_len(B)], "errors": B.errors})
+    finally:
+        ctx.close()
+
+
+def a02(browser, label, dev):
+    """A02／A04／A05：作答時讀不到 → 暫停、不標對錯；暫停中直接觸發換頁也不換；恢復後再試一次：存一次、同一題公布回饋並標正解。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        if not first_choice(B):
+            print(f"SKIP {label} A02 這一輪沒有選擇題"); return
+        l0 = log_len(B); q0 = B.ev(QTXT)
+        B.ev("() => { window.__failGet = true; }")
+        B.p.locator("#main .opt").first.click()
+        held = B.has(MASK) and B.has("#readNote") and B.ev(MARKS) == 0 and not B.ev(FB)
+        B.ev("() => { window.__failGet = false; window.__w = 0; const c = document.querySelector('#concepts .ccard'); if (c) c.click(); }")
+        same = B.ev(QTXT) == q0 and B.ev("window.__w") == 0
+        B.p.locator("#retrySave").click()
+        check(f"{label} A02 作答讀不到：暫停、不標對錯、不公布；暫停中換頁無效；恢復後再試一次：只存一次、同一題公布並標正解",
+              held and same and log_len(B) == l0 + 1 and B.ev(FB) and B.ev("document.querySelectorAll('#main .opt.right').length") == 1 and not B.has(MASK) and not B.errors,
+              {"held": held, "same": same, "log": [l0, log_len(B)], "mask": B.has(MASK), "errors": B.errors})
+    finally:
+        ctx.close()
+
+
+def a08(browser, label, dev):
+    """A08：答完一題（有「下一題」）→ 切回分頁 tick 寫失敗 → 暫停（說「今天的進度還沒整理好」）；直接觸發「下一題」：題目不變。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        start(B); answer(B)
+        if not B.has("#next") and B.has('#errq button[data-k=""]'):
+            B.p.locator('#errq button[data-k=""]').click()   # 答錯時按「先跳過」，「下一題」才會出現
+        if not B.has("#next"):
+            check(f"{label} A08 答完要有「下一題」", False, "沒有"); return
+        q0 = B.ev(QTXT)
+        B.ev("() => { window.__failSetV = 0; }"); B.ev(SYNC_VIS)
+        txt = B.p.locator(MASK).inner_text() if B.has(MASK) else ""
+        B.ev("() => document.querySelector('#next').click()")
+        check(f"{label} A08 tick 沒做完時暫停（不說沒有存）；直接觸發下一題：題目不變",
+              "還沒整理好" in txt and "沒有存" not in txt and B.ev(QTXT) == q0 and B.has("#next") and B.has(MASK) and not B.errors, {"txt": txt[:80], "next": B.has("#next"), "errors": B.errors})   # 原題回饋與「下一題」還在＝沒換頁
+        B.p.locator("#retrySave").click()
+        check(f"{label} A08 恢復後再試一次：暫停解除", not B.has(MASK) and not B.errors, B.errors)
+    finally:
+        ctx.close()
+
+
+def a09(browser, label, dev):
+    """A09：解說／實驗暫停中，直接觸發下一步與完成鈕：句數不增、完成鈕不開。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        if not open_lab(B):
+            check(f"{label} A09 找得到實驗", False, "沒有"); return
+        predict(B); do_task(B, 0)
+        run0 = B.ev(LAST_RUN); li0 = B.p.locator("#mSteps li").count()
+        B.ev("() => { window.__failSetV = 0; }"); B.ev(SYNC_VIS)
+        sel = task_sel(B, 1)
+        B.ev("(s) => { const b = document.querySelector(s); if (b) b.click(); const d = document.querySelector('#labDone'); if (d) { d.disabled = false; d.click(); } }", sel)
+        check(f"{label} A09 暫停中觸發下一步／完成鈕：句數與任務不變、仍在實驗",
+              B.has(MASK) and B.ev(LAST_RUN) == run0 and B.p.locator("#mSteps li").count() == li0 and B.has("#labPredict") and not B.errors, {"run": B.ev(LAST_RUN), "errors": B.errors})
+    finally:
+        ctx.close()
+
+
+def a11(browser, label, dev):
+    """A11：暫停中切回分頁：只檢查有沒有被別處改，不補存、不重畫；被別處改了才走失效流程。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        start(B); sel = prep_answer(B); l0 = log_len(B)
+        B.ev("() => { window.__failSet = true; }"); B.p.locator(sel).click(); B.ev("() => { window.__failSet = false; window.__w = 0; }")
+        snap = B.ev(SYNC_VIS)
+        stay = B.has(MASK) and snap.get("dw") == 0 and log_len(B) == l0
+        A = Tab(ctx); b0 = B.navs
+        A.ev("() => localStorage.removeItem(G5Core.LS_KEY)")
+        B.p.wait_for_selector("#outdated")
+        check(f"{label} A11 暫停中切回分頁：不補存（寫入 0）、仍暫停；別處刪檔才進失效（這一步需要重做）",
+              stay and overlay_ok(B.ev(SNAP, ""), True) and B.quiet(800) and not B.errors and not A.errors, {"stay": stay, "snap": snap})
+    finally:
+        ctx.close()
+
+
+def a12(browser, label, dev):
+    """A12：作答讀不到 → 別處換掉存檔 → 再試一次：進失效流程並要求確認（這一步需要重做），不自動重載、不寫回。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        start(B); sel = prep_answer(B)
+        B.ev("() => { window.__failGet = true; }"); B.p.locator(sel).click(); B.ev("() => { window.__failGet = false; }")
+        ext = B.ev("() => { const K = G5Core.LS_KEY, s = JSON.parse(window.__rawGet(K)); s.settings.sound = !s.settings.sound; const t = JSON.stringify(s); localStorage.setItem(K, t); window.__w = 0; return t; }")
+        snap = B.ev(SYNC_CLICK, "#retrySave")
+        check(f"{label} A12 讀不到後別處換檔、再試一次：失效並要求確認、不自動重載、存檔保持別處的值",
+              overlay_ok(snap, True) and snap.get("dw") == 0 and B.quiet(800) and B.raw() == ext and not B.errors, {"snap": snap})
+    finally:
+        ctx.close()
+
+
+def a13(browser, label, dev):
+    """A13：有待存時按「回首頁」：取消＝仍暫停、待存保留；確定＝整頁重載、不補寫。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        start(B); sel = prep_answer(B); l0 = log_len(B)
+        B.ev("() => { window.__failSet = true; }"); B.p.locator(sel).click(); B.ev("() => { window.__failSet = false; }")
+        B.p.locator("#maskHome").click()
+        asked = B.has("#maskHomeYes") and B.has("#maskHomeNo")
+        B.p.locator("#maskHomeNo").click()
+        kept = B.has(MASK) and B.has("#retrySave")
+        b0 = B.navs
+        B.p.locator("#maskHome").click(); B.p.locator("#maskHomeYes").click()
+        reloaded = B.wait_reload(b0)
+        check(f"{label} A13 回首頁要確認；取消仍暫停；確定才重載、不補寫這一題",
+              asked and kept and reloaded and log_len(B) == l0 and not B.has(MASK) and not B.errors, {"asked": asked, "kept": kept, "重載": reloaded, "log": [l0, log_len(B)]})
+    finally:
+        ctx.close()
+
+
+def a14(browser, label, dev):
+    """A14：開頁就讀不到（空白裝置）→ 暫停說讀不到、只給「重新整理」；恢復後重新整理：照常可用。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        B.ev("() => { localStorage.clear(); sessionStorage.setItem('__e2e', JSON.stringify({__failGet: true})); }")
+        B.p.reload(); B.p.wait_for_selector(MASK)
+        B.ev("() => sessionStorage.removeItem('__e2e')")
+        txt = B.p.locator(MASK).inner_text()
+        ok1 = "讀不到這台裝置的紀錄" in txt and B.has("#maskReload") and B.ev("window.__w") == 0
+        b0 = B.navs
+        B.ev("() => { window.__failGet = false; }"); B.p.locator("#maskReload").click()
+        reloaded = B.wait_reload(b0)
+        start(B); answer(B)
+        check(f"{label} A14 開頁讀不到：暫停、只給重新整理、零寫入；恢復後重新整理照常作答", ok1 and reloaded and log_len(B) == 1 and not B.has(MASK) and not B.errors,
+              {"txt": txt[:60], "重載": reloaded, "log": log_len(B), "errors": B.errors})
+    finally:
+        ctx.close()
+
+
+def a16(browser, label, dev):
+    """A16：壞存檔 → 暫停、作答不寫；家長在暫停畫面兩步清除 → 空白可作答。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        B.ev("() => { localStorage.setItem(G5Core.LS_KEY, '{壞掉'); }"); B.p.reload(); B.p.wait_for_selector(MASK)
+        txt = B.p.locator(MASK).inner_text()
+        B.p.locator("#discard").click(); B.p.locator("#discardYes").click()
+        s = B.state()
+        start(B); answer(B)
+        check(f"{label} A16 壞存檔：暫停說讀不出來、有家長清除；清除後可作答", "存檔讀不出來" in txt and s is not None and log_len(B) == 1 and not B.has(MASK) and not B.errors,
+              {"txt": txt[:60], "log": log_len(B), "errors": B.errors})
+    finally:
+        ctx.close()
+
+
+def a21(browser, label, dev):
+    """A21：作答寫失敗 → 恢復後連按兩次再試一次：只記一次、回饋只出現一次。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        start(B); sel = prep_answer(B); l0 = log_len(B)
+        B.ev("() => { window.__failSet = true; }"); B.p.locator(sel).click(); B.ev("() => { window.__failSet = false; }")
+        B.ev("() => { const b = document.querySelector('#retrySave'); b.click(); b.click(); }")
+        nfb = B.ev("document.querySelectorAll('#main #next, #main #errq').length")
+        check(f"{label} A21 連按兩次再試一次：只記一次、回饋一次", log_len(B) == l0 + 1 and nfb == 1 and not B.has(MASK) and not B.errors, {"log": [l0, log_len(B)], "fb": nfb, "errors": B.errors})
+    finally:
+        ctx.close()
+
+
+def a22(browser, label, dev):
+    """A22（Codex 審 0f1db5a #1）：點錯選項 → 公布回饋時點的那個選項要標 .wrong（只標一個），正解標 .right。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        start(B); hit = None
+        for _ in range(30):
+            if B.has("#main .opt"):
+                q = B.p.locator("#main .q").first.inner_text(); n = B.p.locator("#main .opt").count()
+                k = (KNOWN[q] + 1) % n if q in KNOWN else 0
+                B.p.locator(f'#main .opt[data-i="{k}"]').click()
+                right = int(B.p.locator("#main .opt.right").first.get_attribute("data-i")) if B.has("#main .opt.right") else None
+                if right is not None:
+                    KNOWN[q] = right
+                if right is not None and right != k:
+                    hit = {"點的": k, "點的標了wrong": B.ev("(k) => !!document.querySelector('#main .opt.wrong[data-i=\"' + k + '\"]')", str(k)),
+                           "wrong數": B.ev("document.querySelectorAll('#main .opt.wrong').length")}
+                    break
+            else:
+                answer(B)
+            if B.has('#errq button[data-k=""]'):
+                B.p.locator('#errq button[data-k=""]').click()
+            if B.has("#next"):
+                B.p.locator("#next").click()
+            else:
+                start(B)
+        check(f"{label} A22 點錯選項：點的那個標 .wrong（只標一個）、正解標 .right",
+              hit is not None and hit["點的標了wrong"] and hit["wrong數"] == 1 and not B.errors, {"hit": hit, "errors": B.errors})
+    finally:
+        ctx.close()
+
+
+def a23(browser, label, dev):
+    """A23（Codex 審 0f1db5a #2）：實驗停在「先預測」時切回分頁、tick 寫失敗 → 繞過遮罩按預測：不前進（任務不打開、預測不寫）；再試一次後才能預測。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        if not open_lab(B):
+            check(f"{label} A23 找得到實驗", False, "沒有"); return
+        B.ev("() => { window.__failSetV = 0; }"); B.ev(SYNC_VIS)
+        B.ev("() => { const b = document.querySelector('#labPredict button[data-g]'); if (b) b.click(); }")
+        stay = B.p.locator("#labTask").is_hidden() and B.has("#labPredict button[data-g]")
+        pred = B.ev("() => { const s = JSON.parse(window.__rawGet(G5Core.LS_KEY)); const ids = Object.keys(s.labRuns); return s.labRuns[ids[ids.length - 1]].prediction; }")
+        if B.has("#retrySave"):
+            B.p.locator("#retrySave").click()
+        if B.has("#labPredict button[data-g]:not([disabled])"):
+            predict(B)
+        check(f"{label} A23 tick 沒做完時預測不前進、不寫；再試一次後才打開任務", stay and pred is None and B.p.locator("#labTask").is_visible() and not B.errors,
+              {"stay": stay, "prediction": pred, "errors": B.errors})
     finally:
         ctx.close()
 
@@ -1263,6 +1521,7 @@ FLOWS = [
     ("T27", t27, ("未變",)), ("T27", t27, ("已刪",)), ("T28", t28, ()),
     ("R01", r01, ()), ("R02", r02, ()), ("R03", r03, ()), ("R04", r04, ("同日",)), ("R04", r04, ("跨日",)), ("R05", r05, ()),
     ("R27", r27, ()), ("R28", r28, ()), ("R29", r29, ()), ("R30", r30, ()), ("R31", r31, ()),
+    ("A01", a01, ()), ("A02", a02, ()), ("A08", a08, ()), ("A09", a09, ()), ("A11", a11, ()), ("A12", a12, ()), ("A13", a13, ()), ("A14", a14, ()), ("A16", a16, ()), ("A21", a21, ()), ("A22", a22, ()), ("A23", a23, ()),
 ]
 
 

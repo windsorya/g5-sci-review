@@ -496,15 +496,16 @@ def flow_short_round_and_teach(browser, device):
 
 
 def flow_save_fail(browser):
+    """矩陣 27＋4agent 方案 (a)：寫入失敗 → 整頁暫停、不宣告答對、不標對錯；恢復後按「再試一次」才公布、只算一次。"""
     ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00")
     btn(page, "開始今天的練習").click()
     page.evaluate("window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function(){ throw new Error('QuotaExceededError'); }; 0")
     btn(page, "東邊升起、西邊落下").click()
-    box = page.inner_text("#ansBox")
-    check("寫入失敗不宣告答對（矩陣 27）", "還沒存到" in box and "答對了" not in box, box)
+    box = page.inner_text("#ansBox"); mask = page.inner_text("#storeMask") if page.locator("#storeMask").count() else ""
+    check("寫入失敗不宣告答對（矩陣 27）：整頁暫停、說還沒存進、題目不標對錯", "還沒存進" in mask and "答對了" not in box and page.locator("#main .opt.right").count() == 0, (mask[:60], box[:60]))
     page.evaluate("Storage.prototype.setItem = window.__realSet; 0")
-    btn(page, "再存一次").first.click()
-    check("恢復後重試才公布", "答對了" in page.inner_text("#ansBox"))
+    page.locator("#retrySave").click()
+    check("恢復後再試一次才公布", "答對了" in page.inner_text("#ansBox") and page.locator("#storeMask").count() == 0)
     s = state(page)
     check("重試只算一次", s["cards"]["s1"]["seen"] == 1, s["cards"].get("s1"))
     check("寫入失敗流程沒有 JS 錯誤", not errors, errors)
@@ -512,16 +513,17 @@ def flow_save_fail(browser):
 
 
 def flow_save_fail_then_tick(browser):
+    """4agent 方案 (a) U6：暫停中切回頁面只檢查、不補存；恢復後按「再試一次」補存＋tick，同輪公布這一題、只寫一次。"""
     ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00")
     btn(page, "開始今天的練習").click()
     page.evaluate("window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function(){ throw new Error('QuotaExceededError'); }; 0")
     btn(page, "東邊升起、西邊落下").click()
     page.evaluate("Storage.prototype.setItem = window.__realSet; 0")
-    page.evaluate("document.dispatchEvent(new Event('visibilitychange')); 0")   # 切回頁面＝resume：補寫待重試的答案＋tick，整條成功就同輪公布（補充設計 C3）
-    if page.locator("#saveAgain").count():
-        page.locator("#saveAgain").click()
-    check("存檔失敗→切回頁面：resume 成功後同輪顯示這一題的回饋（以本輪確認的操作 ID 判斷）、提示收起", "答對了" in page.inner_text("#ansBox") and page.locator("#saveFail").count() == 0,
-          page.inner_text("#ansBox")[:120])
+    page.evaluate("document.dispatchEvent(new Event('visibilitychange')); 0")
+    still = page.locator("#storeMask").count() == 1 and state(page)["log"] == []
+    page.locator("#retrySave").click()
+    check("存檔失敗→切回頁面仍暫停（不補存）；再試一次後同輪公布這一題、遮罩收起", still and "答對了" in page.inner_text("#ansBox") and page.locator("#storeMask").count() == 0,
+          (still, page.inner_text("#ansBox")[:120]))
     s = state(page)
     check("該答案只寫入一次", s["cards"]["s1"]["seen"] == 1 and s["ops"].count(s["log"][0]["op"]) == 1, s["cards"].get("s1"))
     check("切回頁面流程沒有 JS 錯誤", not errors, errors)
@@ -585,21 +587,20 @@ def flow_review_after_plan_done(browser):
 
 
 def flow_pending_blocks_new_answer(browser):
-    """D1：A 存檔失敗 → 回首頁再開始 → 作答 B 不得覆蓋待存的 A；存好後可以重答 B。"""
+    """D1＋4agent 方案 (a)：A 存檔失敗 → 整頁暫停；暫停中換觀念頁、開始回合都無效（繞過遮罩也一樣）、不覆蓋 A；恢復後再試一次補寫 A，之後可以正常作答。"""
     ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00")
     btn(page, "開始今天的練習").click()
     page.evaluate("window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function(){ throw new Error('QuotaExceededError'); }; 0")
     btn(page, "東邊升起、西邊落下").click()
-    check("A 沒存到", "還沒存到" in page.inner_text("#ansBox"))
-    page.locator(".ccard[data-cid='1-2']").click()
-    btn(page, "回首頁").click()
-    btn(page, "開始今天的練習").click()                    # 存不進去：留在首頁，不進練習
-    check("開始回合沒存到就不進練習（停在首頁）", page.locator("#main .opt").count() == 0, page.inner_text("#main")[:120])
+    check("A 沒存到：整頁暫停", page.locator("#storeMask").count() == 1)
+    q0 = page.inner_text("#main .q")
+    page.evaluate("() => { const c = document.querySelector(\".ccard[data-cid='1-2']\"); if (c) c.click(); const g = document.querySelector('#goAll'); if (g) g.click(); }")
+    check("暫停中換頁、開始回合都無效（仍是原題）", page.inner_text("#main .q") == q0, page.inner_text("#main")[:120])
     page.evaluate("Storage.prototype.setItem = window.__realSet; 0")
     page.locator("#retrySave").click()                      # 補寫 A
     s = state(page)
-    check("補寫的是 A（s1 作答一次）", s and s["cards"]["s1"]["seen"] == 1, s and s["cards"].get("s1"))
-    btn(page, "繼續這一輪").click()                         # A 已寫進那一輪，首頁正確地給「繼續這一輪」
+    check("補寫的是 A（s1 作答一次）、公布回饋", s and s["cards"]["s1"]["seen"] == 1 and "答對了" in page.inner_text("#ansBox"), s and s["cards"].get("s1"))
+    btn(page, "下一題").click()
     page.locator("#main .opt").first.click()
     check("存好以後可以正常作答下一題", "答對了" in page.inner_text("#ansBox") or "正確答案" in page.inner_text("#ansBox"), page.inner_text("#ansBox")[:120])
     check("待存流程沒有 JS 錯誤", not errors, errors)
@@ -639,20 +640,20 @@ def seed_state(when_day, plan, done, queue, answered):
 
 
 def flow_pending_timer_no_hijack(browser, device=None, label="chromium"):
-    """R2（M04／D1-c）：待存時重答會排 1.6 秒重繪；她在這 1.6 秒內離開到觀念頁，重繪不得把她拉回練習。"""
+    """R2（M04／D1-c）＋4agent 方案 (a)：待存時不再排 1.6 秒重繪；暫停中觸發觀念頁也不換頁，時間過去畫面不被搶走；恢復後再試一次公布原題。"""
     ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00", device,
                                  init=seed_state("2026-10-11", ["s1", "s2", "s3"], ["s1"], ["s2", "s3"], ["s1"]))
     page.locator("#goOn").click(); page.evaluate(BLOCK)
-    page.locator("#main .opt").nth(1).click()                              # s2 存失敗（成為待補存）
-    page.locator(".ccard[data-cid='1-2']").click(); btn(page, "回首頁").click()
-    page.locator("#goOn").click(); page.locator("#main .opt").nth(1).click()  # 重答 → SAVE_PENDING
-    page.locator(".ccard[data-cid='1-3']").click()                           # 立刻離開到季節觀念頁
-    before = "一年中太陽走的路線" in page.inner_text("#main")
+    q0 = page.inner_text("#main .q")
+    page.locator("#main .opt").nth(1).click()                              # s2 存失敗（成為唯一待存）→ 整頁暫停
+    page.evaluate("() => { const c = document.querySelector(\".ccard[data-cid='1-3']\"); if (c) c.click(); }")
     page.clock.run_for(1700)
-    after = page.inner_text("#main")
-    check(f"{label} R2 離頁後 1.6 秒重繪不搶回練習（仍在季節觀念頁、沒有選項）",
-          before and "一年中太陽走的路線" in after and page.locator("#main .opt").count() == 0,
-          (before, after[:80], page.locator("#main .opt").count()))
+    same = page.inner_text("#main .q") == q0 and page.locator("#storeMask").count() == 1
+    page.evaluate("Storage.prototype.setItem = window.__s; 0")
+    page.locator("#retrySave").click()
+    check(f"{label} R2 待存時沒有延遲重繪、暫停中不換頁；恢復後再試一次公布原題",
+          same and page.locator("#storeMask").count() == 0 and ("答對了" in page.inner_text("#ansBox") or "正確答案" in page.inner_text("#ansBox")),
+          (same, page.inner_text("#main")[:80]))
     check(f"{label} R2 流程沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
@@ -759,8 +760,8 @@ def flow_corrupt(browser):
     bad = json.dumps({"v": 3, "cards": {"s1": {"seen": "2"}}})
     ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00",
                                  init=f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', {json.dumps(bad)});}}")
-    check("壞存檔顯示提示（矩陣 19）", "存檔讀不出來" in page.inner_text("#banners"))
-    btn(page, "開始今天的練習").click()
+    check("壞存檔顯示提示（矩陣 19；4agent 方案 (a)：整頁暫停）", "存檔讀不出來" in page.inner_text("#storeMask") and page.locator("#discard").count() == 1)
+    page.evaluate("() => { const b = [...document.querySelectorAll('#main button')].find((x) => x.textContent.includes('開始今天的練習')); if (b) b.click(); }")   # 繞過遮罩也不寫
     raw = page.evaluate("localStorage.getItem('g5sci.v3')")
     check("壞存檔不被覆蓋", raw == bad, raw)
     check("壞存檔流程沒有 JS 錯誤", not errors, errors)
