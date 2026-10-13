@@ -810,3 +810,15 @@ test("R5/R8 合法 v1 照常搬（D2-d）：只寫一次、migrateReason=null", 
   assert.deepEqual(st.get().state.cards.s1, { seen: 8, goodDays: [], blockedDay: null, due: "2026-10-21", needsRecheck: true });
   assert.equal(mem.raw["g5sci.v1"], v1);
 });
+
+// Codex 審數學站 e6c7ed6 時指出：同一份 store（自然站原版）兩個分頁會互相蓋掉作答。
+test("M1 兩個分頁：A 存了作答，B 隨後 tick 不得用舊的記憶體狀態蓋掉", () => {
+  const b = bank(["s1", "s2"]); const mem = memStorage();
+  const A = C.createStore({ storage: mem, bank: b, clock: () => NOON(D) }); A.load();
+  const B = C.createStore({ storage: mem, bank: b, clock: () => NOON(D) }); B.load();
+  assert.ok(A.dispatch(op("answer", { cardId: "s1", ok: true })).ok);
+  assert.ok(B.dispatch({ type: "tick" }).ok);
+  assert.deepEqual(Object.keys(JSON.parse(mem.raw[C.LS_KEY]).cards), ["s1"], "A 的作答被 B 蓋掉了");
+  assert.ok(B.dispatch(op("answer", { cardId: "s2", ok: true })).ok);
+  assert.deepEqual(Object.keys(JSON.parse(mem.raw[C.LS_KEY]).cards).sort(), ["s1", "s2"]);
+});
