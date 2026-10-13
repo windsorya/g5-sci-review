@@ -1291,6 +1291,7 @@ LABS.dissolve=function(box){
     $("#dsSvg").innerHTML=s;
   }
   function tick(){
+    if(outdatedOn){labTimer=null;return;}   // 整頁失效後不再畫（Codex 審 812ca9b T15）
     sync(); var r=C.dissolveRead(m);
     if(!reduce){var rate=(m.hot?2:1)*(m.stir?2:1);if(r.sugarSolid>0)for(var i=0;i<rate;i++)if(P.length<260)P.push({x:180+(Math.random()-.5)*20,y:200,vx:(Math.random()-.5)*(m.stir?3:1),vy:-Math.random()*(m.stir?2.5:1)});
       P.forEach(function(p){p.x+=p.vx;p.y+=p.vy;if(p.x<95||p.x>265)p.vx*=-1;if(p.y<80||p.y>212)p.vy*=-1;p.vx+=(Math.random()-.5)*.3;p.vy+=(Math.random()-.5)*.3;});}
@@ -1309,7 +1310,7 @@ LABS.dissolve=function(box){
     }
     if(r.sugarSolid>0||(!reduce&&P.length)) labTimer=requestAnimationFrame(tick); else labTimer=null;
   }
-  function start(){if(!labTimer) labTimer=requestAnimationFrame(tick);}
+  function start(){if(!labTimer&&!outdatedOn) labTimer=requestAnimationFrame(tick);}
   on("#dsGo",function(){sync();if(C.dissolveRead(m).sugarSolid>0){$("#dsRo").textContent="上一顆方糖還在溶解，等它溶完再放。";return;}
     var r0=C.dissolveRead(m); fresh=r0.sugarTotal===0&&r0.saltTotal===0;
     m=C.dissolveAddSugar(m,now()); sugarStart=now(); mixed=false; $("#dsRo").textContent="糖正在溶解……"; start();});
@@ -1319,7 +1320,7 @@ LABS.dissolve=function(box){
   on("#dsSalt",function(){sync();m=C.dissolveAddSalt(m);var r=C.dissolveRead(m);
     if(!reduce&&r.saltSolid===0)for(var i=0;i<20;i++)P.push({x:180+(Math.random()-.5)*60,y:90+Math.random()*120,vx:(Math.random()-.5),vy:(Math.random()-.5)});
     $("#dsRo").innerHTML=r.saltSolid===0?'加了 '+(r.saltTotal/6)+' 匙鹽（'+r.saltTotal+' g），攪一攪都溶解了。秤：'+r.scaleMass+' g。':'加到第 '+(r.saltTotal/6)+' 匙，杯底的鹽<b>溶不下了</b>（留下 '+r.saltSolid+' g）：同樣多的水、同樣溫度，能溶解的量有限度。秤：'+r.scaleMass+' g。（數量是示意）';
-    if(r.saltSolid>0) check(3); draw(); start();});
+    if(r.saltSolid>0) check(3); if(outdatedOn) return; draw(); start();});
   // 換一杯清水：已做過的冷水／熱水紀錄保留，換杯是為了做下一杯
   on("#dsNew",function(){stopAnim();m=C.dissolveNew();m.hot=$("#dsHot").checked;m.stir=$("#dsStir").checked;P=[];sugarStart=null;mixed=false;draw();$("#dsRo").textContent="換了一杯清水：秤 "+m.base+" g。";});
   draw();

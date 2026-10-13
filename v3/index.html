@@ -2402,6 +2402,14 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     var lastRaw = null, HOLD = LS_KEY + ".noMigrate", NOTICE = LS_KEY + ".reloaded";
     function sGet(k) { try { return session ? session.getItem(k) : null; } catch (e) { return null; } }
     function sSet(k, v) { try { if (session) { if (v === null) session.removeItem(k); else session.setItem(k, v); } } catch (e) { /* 分頁暫存不能用就算了 */ } }
+    // 「失效重載後不搬舊版」的標記：先記在分頁暫存；分頁暫存不能用或寫不進去（讀回不是 "1"），改記在本機存檔的另一個 key，
+    // 不然重載後看不到標記，舊版會被搬回來（Codex 審 812ca9b／c10c0f9 T06：sessionStorage 為 null 或寫入額度滿時舊紀錄復活）
+    function holdOn() { if (sGet(HOLD) === "1") return true; try { return storage.getItem(HOLD) === "1"; } catch (e) { return false; } }
+    function holdSet() {
+      sSet(HOLD, "1"); if (sGet(HOLD) === "1") return true;
+      try { storage.setItem(HOLD, "1"); return storage.getItem(HOLD) === "1"; } catch (e) { return false; }
+    }
+    function holdClear() { sSet(HOLD, null); try { if (storage.getItem(HOLD) !== null) storage.removeItem(HOLD); } catch (e) { /* 下次存檔成功再清 */ } }
     function write(next) {
       if (st.stale) return "stale";
       var errs = checkState(next, bank);
@@ -2410,7 +2418,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
       var txt = JSON.stringify(next);
       try { storage.setItem(LS_KEY, txt); } catch (e) { return "failed"; }
       lastRaw = txt;
-      if (st.migrateHeld) { st.migrateHeld = false; sSet(HOLD, null); }   // 新存檔成功了，之後不必再擋舊版搬移
+      if (st.migrateHeld) { st.migrateHeld = false; holdClear(); }   // 新存檔成功了，之後不必再擋舊版搬移
       return "ok";
     }
     // "ok"＝磁碟跟上次一樣；"fail"＝讀不到（不寫、待存留著重試，不當成空白）；"changed"＝被別處改了（本頁失效）
@@ -2427,7 +2435,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     function load() {
       var raw = null, old = null;
       st.reloadNotice = sGet(NOTICE) === "1"; if (st.reloadNotice) sSet(NOTICE, null);
-      st.migrateHeld = sGet(HOLD) === "1";
+      st.migrateHeld = holdOn();
       try { raw = storage.getItem(LS_KEY); } catch (e) { st.loadError = "READ"; st.saveStatus = "blocked"; return st; }
       lastRaw = raw;   // 壞掉的存檔也記原文：沒再變就不算外部變更（不會重載循環）
       if (raw !== null) {
@@ -2503,7 +2511,8 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     function invalidate() { st.stale = true; return changed(); }   // 同步程式已經換掉存檔（onReplaced）：不必比對，直接失效
     function watches(key) { return key === null || key === LS_KEY; }   // clear() 的事件 key 是 null；別站 key、probe 都不理
     // 孩子按「載入最新紀錄」或自動重載前：明確取消舊的待存操作；在這個分頁記下「重載後提示、新版不存在時不搬舊版」
-    function prepareReload() { st.pendingAction = null; sSet(HOLD, "1"); sSet(NOTICE, "1"); }
+    // 回傳 true＝「不搬舊版」標記確實記住了（分頁暫存或本機存檔其一讀得回來）
+    function prepareReload() { st.pendingAction = null; var held = holdSet(); sSet(NOTICE, "1"); return held; }
     function accepted(id) { return st.state.ops.indexOf(id) >= 0; }   // 畫面只在「這個操作 ID 真的寫進去了」才公布結果
     function discardBroken() {   // 家長明確按「清除並重新開始」：一樣先驗證、寫入成功才公布；v1 原文不動
       if (st.loadError !== "SCHEMA" && st.loadError !== "MIGRATE") return false;
@@ -2512,7 +2521,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
       if (checkState(b0, bank).length) return false;
       try { storage.setItem(LS_KEY, JSON.stringify(b0)); lastRaw = JSON.stringify(b0); } catch (e) { st.saveStatus = "failed"; return false; }
       st.loadError = null; st.migrateReason = null; st.state = b0; st.saveStatus = "ok"; st.pendingAction = null;
-      if (st.migrateHeld) { st.migrateHeld = false; sSet(HOLD, null); }
+      if (st.migrateHeld) { st.migrateHeld = false; holdClear(); }
       return true;
     }
     return { get: function () { return st; }, load: load, dispatch: dispatch, retry: retry, accepted: accepted, discardBroken: discardBroken,
@@ -3626,6 +3635,7 @@ LABS.dissolve=function(box){
     $("#dsSvg").innerHTML=s;
   }
   function tick(){
+    if(outdatedOn){labTimer=null;return;}   // 整頁失效後不再畫（Codex 審 812ca9b T15）
     sync(); var r=C.dissolveRead(m);
     if(!reduce){var rate=(m.hot?2:1)*(m.stir?2:1);if(r.sugarSolid>0)for(var i=0;i<rate;i++)if(P.length<260)P.push({x:180+(Math.random()-.5)*20,y:200,vx:(Math.random()-.5)*(m.stir?3:1),vy:-Math.random()*(m.stir?2.5:1)});
       P.forEach(function(p){p.x+=p.vx;p.y+=p.vy;if(p.x<95||p.x>265)p.vx*=-1;if(p.y<80||p.y>212)p.vy*=-1;p.vx+=(Math.random()-.5)*.3;p.vy+=(Math.random()-.5)*.3;});}
@@ -3644,7 +3654,7 @@ LABS.dissolve=function(box){
     }
     if(r.sugarSolid>0||(!reduce&&P.length)) labTimer=requestAnimationFrame(tick); else labTimer=null;
   }
-  function start(){if(!labTimer) labTimer=requestAnimationFrame(tick);}
+  function start(){if(!labTimer&&!outdatedOn) labTimer=requestAnimationFrame(tick);}
   on("#dsGo",function(){sync();if(C.dissolveRead(m).sugarSolid>0){$("#dsRo").textContent="上一顆方糖還在溶解，等它溶完再放。";return;}
     var r0=C.dissolveRead(m); fresh=r0.sugarTotal===0&&r0.saltTotal===0;
     m=C.dissolveAddSugar(m,now()); sugarStart=now(); mixed=false; $("#dsRo").textContent="糖正在溶解……"; start();});
@@ -3654,7 +3664,7 @@ LABS.dissolve=function(box){
   on("#dsSalt",function(){sync();m=C.dissolveAddSalt(m);var r=C.dissolveRead(m);
     if(!reduce&&r.saltSolid===0)for(var i=0;i<20;i++)P.push({x:180+(Math.random()-.5)*60,y:90+Math.random()*120,vx:(Math.random()-.5),vy:(Math.random()-.5)});
     $("#dsRo").innerHTML=r.saltSolid===0?'加了 '+(r.saltTotal/6)+' 匙鹽（'+r.saltTotal+' g），攪一攪都溶解了。秤：'+r.scaleMass+' g。':'加到第 '+(r.saltTotal/6)+' 匙，杯底的鹽<b>溶不下了</b>（留下 '+r.saltSolid+' g）：同樣多的水、同樣溫度，能溶解的量有限度。秤：'+r.scaleMass+' g。（數量是示意）';
-    if(r.saltSolid>0) check(3); draw(); start();});
+    if(r.saltSolid>0) check(3); if(outdatedOn) return; draw(); start();});
   // 換一杯清水：已做過的冷水／熱水紀錄保留，換杯是為了做下一杯
   on("#dsNew",function(){stopAnim();m=C.dissolveNew();m.hot=$("#dsHot").checked;m.stir=$("#dsStir").checked;P=[];sugarStart=null;mixed=false;draw();$("#dsRo").textContent="換了一杯清水：秤 "+m.base+" g。";});
   draw();
