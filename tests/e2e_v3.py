@@ -819,6 +819,153 @@ def flow_dissolve(browser, reduced):
     ctx.close()
 
 
+# ===== 探險地圖＋成長植物（#1725）=====
+MAP_ORDER = ["1-1", "1-3", "1-2", "2-1", "2-2", "2-3", "3-1"]   # 與 src/app.html CONCEPTS 的程式順序相同
+
+
+def map_card_ids(cid):
+    """從建好的頁面取出某觀念的全部題卡 id（主題庫 id:"s1",concept:"2-1"；加題 ch("k16", "2-1", …)）。"""
+    html = (ROOT / PAGE).read_text(encoding="utf-8")
+    return sorted(set(re.findall(r'id:"(\w+)",concept:"' + re.escape(cid) + '"', html)) | set(re.findall(r'\b\w+\("(\w+)", "' + re.escape(cid) + '"', html)))
+
+
+def map_seed(n, unit3=True, seen=None, seen_throws=False, grown=False):
+    """前 n 個觀念出口題通過（＝觀念卡「開花了」）；grown＝第 n+1 個觀念全部題卡都見過（＝「長葉了」，還不算走過）。
+    同時記下這一頁對每個 key 的 setItem 次數（window.__mw）。"""
+    s = {"v": 3, "cards": {}, "exits": {}, "days": {}, "labRuns": {}, "session": None, "log": [], "ops": [], "help": {}, "extra": [],
+         "settings": {"unit3": unit3, "sound": False}}
+    for cid in MAP_ORDER[:n]:
+        s["exits"][cid] = {"status": "pass", "due": None, "opened": "2026-10-11", "last": "2026-10-11"}
+    if grown:
+        for k in map_card_ids(MAP_ORDER[n]):
+            s["cards"][k] = {"seen": 1, "goodDays": [], "blockedDay": None, "due": "2026-10-14"}
+    js = ("window.__mw={};(function(){var o=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){"
+          + ("if(k==='g5sci.mapSeen')throw new Error('QuotaExceededError');" if seen_throws else "")
+          + "window.__mw[k]=(window.__mw[k]||0)+1;return o.call(this,k,v);};})();"
+          + "if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', %s);" % json.dumps(json.dumps(s))
+          + ("localStorage.setItem('g5sci.mapSeen','%d');" % seen if seen is not None else "localStorage.removeItem('g5sci.mapSeen');")
+          + "window.__mw={};}")
+    return js
+
+
+MAP_INFO_JS = """() => { const box = document.querySelector('#mapBox');
+  const st = [...box.querySelectorAll('button.stn')].map((b) => ({cid: b.dataset.cid, cls: b.className, w: b.getBoundingClientRect().width, h: b.getBoundingClientRect().height,
+    x: b.querySelector('.dot').getBoundingClientRect().x, y: b.querySelector('.dot').getBoundingClientRect().y}));
+  const cards = [...document.querySelectorAll('#concepts .ccard')].map((c) => ({cid: c.dataset.cid, st: (c.querySelector('.st') || {}).textContent || '', off: c.classList.contains('off')}));
+  const sizes = [...box.querySelectorAll('*')].filter((e) => e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
+    .map((e) => parseFloat(getComputedStyle(e).fontSize));
+  const pl = box.querySelector('svg.pl');
+  return {hidden: box.hidden, title: (box.querySelector('h2') || {}).textContent, count: (box.querySelector('#mapCount') || {}).textContent, st, cards,
+    minFont: Math.min(...sizes), grow: !!(pl && pl.classList.contains('grow')), stars: !!box.querySelector('.stars.go'), won: !!box.querySelector('.goal.won'),
+    plant: pl ? pl.getAttribute('aria-label') : '', text: box.innerText, mw: window.__mw, seen: localStorage.getItem('g5sci.mapSeen'),
+    sw: document.documentElement.scrollWidth, emoji: /[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/u.test(box.innerText)}; }"""
+
+# 對比度（WCAG）：文字色對它實際疊上的底色
+MAP_CONTRAST_JS = """() => { const rgb = (s) => (s.match(/[\\d.]+/g) || []).slice(0, 4).map(Number);
+  const lum = (c) => { const a = c.slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2]; };
+  const bg = (e) => { for (let n = e; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.length >= 3 && (c.length < 4 || c[3] > 0.5)) return c; } return [255, 255, 255]; };
+  const ratio = (e) => { const a = lum(rgb(getComputedStyle(e).color)), b = lum(bg(e)); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
+  const els = [...document.querySelectorAll('#mapBox h2, #mapCount, #mapBox .nm, #mapBox .u, #mapBox .tag, #mapBox .dot, #mapBox .stage, #mapBox .next span:last-child, #mapBox .mapwin')]
+    .filter((e) => e.getClientRects().length);
+  return els.map((e) => [e.className || e.tagName, Math.round(ratio(e) * 100) / 100, e.textContent.trim().slice(0, 8)]); }"""
+
+
+def flow_map(browser, label, device=None):
+    # 走過 3 站、第一次看到（沒有 mapSeen）→ 長大動畫一次
+    ctx, page, errors = new_page(browser, "2026-10-13T19:00:00+08:00", device, init=map_seed(3, grown=True))
+    page.wait_for_selector("#mapBox:not([hidden])")
+    i = page.evaluate(MAP_INFO_JS)
+    check(f"{label} 地圖：首頁有「探險地圖」，在天空大圖下方、今天要練上方",
+          i["title"] == "探險地圖" and page.evaluate("(() => { const h = document.querySelector('#hero'), m = document.querySelector('#mapBox'), n = document.querySelector('#main');"
+                                                 " return !!(h.compareDocumentPosition(m) & 4) && !!(m.compareDocumentPosition(n) & 4); })()"), i["title"])
+    check(f"{label} 地圖：「走過 3 站／共 7 站・再 4 站到考試」", i["count"] == "走過 3 站／共 7 站・再 4 站到考試", i["count"])
+    order = [s["cid"] for s in i["st"]]
+    check(f"{label} 地圖：七站＝觀念卡同一個順序", order == [c["cid"] for c in i["cards"]] and len(order) == 7, order)
+    bloom = {c["cid"]: c["st"] in ("開花了", "結果了") for c in i["cards"]}
+    done = {s["cid"]: " done" in s["cls"] for s in i["st"]}
+    check(f"{label} 地圖：打勾的站＝觀念卡顯示開花的觀念（逐一比對）", done == bloom and sum(done.values()) == 3, (done, bloom))
+    grown = {c["cid"]: c["st"] for c in i["cards"]}.get("2-1")
+    check(f"{label} 地圖：「長葉了」（題卡都見過、出口題還沒過）不算走過", grown == "長葉了" and not done["2-1"], grown)
+    nows = [s["cid"] for s in i["st"] if " now" in s["cls"]]
+    check(f"{label} 地圖：「現在在這裡」＝第一個沒開花的觀念（第 4 站 根莖葉）", nows == ["2-1"] and "現在在這裡" in i["text"], nows)
+    check(f"{label} 地圖：植物第 3 階（長出葉子）＋下一階剪影與提示", i["plant"] == "植物：長出葉子" and "再走過一站，看看它會變成什麼" in i["text"], i["plant"])
+    check(f"{label} 地圖：剛破關（上次沒看過）播長大動畫一次，記下 mapSeen=3", i["grow"] and i["seen"] == "3", (i["grow"], i["seen"]))
+    check(f"{label} 地圖：觸控目標每站 ≥44px、字級 ≥15px、沒有 emoji", all(s["w"] >= 44 and s["h"] >= 44 for s in i["st"]) and i["minFont"] >= 15 and not i["emoji"],
+          (min(s["h"] for s in i["st"]), i["minFont"]))
+    shot(page, f"{label}_map_3")
+    # 點站名＝打開那個觀念（同點觀念卡）；地圖只在首頁
+    page.locator('#mapBox button.stn[data-cid="2-1"]').click()
+    mtxt = page.inner_text("#main")
+    check(f"{label} 地圖：點「根莖葉」打開觀念頁（植物根莖葉的功能），地圖收起來", "植物根莖葉的功能" in mtxt and page.locator("#mapBox").is_hidden(), mtxt[:60])
+    btn(page, "回首頁").click()
+    i2 = page.evaluate(MAP_INFO_JS)
+    check(f"{label} 地圖：回首頁地圖再出現，已看過不再播動畫", not i2["hidden"] and not i2["grow"], (i2["hidden"], i2["grow"]))
+    page.locator('#mapBox button.stn[data-cid="1-1"]').click()
+    check(f"{label} 地圖：點走過的站（太陽與影子）也打得開", "太陽在天空中的位置變化" in page.inner_text("#main"))
+    btn(page, "回首頁").click()
+    mw = page.evaluate("window.__mw")
+    check(f"{label} 地圖：開頁＋點站名＋回首頁，g5sci.v3 寫入 0 次（只寫 g5sci.mapSeen）", mw.get("g5sci.v3", 0) == 0 and set(mw) <= {"g5sci.mapSeen", "g5sci.probe"}, mw)
+    check(f"{label} 地圖：沒有 pageerror", not errors, errors)
+    ctx.close()
+
+
+def flow_map_more(browser):
+    label = "chromium"
+    # 第三單元未開放：溶解站鎖頭、不算分母；點它不打開
+    ctx, page, errors = new_page(browser, "2026-10-13T19:00:00+08:00", init=map_seed(2, unit3=False, seen=2))
+    i = page.evaluate(MAP_INFO_JS)
+    last = i["st"][-1]
+    check(f"{label} 地圖：第三單元未開放→溶解站鎖住、還沒開放、共 6 站", last["cid"] == "3-1" and " off" in last["cls"] and "還沒開放" in i["text"] and i["count"] == "走過 2 站／共 6 站・再 4 站到考試", i["count"])
+    check(f"{label} 地圖：上次已看過同一階（mapSeen=2）不播動畫", not i["grow"], i["grow"])
+    page.locator('#mapBox button.stn[data-cid="3-1"]').click(force=True)   # aria-disabled：Playwright 預設不點，孩子還是點得到
+    check(f"{label} 地圖：點鎖住的站只提示、不打開觀念", "老師教完溶解" in page.inner_text("#main") and not page.locator("#mapBox").is_hidden())
+    check(f"{label} 地圖（未開放）：沒有 pageerror", not errors, errors)
+    ctx.close()
+    # 七站全走完：結果、金色獎盃、全破訊息、星星一次；重開不再放
+    ctx, page, errors = new_page(browser, "2026-10-13T19:00:00+08:00", init=map_seed(7, seen=6))
+    i = page.evaluate(MAP_INFO_JS)
+    check(f"{label} 地圖：七站全走完→第 7 階結果、終點金色獎盃、「探險地圖全部走完了！去跟爸媽說」",
+          i["plant"] == "植物：結果" and i["won"] and "探險地圖全部走完了！去跟爸媽說" in i["text"] and i["count"] == "走過 7 站／共 7 站・全部走完了", (i["plant"], i["won"], i["count"]))
+    check(f"{label} 地圖：全破那一次長大＋星星動畫", i["grow"] and i["stars"], (i["grow"], i["stars"]))
+    page.reload(); page.wait_for_selector("#mapBox:not([hidden])")
+    i = page.evaluate(MAP_INFO_JS)
+    check(f"{label} 地圖：全破後重開不再放星星", not i["stars"] and not i["grow"] and i["won"], (i["stars"], i["grow"]))
+    check(f"{label} 地圖（全破）：沒有 pageerror", not errors, errors)
+    ctx.close()
+    # 減少動態效果：剛破關也不動畫
+    ctx, page, errors = new_page(browser, "2026-10-13T19:00:00+08:00", init=map_seed(7, seen=6), reduced=True)
+    i = page.evaluate(MAP_INFO_JS)
+    check(f"{label} 地圖：prefers-reduced-motion 時不播長大與星星", not i["grow"] and not i["stars"] and i["seen"] == "7", (i["grow"], i["stars"], i["seen"]))
+    ctx.close()
+    # mapSeen 寫不進去（瀏覽器丟例外）：地圖照常、不拋錯、不影響作答存檔
+    ctx, page, errors = new_page(browser, "2026-10-13T19:00:00+08:00", init=map_seed(3, seen_throws=True))
+    i = page.evaluate(MAP_INFO_JS)
+    btn(page, "開始今天的練習").click()
+    btn(page, "東邊升起、西邊落下").click()
+    check(f"{label} 地圖：mapSeen 寫入失敗也不出錯，地圖照常、練習照常存", not errors and i["count"].startswith("走過 3 站") and "答對了" in page.inner_text("#ansBox") and state(page)["session"] is not None, errors)
+    ctx.close()
+
+
+def flow_map_layout(browser, label):
+    # 手機 390 直排、不橫向捲動；iPad 810 橫排；深色模式文字對比 ≥4.5
+    for name, dev, scheme, vertical in (("phone390", {"viewport": {"width": 390, "height": 844}, "is_mobile": True, "has_touch": True}, "light", True),
+                                        ("phone390_dark", {"viewport": {"width": 390, "height": 844}, "is_mobile": True, "has_touch": True}, "dark", True),
+                                        ("ipad810", {"viewport": {"width": 810, "height": 1080}, "is_mobile": True, "has_touch": True}, "light", False),
+                                        ("ipad810_dark", {"viewport": {"width": 810, "height": 1080}, "is_mobile": True, "has_touch": True}, "dark", False)):
+        for n in (3, 7):
+            ctx, page, errors = new_page(browser, "2026-10-13T19:00:00+08:00", dev, init=map_seed(n, seen=n), color_scheme=scheme)
+            i = page.evaluate(MAP_INFO_JS)
+            xs = {round(s["x"]) for s in i["st"]}; ys = {round(s["y"]) for s in i["st"]}
+            lay = (len(xs) == 1 and len(ys) == 7) if vertical else (len(ys) == 1 and len(xs) == 7)
+            w = dev["viewport"]["width"]
+            check(f"{label} {name} 走過{n}站：{'直排' if vertical else '橫排'}、不橫向捲動（文件寬 {i['sw']}≤{w}）", lay and i["sw"] <= w, (len(xs), len(ys), i["sw"]))
+            low = [c for c in page.evaluate(MAP_CONTRAST_JS) if c[1] < 4.5]
+            check(f"{label} {name} 走過{n}站：地圖文字對比都 ≥4.5", not low, low)
+            check(f"{label} {name} 走過{n}站：沒有 pageerror", not errors, errors)
+            shot(page, f"{label}_map_{name}_{n}")
+            ctx.close()
+
+
 def main():
     with sync_playwright() as p:
         ch = p.chromium.launch()
@@ -852,6 +999,11 @@ def main():
         flow_no_cloud(ch)
         flow_dissolve(ch, False)
         flow_dissolve(ch, True)
+        flow_map(ch, "chromium")
+        flow_map(wk, "webkit_ipad", ipad)
+        flow_map_more(ch)
+        flow_map_layout(ch, "chromium")
+        flow_map_layout(wk, "webkit")
         if SHOTS:
             for name, dev in (("phone390", {"viewport": {"width": 390, "height": 844}, "device_scale_factor": 2, "is_mobile": True, "has_touch": True}),
                               ("ipad810", ipad)):
