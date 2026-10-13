@@ -643,7 +643,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
             A(160, 96, 92, 96, "var(--ink)", 4) + A(160, 96, 228, 96, "var(--ink)", 4) + T(70, 101, "東", 22, "middle", "var(--ink)", true) + T(250, 101, "西", 22, "middle", "var(--ink)", true) +
             T(160, 34, "我面向南方（看著前面）", 14) + T(70, 128, "左手", 13, "middle", "var(--muted)") + T(250, 128, "右手", 13, "middle", "var(--muted)");
           return svg("一個人面向南方站著，左手指向東，右手指向西", s); } },
-        { say: "太陽從東邊升起，畫一道圓弧，經過南方的天空，從西邊落下（其實是地球在自轉，太陽看起來才會這樣走）。", fig: function () {
+        { say: "太陽從東邊升起，畫一道圓弧，經過南方的天空，從西邊落下。其實是地球在自轉，太陽看起來才會這樣走。", fig: function () {
           var s = ground(160) + P("M22 160 Q160 -40 298 160", null, "var(--sun)", 3, ' stroke-dasharray="8 6"') + sun(48, 116, 11) + sun(160, 60, 13) + sun(272, 116, 11) +
             T(70, 150, "早上", 13, "start") + T(160, 92, "中午（南方）", 13) + T(250, 150, "傍晚", 13, "end") + head(280, 126, 292, 146, "var(--sun)", 12) +
             T(16, 186, "東", 15, "start") + T(304, 186, "西", 15, "end") + T(306, 20, "面向南方看", 11, "end", "var(--muted)");
@@ -754,7 +754,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
           var s = ground(160) + P("M30 168 Q160 -60 290 168", null, "var(--sun)", 3.5) + P("M70 152 Q160 70 250 152", null, "var(--leaf)", 3.5, ' stroke-dasharray="4 5"');
           s += T(160, 34, "夏至：路線長", 14, "middle", "var(--sun-deep)", true) + T(160, 128, "冬至：路線短", 14, "middle", "var(--leaf)", true) + T(16, 186, "東", 15, "start") + T(304, 186, "西", 15, "end") + T(306, 20, "面向南方看", 11, "end", "var(--muted)");
           return svg("面向南方看：夏至太陽路線又高又長，冬至又低又短", s); } },
-        { say: "所以夏至白天最長、冬至白天最短；夏天日出比較早、日落比較晚，冬天相反（下面是台中的時間）。", fig: function () {
+        { say: "所以夏至白天最長、冬至白天最短。夏天日出比較早、日落比較晚，冬天相反（下面是台中的時間）。", fig: function () {
           var st = sunTimesFn(), rows = [["夏至", new Date(2026, 5, 21), "var(--sun)"], ["春分", new Date(2026, 2, 20), "var(--pri)"], ["冬至", new Date(2026, 11, 22), "var(--leaf)"]], s = '';
           function X(h) { return 60 + (h - 4) * 15.5; }
           rows.forEach(function (r, i) {
@@ -849,7 +849,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
       ask: "光垂直照進水裡，會不會轉彎？" },
     "lt-shallow": { cid: "1-2", title: "水裡的東西，為什麼看起來比較淺？",
       steps: [
-        { say: "光照到腳上再彈出來（腳反射的光），從水裡斜斜跑到空氣中，在水面轉了彎，才進到你的眼睛。", fig: function () { return svg("水中腳的光，在水面轉彎後進入岸上的眼睛", shallowScene(false)); } },
+        { say: "光照到腳上再彈出來（腳反射的光）。這道光從水裡斜斜跑到空氣中，在水面轉了彎，才進到你的眼睛。", fig: function () { return svg("水中腳的光，在水面轉彎後進入岸上的眼睛", shallowScene(false)); } },
         { say: "可是眼睛以為光是一直線來的，順著線往回找，就把腳看在比較高的地方。", fig: function () { return svg("眼睛順著直線往回看，以為腳在比較高的位置", shallowScene(true)); } },
         { say: "所以水裡的腳看起來變短，池底看起來變淺。池水其實比看起來深，下水前要小心。", fig: function () {
           var s = box(0, 70, 320, 130, "var(--waterfill)") + L(0, 70, 320, 70, "var(--pri)", 2);
@@ -933,7 +933,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
           var s = soil(120) + plant(170, 120, 80);
           for (var i = 0; i < 4; i++) s += A(16, 40 + i * 18, 80, 40 + i * 18, "var(--muted)", 2);
           return svg("風吹過來，根抓住土，植物站得穩", s + T(48, 30, "風", 15) + T(250, 170, "抓住土", 15, "middle", "var(--soil)", true), "var(--leaf-soft)"); } },
-        { say: "有些根長得很特別：榕樹的氣生根從樹枝垂下來，能吸空氣中的水分，伸進土裡會變成像樹幹的支柱根；銀葉樹的板根突出地面，像三角形的翅膀，讓樹站穩。", fig: function () {
+        { say: "有些根長得很特別。榕樹的氣生根從樹枝垂下來，能吸空氣中的水分。氣生根伸進土裡，會變成像樹幹的支柱根。銀葉樹的板根突出地面，像三角形的翅膀，讓樹站穩。", fig: function () {
           var s = soil(150) + L(80, 150, 80, 60, "var(--soil)", 12) + '<ellipse cx="80" cy="50" rx="58" ry="26" fill="var(--leaf)"/>';
           [44, 60, 100, 116].forEach(function (x, i) { s += L(x, 60, x, i % 2 ? 150 : 118, "var(--soil)", i % 2 ? 6 : 2); });
           s += T(80, 176, "榕樹：氣生根、支柱根", 12);
@@ -959,7 +959,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
           var d = "M260 190"; for (var y = 190; y > 30; y -= 20) d += " q" + (y % 40 ? 16 : -16) + " -10 0 -20";
           s += P(d, null, "var(--leaf)", 4) + T(210, 22, "牽牛花：纏繞", 13);
           return svg("絲瓜用捲鬚攀爬，牽牛花的莖纏繞往上", s, "var(--leaf-soft)"); } },
-        { say: "馬鈴薯是長在土裡的莖（塊莖），用來存養分，不會結種子；草莓、吊蘭的走莖會在前端長出小苗。", fig: function () {
+        { say: "馬鈴薯是長在土裡的莖（塊莖），用來存養分，不會結種子。草莓、吊蘭的走莖會在前端長出小苗。", fig: function () {
           var s = soil(80) + '<ellipse cx="88" cy="140" rx="46" ry="30" fill="#c99a62"/>' + dot(70, 130, 3.5) + dot(100, 150, 3.5) + dot(110, 126, 3.5) + T(88, 190, "馬鈴薯：塊莖", 13);
           s += plant(196, 80, 34, { noRoot: true }) + P("M196 80 Q240 64 286 80", null, "var(--leaf)", 3) + leaf(286, 80, 18, -60) + leaf(286, 80, 18, -120) + T(242, 112, "走莖長小苗", 13);
           return svg("馬鈴薯是長在土裡的塊莖；走莖前端長出小苗", s, "var(--leaf-soft)"); } }
@@ -976,7 +976,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
           var s = leaf(70, 130, 170, -12, "var(--leaf)");
           for (var i = 0; i < 4; i++) s += P('M' + (110 + i * 34) + ' 100 q-8 -12 0 -24 q8 -12 0 -24', null, "var(--pri)", 2.5, ' stroke-dasharray="4 4"');
           return svg("葉子上方冒出水蒸氣", s + T(160, 30, "水蒸氣跑出去", 15, "middle", "var(--pri)", true), "var(--leaf-soft)"); } },
-        { say: "用夾鏈袋包住陽光下的葉子，袋子裡出現小水珠——那是葉子「散出來」的水，不是葉子把水吸進去。吸水是根的工作。", fig: function () {
+        { say: "用夾鏈袋包住陽光下的葉子，袋子裡會出現小水珠。那是葉子「散出來」的水，不是葉子把水吸進去。吸水是根的工作。", fig: function () {
           var s = L(40, 190, 120, 110, "var(--leaf)", 6) + P("M110 120 Q200 30 290 70 Q260 170 140 160 Z", "var(--card)", "var(--muted)", 2, ' opacity=".9"') + leaf(130, 116, 120, -16);
           for (var i = 0; i < 12; i++) s += '<circle cx="' + (150 + (i * 31) % 120) + '" cy="' + (78 + (i * 19) % 70) + '" r="4" fill="var(--waterfill)" stroke="var(--pri)" stroke-width="1"/>';
           return svg("夾鏈袋包住葉子，袋子內側出現很多小水珠", s + T(80, 30, "小水珠＝葉子散出來的水", 13, "start", "var(--ink)", true), "var(--leaf-soft)"); } }
@@ -997,7 +997,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
       ask: "如果把根剪掉，水還能送到葉子嗎？" },
     "pl-adapt": { cid: "2-1", title: "特別的植物，特別的本領",
       steps: [
-        { say: "仙人掌住在很乾的地方：葉子變成細細的刺，水比較不會散掉；胖胖的綠色莖可以存水、做養分。", fig: function () {
+        { say: "仙人掌住在很乾的地方。它的葉子變成細細的刺，水比較不會散掉；胖胖的綠色莖可以存水、做養分。", fig: function () {
           var s = soil(170) + P("M140 170 L140 60 Q160 34 180 60 L180 170 Z", "var(--leaf)") + P("M140 120 L110 120 L110 90", null, "var(--leaf)", 14) + P("M180 100 L210 100 L210 76", null, "var(--leaf)", 14);
           for (var i = 0; i < 14; i++) { var y = 60 + i * 8; s += L(i % 2 ? 180 : 140, y, i % 2 ? 190 : 130, y - 4, "var(--ink)", 1.5); }
           return svg("仙人掌的刺是葉子變的，綠色的莖很胖", s + T(250, 60, "刺＝葉", 14, "middle", "var(--ink)", true) + T(250, 130, "胖胖的莖：存水", 13), "var(--sun-soft)"); } },
@@ -1061,7 +1061,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
         { say: "靠水：椰子、林投的果實能浮在水上，漂到很遠的地方。", fig: function () {
           var s = box(0, 120, 320, 80, "var(--waterfill)") + P("M0 120 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0", null, "var(--pri)", 2) + '<ellipse cx="150" cy="118" rx="30" ry="22" fill="#8a6a3b"/>' + A(190, 150, 250, 150, "var(--pri)", 3);
           return svg("椰子的果實浮在水上漂走", s + T(160, 186, "水力", 16, "middle", "var(--ink)", true)); } },
-        { say: "靠動物：鬼針草有倒鉤，黏在衣服、動物毛上被帶走；鳥吃了甜甜的果實（木瓜、芭樂），種子隨著便便排出去。", fig: function () {
+        { say: "靠動物：鬼針草有倒鉤，黏在衣服、動物毛上被帶走。鳥吃了甜甜的果實（木瓜、芭樂），種子隨著便便排出去。", fig: function () {
           var s = P("M40 40 L100 40 L100 150 Q70 170 40 150 Z", "var(--card)", "var(--muted)", 2);
           for (var i = 0; i < 4; i++) s += L(56 + i * 12, 70 + i * 16, 64 + i * 12, 84 + i * 16, "var(--ink)", 3) + P('M' + (64 + i * 12) + ' ' + (84 + i * 16) + ' l3 4 M' + (64 + i * 12) + ' ' + (84 + i * 16) + ' l-4 2', null, "var(--ink)", 1.5);
           s += T(70, 186, "黏在衣服上", 13);
@@ -1109,11 +1109,11 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     /* ===== 2-3 植物與生活 ===== */
     "us-part": { cid: "2-3", title: "我們吃的是植物的哪個部位？",
       steps: [
-        { say: "長在土裡的不一定是根：有芽眼、有一節一節的是莖（馬鈴薯、薑、蓮藕）；沒有的是根（蘿蔔、地瓜）。", fig: function () {
+        { say: "長在土裡的不一定是根。有芽眼、有一節一節的是莖（馬鈴薯、薑、蓮藕）；沒有的是根（蘿蔔、地瓜）。", fig: function () {
           var s = soil(60) + '<ellipse cx="80" cy="120" rx="40" ry="26" fill="#c99a62"/>' + dot(66, 112, 3.5) + dot(96, 128, 3.5) + T(80, 176, "馬鈴薯：莖", 14, "middle", "var(--ink)", true);
           s += P("M210 76 L250 76 L232 170 Z", "#f1ede2", "var(--muted)", 2) + leaf(230, 76, 26, -70) + leaf(230, 76, 26, -110) + T(232, 190, "蘿蔔：根", 14, "middle", "var(--ink)", true);
           return svg("馬鈴薯有芽眼是莖；蘿蔔是根", s, "var(--leaf-soft)"); } },
-        { say: "一層一層的是葉（高麗菜）；花椰菜吃的是還沒開的花；包著種子的是果實（番茄）；紅豆、花生仁是種子。", fig: function () {
+        { say: "一層一層的是葉（高麗菜）；花椰菜吃的是還沒開的花。包著種子的是果實（番茄）；紅豆、花生仁是種子。", fig: function () {
           var s = '<circle cx="50" cy="90" r="30" fill="#b9d98b"/>' + P("M28 90 Q50 66 72 90", null, "var(--leaf)", 2) + T(50, 150, "葉", 15, "middle", "var(--ink)", true);
           s += '<circle cx="125" cy="84" r="24" fill="#e8e2c4"/>' + dot(115, 78, 7, "#f4efd9") + dot(132, 76, 7, "#f4efd9") + dot(124, 92, 7, "#f4efd9") + L(125, 108, 125, 124, "var(--leaf)", 8) + T(125, 150, "花", 15, "middle", "var(--ink)", true);
           s += tomato(200, 90, 26, true) + T(200, 150, "果實", 15, "middle", "var(--ink)", true);
@@ -1128,7 +1128,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
       ask: "薑有一節一節的，它是根還是莖？" },
     "us-econ": { cid: "2-3", title: "經濟植物是什麼？",
       steps: [
-        { say: "經濟植物＝人們拿來吃、用、觀賞，可以帶來收入的植物；不是指「很貴的植物」，而且大多容易種、生活中常見。", fig: function () {
+        { say: "經濟植物＝人們拿來吃、用、觀賞，可以帶來收入的植物。它不是指「很貴的植物」，而且大多容易種、生活中常見。", fig: function () {
           var s = tomato(60, 90, 26, false) + T(60, 150, "吃：芒果、茶", 13) + box(130, 70, 60, 14, "#c89b6d") + box(130, 92, 60, 14, "#c89b6d") + T(160, 150, "用：木材", 13);
           s += P("M260 120 Q240 80 262 64 Q284 80 262 120 Z", "#b07cc6") + P("M262 100 Q230 70 250 52", null, "#b07cc6", 6) + L(262, 120, 262, 140, "var(--leaf)", 4) + T(262, 150, "看：蘭花", 13);
           return svg("經濟植物可以吃、可以用、可以觀賞", s + T(160, 30, "吃、用、看，都能帶來收入", 14, "middle", "var(--ink)", true), "var(--sun-soft)"); } },
