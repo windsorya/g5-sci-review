@@ -822,3 +822,32 @@ test("M1 兩個分頁：A 存了作答，B 隨後 tick 不得用舊的記憶體�
   assert.ok(B.dispatch(op("answer", { cardId: "s2", ok: true })).ok);
   assert.deepEqual(Object.keys(JSON.parse(mem.raw[C.LS_KEY]).cards).sort(), ["s1", "s2"]);
 });
+
+
+// Codex 審 2e70601（自然站多分頁修正）：①讀取失敗時不可蓋掉既有的待存操作（我上一版引入的回歸）②外部清空存檔後不可把舊紀錄寫回去
+function flakyStorage() {
+  const m = {}; let readFail = false, writeFail = false;
+  return { getItem: (k) => { if (readFail) throw new Error("read"); return k in m ? m[k] : null; },
+           setItem: (k, v) => { if (writeFail) throw new Error("QuotaExceeded"); m[k] = v; }, removeItem: (k) => { delete m[k]; },
+           setRead: (f) => { readFail = f; }, setWrite: (f) => { writeFail = f; }, raw: m };
+}
+test("M4 已有待存操作 A，讀取又失敗時送出 B：回 SAVE_PENDING、待存仍是 A；恢復後重試 A 成功、再送 B 成功", () => {
+  const b = bank(["s1", "s2"]); const mem = flakyStorage();
+  const S = C.createStore({ storage: mem, bank: b, clock: () => NOON(D) }); S.load();
+  const A = op("answer", { cardId: "s1", ok: true }), B = op("answer", { cardId: "s2", ok: true });
+  mem.setWrite(true); assert.equal(S.dispatch(A).ok, false); mem.setWrite(false);
+  mem.setRead(true);
+  const r = S.dispatch(B);
+  assert.equal(r.error, "SAVE_PENDING"); assert.equal(S.get().pendingAction.id, A.id);
+  mem.setRead(false);
+  assert.ok(S.retry().ok); assert.ok(S.accepted(A.id));
+  assert.ok(S.dispatch(B).ok); assert.ok(S.accepted(B.id));
+});
+test("M5 別處把存檔整個刪掉後，這個分頁不得把舊紀錄寫回去", () => {
+  const b = bank(["s1"]); const mem = flakyStorage();
+  const S = C.createStore({ storage: mem, bank: b, clock: () => NOON(D) }); S.load();
+  assert.ok(S.dispatch(op("answer", { cardId: "s1", ok: true })).ok);
+  mem.removeItem(C.LS_KEY);
+  assert.equal(S.dispatch({ type: "tick" }).ok, false);
+  assert.equal(mem.raw[C.LS_KEY], undefined, "舊紀錄復活了");
+});
