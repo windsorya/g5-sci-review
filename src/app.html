@@ -48,6 +48,10 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 @media (min-width:821px){.hero{margin:0;border-radius:0 0 var(--r) var(--r)}}
 .banner{border-radius:14px;padding:12px 16px;display:grid;gap:8px;background:var(--bad-soft)}
 .banner.info{background:var(--sun-soft)}
+.legacy .choices{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.legacy .choices .btn{display:grid;gap:4px;justify-items:start;text-align:left;height:auto;padding:14px 18px}
+.legacy .choices .btn .small{font-weight:400;font-size:15px;line-height:1.45}
+.legacy .ask{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .outdated{position:fixed;inset:0;z-index:9999;background:rgba(10,20,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
 .outdated .obox{background:var(--card);color:var(--ink);border-radius:16px;padding:20px;max-width:420px;width:100%;display:grid;gap:10px;box-shadow:var(--shadow)}
 /* 面板 */
@@ -540,11 +544,12 @@ function makeStorage(){
   if(ls){
     var canWrite=true; try{ls.setItem("g5sci.probe","1");ls.removeItem("g5sci.probe");}catch(e){canWrite=false;}
     if(canWrite) return ls;
-    var hasData=true; try{hasData=ls.getItem("g5sci.v3")!==null||ls.getItem("g5sci.v1")!==null;}catch(e){hasData=true;}
+    // 新版、舊版、舊版封存（設計 task-mv6srlue-pujdyl T29）任一在＝有資料；讀不到也當有資料（交給 store 顯示 READ）
+    var hasData=true; try{hasData=ls.getItem(C.LS_KEY)!==null||ls.getItem(C.LS_V1)!==null||ls.getItem(C.LS_ARC)!==null;}catch(e){hasData=true;}
     if(hasData) return ls;   // 有舊紀錄就不換成空白：照常讀，寫入失敗由 store 擋下並提示
   }
   memoryOnly=true; var m={};
-  return {getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null;},setItem:function(k,v){m[k]=String(v);}};
+  return {getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null;},setItem:function(k,v){m[k]=String(v);},removeItem:function(k){delete m[k];}};
 }
 // 分頁暫存（sessionStorage）只記「這次是失效後的重載」；不能用就照常運作（只是少了提示）
 function sessionArea(){try{var s=window.sessionStorage;s.getItem(C.LS_KEY);return s;}catch(e){return null;}}
@@ -554,12 +559,16 @@ var seq = 0;
 function newId(p){seq++;return (p||"a")+Date.now().toString(36)+seq.toString(36)+Math.floor(Math.random()*1e6).toString(36);}
 function S(){return store.get().state;}
 function V(){return store.view();}
-function act(a){if(a.type!=="tick"&&!a.id)a.id=newId();var r=store.dispatch(a);if(r.error==="STATE_CHANGED"){outdated();return r;}if(r.ok&&a.type!=="tick")reloadNote=false;banners();return r;}
+function act(a){if(a.type!=="tick"&&!a.id)a.id=newId();var r=store.dispatch(a);if(r.error==="STATE_CHANGED"){outdated();return r;}if(r.ok&&a.type!=="tick"){reloadNote=false;restoredNote="";}if(r.ok)readNote=false;banners();return r;}
 
 /* ---------- 存檔在別處被改掉（設計 20261013 方案 A）：整頁失效，重載後用最新的紀錄 ---------- */
 // 另一個分頁、另一台裝置（同步）或清除紀錄改了存檔：這頁的畫面、實驗、待存答案都失去前提，不再寫入。
 // 沒有待存的一步就直接重載；有待存的一步就停下來說清楚「這一步需要重做」，按「載入最新紀錄」才重載。每頁只排一次重載。
 var reloadNote=store.get().reloadNotice, outdatedOn=false, reloading=false;
+// 設計 task-mv6srlue-pujdyl S3：讀不到存檔（READ）＝不能確認有沒有被別處改——畫面停在原處、不前進、不重載，只提示再試一次
+var readNote=false;
+function readFail(){readNote=true;banners();}
+function readOk(){if(readNote){readNote=false;banners();}}
 function outdated(){
   if(outdatedOn) return; outdatedOn=true;
   stopAnim();
@@ -627,19 +636,54 @@ function header(){
 function banners(){
   var st=store.get(), h="";
   if(reloadNote) h+='<div class="banner info" id="reloadNote"><strong>紀錄已更新，請從這裡繼續</strong></div>';
+  if(readNote) h+='<div class="banner" id="readNote" role="status"><strong>暫時讀不到紀錄，請再試一次</strong><span class="small">剛剛那一步先停在這裡，沒有存、也沒有往下走。</span></div>';
   if(st.loadError==="SCHEMA") h+='<div class="banner"><strong>存檔讀不出來（可能被改壞了）</strong><span class="small">為了不蓋掉原本的紀錄，現在不會存任何作答。請爸媽到「設定與題庫」決定要不要清除重來。</span></div>';
-  // R5/R8（4agent）：只有真的寫不進去（WRITE）才提儲存空間；格式讀不懂就直接指向「設定與題庫」的略過按鈕
-  else if(st.loadError==="MIGRATE"&&st.migrateReason==="WRITE") h+='<div class="banner"><strong>舊版的作答紀錄搬不過來</strong><span class="small">可能是這台裝置的儲存空間不夠。舊紀錄還在、沒有被刪；清出一些空間後重新整理頁面，就會再搬一次。這段時間不會存作答。</span></div>';
-  else if(st.loadError==="MIGRATE") h+='<div class="banner"><strong>舊版的作答紀錄格式讀不懂，搬不過來</strong><span class="small">不是空間問題，重新整理也不會好。舊紀錄還在、沒有被刪；請爸媽到下方「設定與題庫」按「略過舊紀錄，從頭開始」。按之前不會存作答。</span></div>';
+  // 設計 task-mv6srlue-pujdyl S1：新版沒有紀錄、只剩舊版——不自動搬，請爸媽明確選（取代原本的「搬不過來」兩種橫幅）
+  else if(st.loadError==="LEGACY") h+=legacyBox(st);
   else if(st.loadError) h+='<div class="banner"><strong>讀不到這台裝置的作答紀錄</strong><span class="small">為了不蓋掉看不到的紀錄，現在不會存任何作答。請改用一般瀏覽模式，或重新整理頁面再試。</span></div>';
   else if(memoryOnly) h+='<div class="banner"><strong>這台裝置存不了作答紀錄</strong><span class="small">可能是無痕模式或關閉了網站資料。請改用一般瀏覽模式開啟，否則關掉頁面紀錄就會不見。</span></div>';
   else if(st.saveStatus==="invalid") h+='<div class="banner"><strong>剛剛那一步沒有存（資料檢查沒通過）</strong><span class="small">紀錄沒有被改動。請重新整理頁面；如果一直出現，請爸媽告訴我。</span></div>';
   else if(st.saveStatus==="failed") h+='<div class="banner"><strong>剛剛那一步沒有存到這台裝置</strong><div class="row"><button class="btn sm" type="button" id="retrySave">再存一次</button></div></div>';
+  if(restoredNote&&!st.loadError) h+='<div class="banner info" id="restoredNote"><strong>'+esc(restoredNote)+'</strong></div>';
+  // 設計 S2 步驟 4 失敗：新版已存好，只是舊版還沒封存完——不宣稱完整搬移成功，給一個再試一次
+  if(!st.loadError&&st.archive==="pending") h+='<div class="banner" id="archiveNote"><strong>進度已存，舊版封存未完成</strong><span class="small">新版的作答紀錄已經存好；舊版的原文還留在原處、沒有被刪。可能是儲存空間不夠，等一下再試一次就好。</span><div class="row"><button class="btn sm" type="button" id="archiveRetry">再試一次</button></div></div>';
   var v=V();
   if(v.needsHelp.length) h+='<div class="banner info"><strong>需要爸媽陪著看的觀念：'+v.needsHelp.map(function(c){return esc(CONCEPTS[c].short);}).join("、")+'</strong><span class="small">換了題目還是卡住，這很正常。請陪她看一次圖解，再到「家長摘要」按「已經陪她看過」。</span></div>';
   $("#banners").innerHTML=h;
-  on("#retrySave",retrySave);
+  on("#retrySave",retrySave); on("#archiveRetry",archiveRetry); wireLegacy();
 }
+// 只剩舊版時給爸媽的選擇（設計 S1）：兩個選項都要再按一次確定，不暗中預選恢復；選之前不存作答
+var legacyAsk=null, legacyMsg="", restoredNote="";
+function legacyBox(st){
+  var lg=st.legacy||{}, can=!lg.reason&&!lg.conflict;
+  var h='<div class="banner info legacy" id="legacyBox" role="region" aria-labelledby="legacyT"><strong id="legacyT">這台裝置有舊版「自然複習」的作答紀錄</strong>'+
+    '<span class="small">新版還沒有任何紀錄。請爸媽選一個；選好之前，作答不會存。</span>';
+  if(lg.conflict) h+='<span class="small">這台裝置已經另外存了一份不一樣的舊版備份。為了不蓋掉任何一份，現在不能恢復；可以從頭開始，兩份舊紀錄都會原封不動留著。</span>';
+  else if(lg.reason) h+='<span class="small">舊版紀錄的格式讀不懂，沒辦法恢復；可以從頭開始，舊版原文會另外保存在這台裝置、不會刪掉。</span>';
+  if(legacyAsk) h+='<div class="ask"><strong>'+(legacyAsk==="restore"?'確定要恢復舊版紀錄？':'確定要從頭開始？')+'</strong><button class="btn sm" type="button" id="legacyYes">'+(legacyAsk==="restore"?'確定恢復':'確定從頭開始')+'</button><button class="btn ghost sm" type="button" id="legacyNo">取消</button></div>';
+  else h+='<div class="choices">'+(can?'<button class="btn" type="button" id="legacyRestore">恢復舊版紀錄<span class="small">練過的卡片會搬過來，舊版的「畢業」要重新確認一次</span></button>':'')+
+    '<button class="btn ghost" type="button" id="legacyFresh">從頭開始<span class="small">新版從空白開始；舊版原文另外保存，不會刪掉</span></button></div>';
+  if(legacyMsg) h+='<span class="small" id="legacyMsg" role="status">'+esc(legacyMsg)+'</span>';
+  return h+'</div>';
+}
+function wireLegacy(){
+  function ask(c){return function(){legacyAsk=c;legacyMsg="";banners();var y=$("#legacyYes");if(y)y.focus();};}
+  on("#legacyRestore",ask("restore")); on("#legacyFresh",ask("fresh"));
+  on("#legacyNo",function(){legacyAsk=null;banners();});
+  on("#legacyYes",function(){var c=legacyAsk;legacyAsk=null;doRestore(c);});
+}
+var LEGACY_ERR={READ:"暫時讀不到紀錄，請再試一次。",SAVE_FAILED:"沒有存進這台裝置（可能是儲存空間不夠）。舊紀錄還在、沒有被動；清出一些空間後再按一次。",
+  UNCONFIRMED:"已經寫進去了，但還沒確認成功。請再按一次：會先確認現況，不會重複。",BAD_V1:"舊版紀錄的格式讀不懂，沒辦法恢復；可以選「從頭開始」。",
+  CONFLICT:"這台裝置有兩份不一樣的舊版紀錄，為了不蓋掉任何一份，現在不能恢復。"};
+// 家長按了確定：只有新版寫入並讀回確認才公布；失敗就留在原處說明（舊紀錄都還在）
+function doRestore(choice){
+  var r=store.restoreLegacy(choice);
+  if(r.error==="STATE_CHANGED"){outdated();return;}
+  if(!r.ok){legacyMsg=LEGACY_ERR[r.error]||"沒有完成，請再試一次。";banners();renderSettings();if(!store.get().loadError)$("#storeMsg").textContent=legacyMsg;return;}
+  legacyMsg=""; restoredNote=choice==="restore"?"已恢復舊版紀錄；舊版的「畢業」要重新確認一次。":"已從頭開始；舊版原文另外保存在這台裝置。";
+  renderHome(); renderSide();
+}
+function archiveRetry(){var r=store.retryArchive();if(r.error==="STATE_CHANGED"){outdated();return;}if(r.error==="READ"){readFail();return;}banners();renderSettings();}
 
 /* ---------- 首頁 ---------- */
 var screen="home";
@@ -889,7 +933,7 @@ function submit(c,ok,m,selfGraded){
 }
 // 兩個「再存一次」（上方提示列、題目下方）走同一條路：存成功才公布回饋
 function retrySave(){
-  var rr=store.retry(); if(rr.error==="STATE_CHANGED"){outdated();return;} banners();
+  var rr=store.retry(); if(rr.error==="STATE_CHANGED"){outdated();return;} if(rr.error==="READ"){readFail();return;} banners();
   var f=$("#saveFail");
   if(f&&pending){ if(store.accepted(pending.a.id)){f.remove();feedback(pending,(rr&&rr.info)||{});} return; }
   if(rr.ok) route();
@@ -1371,14 +1415,24 @@ function renderSide(){header();banners();renderConcepts();renderCal();renderExit
 function renderSettings(){
   var s=S(), st=store.get();
   $("#u3").checked=!!s.settings.unit3; $("#snd").innerHTML='<option value="off">關閉</option>'+window.G5Tones.TONES.map(function(t,i){return '<option value="'+i+'">'+(i+1)+'. '+esc(t.name)+'</option>';}).join(""); $("#snd").value=s.settings.sound?String(s.settings.tone||0):"off";
-  $("#storeMsg").textContent=st.loadError?(st.loadError==="SCHEMA"?"存檔讀不出來，目前不會存檔。":st.loadError==="MIGRATE"?"舊紀錄搬不過來，目前不會存檔（舊紀錄還在）。":"讀不到這台裝置的紀錄，目前不會存檔。"):memoryOnly?"這台裝置存不了作答紀錄。":"作答紀錄只存在這台裝置的瀏覽器（不上傳）。"+(st.migrated?"已把舊版紀錄搬過來；舊版的「畢業」要重新確認一次。":"");
+  $("#storeMsg").textContent=st.loadError?(st.loadError==="SCHEMA"?"存檔讀不出來，目前不會存檔。":st.loadError==="LEGACY"?"這台裝置有舊版紀錄還沒處理：請在最上方選「恢復舊版紀錄」或「從頭開始」。選之前不會存作答（舊紀錄還在）。":"讀不到這台裝置的紀錄，目前不會存檔。"):memoryOnly?"這台裝置存不了作答紀錄。":"作答紀錄只存在這台裝置的瀏覽器（不上傳）。"+(st.migrated?"已恢復舊版紀錄；舊版的「畢業」要重新確認一次。":"")+
+    (st.archive==="conflict"?"這台裝置有兩份不一樣的舊版紀錄（原本的與備份），都原封不動留著、沒有覆蓋；需要時請找幫忙設定的人處理。":"")+
+    (st.legacy&&st.legacy.src==="A"?(st.legacy.reason?"這台裝置有一份封存的舊版紀錄，但格式讀不懂，沒辦法恢復（原文保留著）。":"這台裝置有一份封存的舊版紀錄；還沒開始新紀錄前，可以按下面的「恢復封存的舊版紀錄」。"):"");
   var rr=$("#resetRow");
   if(st.loadError==="READ"){rr.innerHTML="";return;}
-  if(st.loadError){rr.innerHTML='<button class="btn warn sm" id="discard" type="button">'+(st.loadError==="MIGRATE"?'略過舊紀錄，從頭開始（舊紀錄保留在這台裝置）':'清除壞掉的存檔，重新開始')+'</button>';on("#discard",function(){rr.innerHTML='<span>確定要清除？舊存檔會被覆蓋。</span><button class="btn warn sm" id="discardYes" type="button">清除</button><button class="btn ghost sm" id="discardNo" type="button">取消</button>';on("#discardNo",renderSettings);on("#discardYes",function(){if(!store.discardBroken()&&store.get().stale){outdated();return;}renderHome();});});return;}
+  if(st.loadError==="LEGACY"){rr.innerHTML="";return;}
+  if(st.loadError){rr.innerHTML='<button class="btn warn sm" id="discard" type="button">清除壞掉的存檔，重新開始</button>';on("#discard",function(){rr.innerHTML='<span>確定要清除？舊存檔會被覆蓋。</span><button class="btn warn sm" id="discardYes" type="button">清除</button><button class="btn ghost sm" id="discardNo" type="button">取消</button>';on("#discardNo",renderSettings);on("#discardYes",function(){if(!store.discardBroken()&&store.get().stale){outdated();return;}renderHome();});});return;}
   if(!rr.dataset.state){rr.innerHTML='<button class="btn ghost sm" id="resetBtn" type="button">清除全部作答紀錄</button>';
     on("#resetBtn",function(){rr.dataset.state="ask";rr.innerHTML='<span>確定要清除所有作答紀錄？</span><button class="btn warn sm" id="resetYes" type="button">清除</button><button class="btn ghost sm" id="resetNo" type="button">取消</button>';
       on("#resetNo",function(){delete rr.dataset.state;renderSettings();});
       on("#resetYes",function(){delete rr.dataset.state;act({type:"reset"});renderHome();});});}
+  // 設計 S1：V、O 都不在、只剩封存 A——不自動恢復，家長另有明確入口（還沒開始新紀錄才有，按了也要再確定一次）
+  if(!rr.dataset.state&&st.legacy&&st.legacy.src==="A"&&!st.legacy.reason){
+    rr.insertAdjacentHTML("beforeend",'<button class="btn ghost sm" id="restoreArchived" type="button">恢復封存的舊版紀錄</button>');
+    on("#restoreArchived",function(){rr.dataset.state="arc";rr.innerHTML='<span>確定要用封存的舊版紀錄開始？</span><button class="btn sm" id="restoreArchivedYes" type="button">確定恢復</button><button class="btn ghost sm" id="restoreArchivedNo" type="button">取消</button>';
+      on("#restoreArchivedNo",function(){delete rr.dataset.state;renderSettings();});
+      on("#restoreArchivedYes",function(){delete rr.dataset.state;doRestore("restore");});});
+  }
 }
 $("#u3").onchange=function(e){act({type:"settings",unit3:e.target.checked});renderSide();};
 $("#snd").onchange=function(e){var v=e.target.value; if(v==="off") act({type:"settings",sound:false}); else { act({type:"settings",sound:true,tone:+v}); chime(+v); }};
@@ -1398,6 +1452,7 @@ on("#importBtn",function(){
 /* ---------- 啟動與跨午夜 ---------- */
 document.addEventListener("visibilitychange",function(){
   if(document.visibilityState!=="visible") return;
+  var ck=store.check(); if(ck.error==="STATE_CHANGED"){outdated();return;} if(ck.ok!==true){readFail();return;} readOk();   // 設計 S3：只有確認沒變才重畫
   var changed=V().today!==shownDay; if(act({type:"tick"}).error==="STATE_CHANGED") return;   // 失效了：不再重畫舊畫面
   if(changed){ if(screen==="practice") route(); else renderHome(); renderSide(); }
   else if(screen==="home") renderHome();

@@ -4,7 +4,7 @@
 跑法：python3.12 tests/e2e_v3.py [--shots DIR] [--page v3/index.html]
 涵蓋：補救三分支（第一次求助→圖解＋觀察任務→換題確認→仍錯就停本輪、標待協助）、預測前鎖實驗、
 短回合≠當日完成（矩陣 8）、考考爸媽題圖（25）、寫入失敗不宣告（27）、壞存檔不覆蓋（19）、
-舊資料遷移（28）、跨午夜換任務（16/17）、不碰 window.claude（18）、溶解帳本與減少動態效果（21–23）。
+舊資料由家長選擇恢復＋封存（28；設計 task-mv6srlue-pujdyl）、跨午夜換任務（16/17）、不碰 window.claude（18）、溶解帳本與減少動態效果（21–23）。
 預設測 v3/index.html（預覽版）；換到正式網址後改 --page index.html。
 """
 import json
@@ -697,19 +697,20 @@ def flow_dissolve_fresh_cup(browser):
 
 
 def flow_bad_v1_banner(browser):
-    """R5/R8（M08／M10）：v1 結構不合法 → 橫幅不提儲存空間、指向「設定與題庫」；略過後從頭開始、v1 原文不動。"""
+    """R5/R8（M08／M10）＋設計 task-mv6srlue-pujdyl S1：v1 結構不合法 → 家長選擇畫面說「格式讀不懂」、沒有「恢復」鈕；
+    按「從頭開始」再確定才建立 v3，v1 原文逐字封存進 g5sci.v1.archived。"""
     v1 = json.dumps({"v": 1, "cards": []})
     ctx, page, errors = new_page(browser, "2026-10-20T12:00:00+08:00",
                                  init=f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v1', {json.dumps(v1)});}}")
     ban = page.inner_text("#banners")
-    check("R5 壞 v1 橫幅：不提儲存空間、指向設定與題庫", "格式讀不懂" in ban and "儲存空間" not in ban and "設定與題庫" in ban, ban)
+    check("R5 壞 v1：家長選擇畫面說格式讀不懂、不提儲存空間、沒有恢復鈕", "格式讀不懂" in ban and "儲存空間" not in ban and page.locator("#legacyRestore").count() == 0
+          and page.locator("#legacyFresh").count() == 1, ban)
     check("R5 壞 v1 不寫 v3", page.evaluate("localStorage.getItem('g5sci.v3')") is None)
-    page.locator("#setBox summary").click()
-    has_discard = page.locator("#discard").count() == 1
-    check("R5 設定與題庫有「略過舊紀錄」鈕", has_discard)
-    if has_discard:
-        page.locator("#discard").click(); page.locator("#discardYes").click()
-        check("R5 略過後 v3 建立、v1 原文不動", state(page) is not None and page.evaluate("localStorage.getItem('g5sci.v1')") == v1)
+    page.locator("#legacyFresh").click()
+    check("R5 從頭開始要再確定一次", page.evaluate("localStorage.getItem('g5sci.v3')") is None and page.locator("#legacyYes").count() == 1)
+    page.locator("#legacyYes").click()
+    check("R5 從頭開始後 v3 建立、v1 原文封存、原 key 刪除", state(page) is not None and page.evaluate("localStorage.getItem('g5sci.v1.archived')") == v1
+          and page.evaluate("localStorage.getItem('g5sci.v1')") is None)
     check("R5 流程沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
@@ -746,16 +747,19 @@ def flow_corrupt(browser):
 
 
 def flow_migrate(browser):
+    """矩陣 28＋設計 task-mv6srlue-pujdyl S1／S2：只剩舊版時不自動搬；家長按「恢復舊版紀錄」並確定才搬，舊版原文封存、原 key 刪除。"""
     v1 = json.dumps({"v": 1, "cards": {"s1": {"box": 3, "streak": 3, "due": "2026-10-25", "seen": 8, "right": 8, "wrong": 0, "retired": True}},
                      "unit3": False, "extra": [], "prefs": {"sound": True}})
     ctx, page, errors = new_page(browser, "2026-10-20T12:00:00+08:00",
                                  init=f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v1', {json.dumps(v1)});}}")
+    check("只剩舊版：顯示家長選擇、不自動搬", page.locator("#legacyBox").count() == 1 and state(page) is None, page.inner_text("#banners"))
+    page.locator("#legacyRestore").click(); page.locator("#legacyYes").click()
     page.locator("#setBox summary").click()
-    check("遷移提示（矩陣 28）", "已把舊版紀錄搬過來" in page.inner_text("#storeMsg"), page.inner_text("#storeMsg"))
-    check("舊版原文不變", page.evaluate("localStorage.getItem('g5sci.v1')") == v1)
+    check("恢復提示（矩陣 28）", "已恢復舊版紀錄" in page.inner_text("#storeMsg"), page.inner_text("#storeMsg"))
+    check("舊版原文逐字封存、原 key 刪除", page.evaluate("localStorage.getItem('g5sci.v1.archived')") == v1 and page.evaluate("localStorage.getItem('g5sci.v1')") is None)
     s = state(page)
-    check("遷移後不承認畢業、明天複習", s and s["cards"]["s1"] == {"seen": 8, "goodDays": [], "blockedDay": None, "due": "2026-10-21", "needsRecheck": True}, s and s["cards"].get("s1"))
-    check("遷移流程沒有 JS 錯誤", not errors, errors)
+    check("恢復後不承認畢業、明天複習", s and s["cards"]["s1"] == {"seen": 8, "goodDays": [], "blockedDay": None, "due": "2026-10-21", "needsRecheck": True}, s and s["cards"].get("s1"))
+    check("恢復流程沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
 
