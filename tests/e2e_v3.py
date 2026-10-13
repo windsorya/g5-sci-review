@@ -517,9 +517,11 @@ def flow_save_fail_then_tick(browser):
     page.evaluate("window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function(){ throw new Error('QuotaExceededError'); }; 0")
     btn(page, "東邊升起、西邊落下").click()
     page.evaluate("Storage.prototype.setItem = window.__realSet; 0")
-    page.evaluate("document.dispatchEvent(new Event('visibilitychange')); 0")   # 切回頁面：tick 先補寫待重試的答案
-    page.locator("#saveAgain").click()
-    check("存檔失敗→切回頁面→再存一次：仍顯示這一題的回饋（以操作 ID 判斷）", "答對了" in page.inner_text("#ansBox"), page.inner_text("#ansBox")[:120])
+    page.evaluate("document.dispatchEvent(new Event('visibilitychange')); 0")   # 切回頁面＝resume：補寫待重試的答案＋tick，整條成功就同輪公布（補充設計 C3）
+    if page.locator("#saveAgain").count():
+        page.locator("#saveAgain").click()
+    check("存檔失敗→切回頁面：resume 成功後同輪顯示這一題的回饋（以本輪確認的操作 ID 判斷）、提示收起", "答對了" in page.inner_text("#ansBox") and page.locator("#saveFail").count() == 0,
+          page.inner_text("#ansBox")[:120])
     s = state(page)
     check("該答案只寫入一次", s["cards"]["s1"]["seen"] == 1 and s["ops"].count(s["log"][0]["op"]) == 1, s["cards"].get("s1"))
     check("切回頁面流程沒有 JS 錯誤", not errors, errors)
