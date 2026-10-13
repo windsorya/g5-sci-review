@@ -166,6 +166,15 @@ details details>summary{font-family:var(--f-body);font-size:15px}
 .three b{font-family:var(--f-display);font-weight:400;font-size:28px;color:var(--pri);font-variant-numeric:tabular-nums}
 textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg);box-sizing:border-box}
 .links a{color:var(--pri)}
+/* 跨裝置同步面板（https://windsorya.github.io/g5-help/sync.js 產生，class 前綴 g5s-；難題站同一份） */
+.g5s-panel{display:grid;gap:10px}
+.g5s-button{min-height:46px;padding:9px 16px;margin:4px 8px 4px 0;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-size:17px;cursor:pointer}
+.g5s-input,.g5s-link{box-sizing:border-box;max-width:100%;padding:10px;font-size:17px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.g5s-link{width:100%}
+.g5s-code{font-size:26px;font-weight:700;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.g5s-conflict{padding:14px;border:2px solid var(--sun);border-radius:12px;background:var(--sun-soft)}
+.g5s-notice{color:var(--bad)}
+.g5s-panel svg{width:180px;height:180px;background:#fff;padding:8px;border-radius:8px}
 /* 難題解說入口（2026-10-13 律師：她不懂的題目一題一篇、不分科目，放在獨立網站） */
 .helplink{display:grid;gap:2px;background:var(--card);border:2px solid var(--pri);border-radius:16px;padding:14px 18px;color:var(--ink);text-decoration:none;box-shadow:var(--shadow);min-height:48px}
 .helplink b{font-family:var(--f-display);font-weight:400;font-size:21px;color:var(--pri)}
@@ -198,6 +207,7 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
       <div><a href="https://www.studyark.org/" target="_blank" rel="noopener">學習方舟</a>：各校南一五上自然期中考考古卷，適合 11/3–11/4 的紙筆模擬。</div>
     </div>
   </details>
+  <details id="syncBox"><summary>換電腦或 iPad 也能接著練（跨裝置同步）</summary><div id="g5sync"></div></details>
   <details id="setBox"><summary>設定與題庫</summary>
     <div style="display:grid;gap:14px">
       <label class="toggle"><input type="checkbox" id="u3"> 老師已經教完「水溶液 1. 溶解現象」（打勾後隔天開始出這單元的題）</label>
@@ -1359,5 +1369,20 @@ document.addEventListener("visibilitychange",function(){
   else renderSide();
 });
 renderHome();
+})();
+</script>
+<script src="https://windsorya.github.io/g5-help/qrcode.js"></script>
+<script src="https://windsorya.github.io/g5-help/sync.js"></script>
+<script>
+// 跨裝置同步（家庭同步碼）：只同步本站自己的 g5sci.v3；同步程式與難題站共用同一份（g5-help/sync.js），載不到就照常本機使用
+(function(){
+  if (!window.G5Sync) return;
+  var queued = false;
+  window.G5Sync.init({
+    endpoint: "https://script.google.com/macros/s/AKfycbxwo08VVT5tSRf-DsQEoo1hMlCm1YytGTzj89BPtJ6YWjPieuKyAPbnWXjUKagBdL6l/exec",
+    keys: ["g5sci.v3"], container: "#g5sync",
+    summarize: {"g5sci.v3": function(j){ try { var x = JSON.parse(j), c = x.cards || {}, n = Object.keys(c).filter(function(k){ return c[k] && c[k].seen > 0; }).length; return "練過 " + n + " 張卡"; } catch (e) { return "（讀不懂的紀錄）"; } }},
+    onReplaced: function(){ if (!queued) { queued = true; setTimeout(function(){ location.reload(); }, 0); } }
+  });
 })();
 </script>
