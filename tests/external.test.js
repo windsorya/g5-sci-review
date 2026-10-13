@@ -163,6 +163,45 @@ test("T06b 分頁暫存與本機存檔都寫不進標記：prepareReload 回 fal
   assert.equal(B.prepareReload(), false);
 });
 
+// Codex 審 1dc3ded T06：分頁暫存與本機存檔在重載前都寫不進、重載時儲存又恢復——靠搬移當下記的永久標記（.fromV1），舊紀錄仍不復活
+test("T06c 兩種儲存在重載前都寫不進、重載時恢復：仍不搬回 v1、不寫存檔", () => {
+  const b = bank(["s1", "s2"]);
+  const v1 = JSON.stringify({ v: 1, cards: { s1: { box: 1, streak: 1, due: "2026-10-21", seen: 7, right: 2, wrong: 0, retired: false } } });
+  const mem = disk({ [C.LS_V1]: v1 });
+  const B = open(mem, b, null);
+  assert.equal(B.get().migrated, true);
+  assert.equal(mem.raw[C.LS_KEY + ".fromV1"], "1", "搬移時沒記永久標記");
+  mem.removeItem(C.LS_KEY); assert.ok(isChanged(B.check()));
+  mem.f.write = true; assert.equal(B.prepareReload(), false); mem.f.write = false;   // 重載前兩邊都寫不進，重載時恢復
+  const w0 = mem.writes();
+  const B2 = open(mem, b, null);
+  assert.equal(B2.get().migrated, false, "舊紀錄復活了"); assert.deepEqual(Object.keys(B2.get().state.cards), []);
+  assert.equal(mem.raw[C.LS_KEY], undefined); assert.equal(mem.writes(), w0, "重載時寫了存檔");
+});
+test("T06c 標記上線前就搬過（新版、舊版都在、沒有標記）：開頁補記標記；之後新版被刪也不搬", () => {
+  const b = bank(["s1", "s2"]);
+  const v1 = JSON.stringify({ v: 1, cards: { s1: { box: 1, streak: 1, due: "2026-10-21", seen: 7, right: 2, wrong: 0, retired: false } } });
+  const mem = disk({ [C.LS_V1]: v1 });
+  open(mem, b, null); delete mem.raw[C.LS_KEY + ".fromV1"];   // 模擬舊版程式搬過、沒有標記
+  const A = open(mem, b, null);
+  assert.equal(mem.raw[C.LS_KEY + ".fromV1"], "1", "沒補記標記");
+  mem.removeItem(C.LS_KEY); assert.ok(isChanged(A.check()));
+  const A2 = open(mem, b, null);
+  assert.equal(A2.get().migrated, false, "補記後仍搬回 v1"); assert.equal(mem.raw[C.LS_KEY], undefined);
+});
+test("T06c 搬移時標記寫不進：撤回這次搬移（不留下沒標記的新版）、封鎖；下次開頁再搬", () => {
+  const b = bank(["s1", "s2"]);
+  const v1 = JSON.stringify({ v: 1, cards: { s1: { box: 1, streak: 1, due: "2026-10-21", seen: 7, right: 2, wrong: 0, retired: false } } });
+  const mem = disk({ [C.LS_V1]: v1 });
+  const set = mem.setItem; mem.setItem = (k, v) => { if (k === C.LS_KEY + ".fromV1") throw new Error("QuotaExceededError"); return set(k, v); };
+  const A = open(mem, b, null);
+  assert.equal(A.get().migrated, false); assert.equal(A.get().loadError, "MIGRATE"); assert.equal(A.get().migrateReason, "WRITE");
+  assert.equal(mem.raw[C.LS_KEY], undefined, "留下了沒有標記的新版"); assert.equal(mem.raw[C.LS_V1], v1);
+  mem.setItem = set;
+  const A2 = open(mem, b, null);
+  assert.equal(A2.get().migrated, true); assert.deepEqual(cards(mem), ["s1"]); assert.equal(mem.raw[C.LS_KEY + ".fromV1"], "1");
+});
+
 ["predict", "task", "complete"].forEach((stage) => {
   test("T07 實驗／解說停在「" + stage + "」階段，別處刪掉存檔後按原按鈕：回 STATE_CHANGED（不是無提示的 NO_RUN）、不寫入", () => {
     const b = bank(["s1"]); const mem = disk(); const B = open(mem, b);

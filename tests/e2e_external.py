@@ -851,6 +851,27 @@ def t06b(browser, label, dev):
         ctx.close()
 
 
+def t06c(browser, label, dev):
+    """重載前分頁暫存與本機存檔都寫不進、重載後恢復：靠搬移時記的永久標記，仍不搬回 v1（Codex 審 1dc3ded）。"""
+    ctx = new_ctx(browser, dev)
+    try:
+        B = Tab(ctx)
+        v1 = '{"v":1,"cards":{}}'
+        B.ev("(v) => { localStorage.clear(); sessionStorage.clear(); localStorage.setItem(G5Core.LS_V1, v); }", v1)
+        B.p.reload(); B.ready()
+        pre = B.raw() is not None and B.ev("localStorage.getItem(G5Core.LS_KEY + '.fromV1')") == "1"
+        B.ev("() => { window.__failSession = true; window.__failSet = true; }")
+        b0 = B.navs
+        B.ev("() => localStorage.removeItem(G5Core.LS_KEY)")
+        B.ev("() => document.dispatchEvent(new Event('visibilitychange'))")
+        reloaded = B.wait_reload(b0)
+        check(f"{label} T06c 前提：第一次開頁把舊版搬進來、記了永久標記", pre, "沒搬或沒標記")
+        check(f"{label} T06c 兩種儲存在重載前都寫不進、重載後恢復：仍不搬回舊版、不寫存檔", reloaded and B.raw() is None and B.ev("window.__w") == 0 and not B.errors,
+              {"重載": reloaded, "raw": B.raw(), "w": B.ev("window.__w"), "errors": B.errors})
+    finally:
+        ctx.close()
+
+
 def t08b(browser, label, dev):
     """已補存的那一步（設定操作順便補存、句數還沒前進），同頁刪檔後按「下一句／下一步」：不得前進。"""
     ctx = new_ctx(browser, dev)
@@ -932,7 +953,7 @@ FLOWS = [
     ("T12", t12, ("dispatch",)), ("T12", t12, ("tick",)), ("T13", t13, ()),
     ("T14", t14_broken, ()), ("T14", t14_read, ()), ("T15", t15_pending, ()), ("T15", t15_burst, ()),
     ("M", m_save_fail, ()), ("M", m_retry_resume, ()), ("M", m_last_resume, ()),
-    ("T06", t06b, ()), ("T08", t08b, ()), ("T15", t15_anim, ()),
+    ("T06", t06b, ()), ("T06", t06c, ()), ("T08", t08b, ()), ("T15", t15_anim, ()),
 ]
 
 
