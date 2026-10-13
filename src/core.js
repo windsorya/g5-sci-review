@@ -76,7 +76,7 @@
   /* ---------- 空白狀態 ---------- */
   function blankState() {
     return { v: 3, cards: {}, exits: {}, days: {}, labRuns: {}, session: null, log: [], ops: [],
-             help: {}, extra: [], settings: { unit3: false, sound: true } };
+             help: {}, extra: [], settings: { unit3: false, sound: true, tone: 0 } };
   }
   function blankDay() { return { planIds: [], doneIds: [], touched: [], extraDone: false, labRuns: 0, teach: 0, mood: null }; }
 
@@ -368,6 +368,8 @@
       case "settings": {
         if (action.unit3 !== undefined) { if (!isBool(action.unit3)) return fail(state0, "BAD_ACTION"); s.settings.unit3 = action.unit3; }
         if (action.sound !== undefined) { if (!isBool(action.sound)) return fail(state0, "BAD_ACTION"); s.settings.sound = action.sound; }
+        // 答對提示音選哪一種（0–9，src/tones.js；2026-10-13 律師要 10 種可選）
+        if (action.tone !== undefined) { if (!isTone(action.tone)) return fail(state0, "BAD_ACTION"); s.settings.tone = action.tone; }
         break;
       }
       case "import": {
@@ -512,9 +514,10 @@
     });
     if (!Array.isArray(o.extra) || !o.extra.every(function (c) { return validCard(c, bank); })) bad("extra");
     else if (!uniqList(o.extra.map(function (c) { return c.id; }))) bad("extra duplicate");
-    if (!isObj(o.settings) || !isBool(o.settings.unit3) || !isBool(o.settings.sound)) bad("settings");
+    if (!isObj(o.settings) || !isBool(o.settings.unit3) || !isBool(o.settings.sound) || !(o.settings.tone === undefined || isTone(o.settings.tone))) bad("settings");
     return errs;
   }
+  function isTone(x) { return typeof x === "number" && Number.isInteger(x) && x >= 0 && x <= 9; }   // 舊存檔沒有 tone 欄位＝第 0 種
   function decode(text, bank) {
     var o;
     try { o = JSON.parse(text); } catch (e) { return { accepted: false, error: "SCHEMA", detail: ["json"] }; }

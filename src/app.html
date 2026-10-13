@@ -201,7 +201,7 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
   <details id="setBox"><summary>設定與題庫</summary>
     <div style="display:grid;gap:14px">
       <label class="toggle"><input type="checkbox" id="u3"> 老師已經教完「水溶液 1. 溶解現象」（打勾後隔天開始出這單元的題）</label>
-      <label class="toggle"><input type="checkbox" id="snd"> 答對時播放提示音</label>
+      <div class="row"><label for="snd">答對提示音</label><select id="snd" style="font-size:17px;min-height:46px;padding:6px 10px;border:2px solid var(--line);border-radius:12px;background:var(--card)"></select><button class="btn ghost sm" type="button" id="sndTry">試聽</button></div>
       <p class="small muted" style="margin:0">題庫來源：目前是<strong>示範題</strong>，依學校公布的五年級課程計畫進度（南一版第 1–10 週）出的，還沒有逐題對過課本頁碼。</p>
       <!-- scope-cut（4agent 2026-10-11）：貼 JSON 加題卡的入口先藏起來（加題改由程式碼題庫）；已存的 extra 照常讀取與驗證 -->
       <div id="importArea" hidden>
@@ -216,6 +216,7 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 </div>
 
 <!--@INLINE src/sun.js-->
+<!--@INLINE src/tones.js-->
 <!--@INLINE src/figs.js-->
 <!--@INLINE src/steps.js-->
 <!--@INLINE src/videos.js-->
@@ -548,11 +549,10 @@ function conceptOn(cid){return C.conceptOn(S(),BANK,cid);}
 function srcLine(c){return '<div class="src">'+esc(c.page?("出處："+c.page):SAMPLE)+"</div>";}
 function on(sel,fn){var el=typeof sel==="string"?$(sel):sel;if(el)el.onclick=fn;}
 var actx=null;
-function chime(){
-  if(!S().settings.sound) return;
-  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
-    [660,880].forEach(function(f,i){var o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime+i*0.12;o.frequency.value=f;o.type="sine";
-      g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.12,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+0.3);});
+function chime(force){
+  var st=S().settings; if(!st.sound&&force===undefined) return;
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.resume) actx.resume();
+    window.G5Tones.play(actx, force!==undefined?force:(st.tone||0));
   }catch(e){}
 }
 
@@ -1325,7 +1325,7 @@ function renderSide(){header();banners();renderConcepts();renderCal();renderExit
 /* ---------- 設定 ---------- */
 function renderSettings(){
   var s=S(), st=store.get();
-  $("#u3").checked=!!s.settings.unit3; $("#snd").checked=!!s.settings.sound;
+  $("#u3").checked=!!s.settings.unit3; $("#snd").innerHTML='<option value="off">關閉</option>'+window.G5Tones.TONES.map(function(t,i){return '<option value="'+i+'">'+(i+1)+'. '+esc(t.name)+'</option>';}).join(""); $("#snd").value=s.settings.sound?String(s.settings.tone||0):"off";
   $("#storeMsg").textContent=st.loadError?(st.loadError==="SCHEMA"?"存檔讀不出來，目前不會存檔。":st.loadError==="MIGRATE"?"舊紀錄搬不過來，目前不會存檔（舊紀錄還在）。":"讀不到這台裝置的紀錄，目前不會存檔。"):memoryOnly?"這台裝置存不了作答紀錄。":"作答紀錄只存在這台裝置的瀏覽器（不上傳）。"+(st.migrated?"已把舊版紀錄搬過來；舊版的「畢業」要重新確認一次。":"");
   var rr=$("#resetRow");
   if(st.loadError==="READ"){rr.innerHTML="";return;}
@@ -1336,7 +1336,8 @@ function renderSettings(){
       on("#resetYes",function(){delete rr.dataset.state;act({type:"reset"});renderHome();});});}
 }
 $("#u3").onchange=function(e){act({type:"settings",unit3:e.target.checked});renderSide();};
-$("#snd").onchange=function(e){act({type:"settings",sound:e.target.checked});};
+$("#snd").onchange=function(e){var v=e.target.value; if(v==="off") act({type:"settings",sound:false}); else { act({type:"settings",sound:true,tone:+v}); chime(+v); }};
+$("#sndTry").onclick=function(){var v=$("#snd").value; chime(v==="off"?0:+v);};
 on("#importBtn",function(){
   var msg=$("#importMsg");
   try{
