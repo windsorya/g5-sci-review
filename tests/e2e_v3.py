@@ -4,7 +4,7 @@
 跑法：python3.12 tests/e2e_v3.py [--shots DIR] [--page v3/index.html]
 涵蓋：補救三分支（第一次求助→圖解＋觀察任務→換題確認→仍錯就停本輪、標待協助）、預測前鎖實驗、
 短回合≠當日完成（矩陣 8）、考考爸媽題圖（25）、寫入失敗不宣告（27）、壞存檔不覆蓋（19）、
-舊資料由家長選擇恢復＋封存（28；設計 task-mv6srlue-pujdyl）、跨午夜換任務（16/17）、不碰 window.claude（18）、溶解帳本與減少動態效果（21–23）。
+舊版 v1 不讀不寫（4agent 最終方案 (a)，L14）、跨午夜換任務（16/17）、不碰 window.claude（18）、溶解帳本與減少動態效果（21–23）。
 預設測 v3/index.html（預覽版）；換到正式網址後改 --page index.html。
 """
 import json
@@ -698,22 +698,41 @@ def flow_dissolve_fresh_cup(browser):
     ctx.close()
 
 
-def flow_bad_v1_banner(browser):
-    """R5/R8（M08／M10）＋設計 task-mv6srlue-pujdyl S1：v1 結構不合法 → 家長選擇畫面說「格式讀不懂」、沒有「恢復」鈕；
-    按「從頭開始」再確定才建立 v3，v1 原文逐字封存進 g5sci.v1.archived。"""
+LEGACY_IDS = "#legacyBox, #legacyRestore, #legacyFresh, #legacyRecheck, #archiveNote, #restoreArchived, #archiveRetry"
+
+
+def seed_init(kv):
+    js = "".join(f"localStorage.setItem({json.dumps(k)}, {json.dumps(v)});" for k, v in kv.items())
+    return "if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');" + js + "}"
+
+
+def flow_legacy_ignored_bad(browser):
+    """L14（4agent 最終方案 (a)）：只有壞的舊版 g5sci.v1：不封鎖、不顯示任何舊版元件；作答照常存進新版，舊版原文不動。"""
     v1 = json.dumps({"v": 1, "cards": []})
-    ctx, page, errors = new_page(browser, "2026-10-20T12:00:00+08:00",
-                                 init=f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v1', {json.dumps(v1)});}}")
-    ban = page.inner_text("#banners")
-    check("R5 壞 v1：家長選擇畫面說格式讀不懂、不提儲存空間、沒有恢復鈕", "格式讀不懂" in ban and "儲存空間" not in ban and page.locator("#legacyRestore").count() == 0
-          and page.locator("#legacyFresh").count() == 1, ban)
-    check("R5 壞 v1 不寫 v3", page.evaluate("localStorage.getItem('g5sci.v3')") is None)
-    page.locator("#legacyFresh").click()
-    check("R5 從頭開始要再確定一次", page.evaluate("localStorage.getItem('g5sci.v3')") is None and page.locator("#legacyYes").count() == 1)
-    page.locator("#legacyYes").click()
-    check("R5 從頭開始後 v3 建立、v1 原文封存、原 key 刪除", state(page) is not None and page.evaluate("localStorage.getItem('g5sci.v1.archived')") == v1
-          and page.evaluate("localStorage.getItem('g5sci.v1')") is None)
-    check("R5 流程沒有 JS 錯誤", not errors, errors)
+    ctx, page, errors = new_page(browser, "2026-10-20T12:00:00+08:00", init=seed_init({"g5sci.v1": v1}))
+    check("L14 壞舊版：沒有任何舊版畫面元件、沒有封鎖橫幅", page.locator(LEGACY_IDS).count() == 0 and "存檔讀不出來" not in page.inner_text("#banners"), page.inner_text("#banners")[:120])
+    btn(page, "開始今天的練習").click(); btn(page, "東邊升起、西邊落下").click()
+    s = state(page)
+    check("L14 壞舊版：作答照常存進新版、舊版原文不動", s is not None and len(s["log"]) == 1 and page.evaluate("localStorage.getItem('g5sci.v1')") == v1, s and len(s["log"]))
+    check("L14 壞舊版流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def flow_legacy_ignored(browser):
+    """L14（4agent 最終方案 (a)）：舊版 O 與不同的封存 A 都在：不搬、不封存、不顯示舊版元件；作答從空白開始存；設定頁有固定說明字。"""
+    v1 = json.dumps({"v": 1, "cards": {"s1": {"box": 3, "streak": 3, "due": "2026-10-25", "seen": 8, "right": 8, "wrong": 0, "retired": True}},
+                     "unit3": False, "extra": [], "prefs": {"sound": True}})
+    arc = json.dumps({"v": 1, "cards": {}})
+    ctx, page, errors = new_page(browser, "2026-10-20T12:00:00+08:00", init=seed_init({"g5sci.v1": v1, "g5sci.v1.archived": arc}))
+    check("L14 O＋A：開頁不建新版、沒有任何舊版畫面元件", state(page) is None and page.locator(LEGACY_IDS).count() == 0, page.inner_text("#banners")[:120])
+    btn(page, "開始今天的練習").click(); btn(page, "東邊升起、西邊落下").click()
+    s = state(page)
+    check("L14 O＋A：作答從空白開始存（不是舊版恢復來的）", s is not None and len(s["log"]) == 1 and s["cards"].get("s1", {}).get("seen", 0) <= 1, s and s["cards"].get("s1"))
+    check("L14 O＋A：舊版與封存原文都不動", page.evaluate("localStorage.getItem('g5sci.v1')") == v1 and page.evaluate("localStorage.getItem('g5sci.v1.archived')") == arc)
+    page.locator("#setBox summary").click()
+    msg = page.inner_text("#storeMsg")
+    check("L14 設定頁有固定說明、沒有恢復入口", "舊版的紀錄不會自動帶入新版" in msg and page.locator("#restoreArchived").count() == 0, msg)
+    check("L14 O＋A 流程沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
 
@@ -745,23 +764,6 @@ def flow_corrupt(browser):
     raw = page.evaluate("localStorage.getItem('g5sci.v3')")
     check("壞存檔不被覆蓋", raw == bad, raw)
     check("壞存檔流程沒有 JS 錯誤", not errors, errors)
-    ctx.close()
-
-
-def flow_migrate(browser):
-    """矩陣 28＋設計 task-mv6srlue-pujdyl S1／S2：只剩舊版時不自動搬；家長按「恢復舊版紀錄」並確定才搬，舊版原文封存、原 key 刪除。"""
-    v1 = json.dumps({"v": 1, "cards": {"s1": {"box": 3, "streak": 3, "due": "2026-10-25", "seen": 8, "right": 8, "wrong": 0, "retired": True}},
-                     "unit3": False, "extra": [], "prefs": {"sound": True}})
-    ctx, page, errors = new_page(browser, "2026-10-20T12:00:00+08:00",
-                                 init=f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v1', {json.dumps(v1)});}}")
-    check("只剩舊版：顯示家長選擇、不自動搬", page.locator("#legacyBox").count() == 1 and state(page) is None, page.inner_text("#banners"))
-    page.locator("#legacyRestore").click(); page.locator("#legacyYes").click()
-    page.locator("#setBox summary").click()
-    check("恢復提示（矩陣 28）", "已恢復舊版紀錄" in page.inner_text("#storeMsg"), page.inner_text("#storeMsg"))
-    check("舊版原文逐字封存、原 key 刪除", page.evaluate("localStorage.getItem('g5sci.v1.archived')") == v1 and page.evaluate("localStorage.getItem('g5sci.v1')") is None)
-    s = state(page)
-    check("恢復後不承認畢業、明天複習", s and s["cards"]["s1"] == {"seen": 8, "goodDays": [], "blockedDay": None, "due": "2026-10-21", "needsRecheck": True}, s and s["cards"].get("s1"))
-    check("恢復流程沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
 
@@ -1032,13 +1034,13 @@ def main():
         flow_pending_timer_no_hijack(ch)
         flow_pending_timer_no_hijack(wk, ipad, "webkit_ipad")
         flow_dissolve_fresh_cup(ch)
-        flow_bad_v1_banner(ch)
+        flow_legacy_ignored_bad(ch)
         flow_import_hidden(ch)
         shots_season_diagrams(ch)
         flow_season(ch)
         flow_season(wk, ipad)
         flow_corrupt(ch)
-        flow_migrate(ch)
+        flow_legacy_ignored(ch)
         flow_midnight(ch)
         flow_no_cloud(ch)
         flow_dissolve(ch, False)

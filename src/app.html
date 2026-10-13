@@ -48,10 +48,6 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 @media (min-width:821px){.hero{margin:0;border-radius:0 0 var(--r) var(--r)}}
 .banner{border-radius:14px;padding:12px 16px;display:grid;gap:8px;background:var(--bad-soft)}
 .banner.info{background:var(--sun-soft)}
-.legacy .choices{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
-.legacy .choices .btn{display:grid;gap:4px;justify-items:start;text-align:left;height:auto;padding:14px 18px}
-.legacy .choices .btn .small{font-weight:400;font-size:15px;line-height:1.45}
-.legacy .ask{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .outdated{position:fixed;inset:0;z-index:9999;background:rgba(10,20,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
 .outdated .obox{background:var(--card);color:var(--ink);border-radius:16px;padding:20px;max-width:420px;width:100%;display:grid;gap:10px;box-shadow:var(--shadow)}
 /* 面板 */
@@ -600,8 +596,8 @@ function makeStorage(){
   if(ls){
     var canWrite=true; try{ls.setItem("g5sci.probe","1");ls.removeItem("g5sci.probe");}catch(e){canWrite=false;}
     if(canWrite) return ls;
-    // 新版、舊版、舊版封存（設計 task-mv6srlue-pujdyl T29）任一在＝有資料；讀不到也當有資料（交給 store 顯示 READ）
-    var hasData=true; try{hasData=ls.getItem(C.LS_KEY)!==null||ls.getItem(C.LS_V1)!==null||ls.getItem(C.LS_ARC)!==null;}catch(e){hasData=true;}
+    // 4agent 最終方案 (a)：只看新版存檔在不在（不讀舊版或封存 key）；讀不到也當有資料（交給 store 顯示 READ），只有確認不存在才用記憶體
+    var hasData=true; try{hasData=ls.getItem(C.LS_KEY)!==null;}catch(e){hasData=true;}
     if(hasData) return ls;   // 有舊紀錄就不換成空白：照常讀，寫入失敗由 store 擋下並提示
   }
   memoryOnly=true; var m={};
@@ -615,7 +611,7 @@ var seq = 0;
 function newId(p){seq++;return (p||"a")+Date.now().toString(36)+seq.toString(36)+Math.floor(Math.random()*1e6).toString(36);}
 function S(){return store.get().state;}
 function V(){return store.view();}
-function act(a){if(a.type!=="tick"&&!a.id)a.id=newId();var r=store.dispatch(a);if(r.error==="STATE_CHANGED"){outdated();return r;}if(r.ok&&a.type!=="tick"){reloadNote=false;restoredNote="";}banners();return r;}
+function act(a){if(a.type!=="tick"&&!a.id)a.id=newId();var r=store.dispatch(a);if(r.error==="STATE_CHANGED"){outdated();return r;}if(r.ok&&a.type!=="tick")reloadNote=false;banners();return r;}
 
 /* ---------- 存檔在別處被改掉（設計 20261013 方案 A）：整頁失效，重載後用最新的紀錄 ---------- */
 // 另一個分頁、另一台裝置（同步）或清除紀錄改了存檔：這頁的畫面、實驗、待存答案都失去前提，不再寫入。
@@ -718,17 +714,12 @@ function banners(){
   var st=store.get(), h="";
   if(reloadNote) h+='<div class="banner info" id="reloadNote"><strong>紀錄已更新，請從這裡繼續</strong></div>';
   if(st.loadError==="SCHEMA") h+='<div class="banner"><strong>存檔讀不出來（可能被改壞了）</strong><span class="small">為了不蓋掉原本的紀錄，現在不會存任何作答。請爸媽到「設定與題庫」決定要不要清除重來。</span></div>';
-  // 設計 task-mv6srlue-pujdyl S1：新版沒有紀錄、只剩舊版——不自動搬，請爸媽明確選（取代原本的「搬不過來」兩種橫幅）
-  else if(st.loadError==="LEGACY") h+=legacyBox(st);
   else if(st.loadError) h+='<div class="banner"><strong>讀不到這台裝置的作答紀錄</strong><span class="small">為了不蓋掉看不到的紀錄，現在不會存任何作答。請改用一般瀏覽模式，或重新整理頁面再試。</span></div>';
   else if(memoryOnly) h+='<div class="banner"><strong>這台裝置存不了作答紀錄</strong><span class="small">可能是無痕模式或關閉了網站資料。請改用一般瀏覽模式開啟，否則關掉頁面紀錄就會不見。</span></div>';
   else if(st.saveStatus==="invalid") h+='<div class="banner"><strong>剛剛那一步沒有存（資料檢查沒通過）</strong><span class="small">紀錄沒有被改動。請重新整理頁面；如果一直出現，請爸媽告訴我。</span></div>';
   // 補充設計 C1：讀不到／沒存只看核心的 storageStatus（不說「沒有存」：前一步可能其實已經存進去）
   else if(st.storageStatus==="readFailed") h+='<div class="banner" id="readNote" role="status"><strong>暫時讀不到紀錄，先停在這裡，請再試一次</strong><span class="small">還不能確認剛剛那一步有沒有存好，所以畫面先不往下走。</span><div class="row"><button class="btn sm" type="button" id="retrySave">再試一次</button></div></div>';
   else if(st.storageStatus==="saveFailed") h+='<div class="banner"><strong>剛剛那一步沒有存到這台裝置</strong><div class="row"><button class="btn sm" type="button" id="retrySave">再存一次</button></div></div>';
-  if(restoredNote&&!st.loadError) h+='<div class="banner info" id="restoredNote"><strong>'+esc(restoredNote)+'</strong></div>';
-  // 設計 S2 步驟 4 失敗：新版已存好，只是舊版還沒封存完——不宣稱完整搬移成功，給一個再試一次
-  if(!st.loadError&&st.archive==="pending") h+='<div class="banner" id="archiveNote"><strong>進度已存，舊版封存未完成</strong><span class="small">新版的作答紀錄已經存好；舊版的原文還留在原處、沒有被刪。可能是儲存空間不夠，等一下再試一次就好。</span><div class="row"><button class="btn sm" type="button" id="archiveRetry">再試一次</button></div></div>';
   var v=V();
   if(v.needsHelp.length) h+='<div class="banner info"><strong>需要爸媽陪著看的觀念：'+v.needsHelp.map(function(c){return esc(CONCEPTS[c].short);}).join("、")+'</strong><span class="small">換了題目還是卡住，這很正常。請陪她看一次圖解，再到「家長摘要」按「已經陪她看過」。</span></div>';
   $("#banners").innerHTML=h;
@@ -737,59 +728,8 @@ function banners(){
   var sf=document.querySelector("#saveFail[data-p]");
   if(sf){var acc=pending&&st.state.ops.indexOf(pending.a.id)>=0, rd=st.storageStatus==="readFailed";
     sf.querySelector("strong").textContent=rd?"暫時讀不到紀錄，先停在這裡，請再試一次":acc?"這一題已經存好了，按下面的按鈕看結果":"這一題還沒存到這台裝置";
-    var sb=sf.querySelector("#saveAgain"); if(sb) sb.textContent=acc&&!rd?"看結果":"再存一次";} on("#archiveRetry",archiveRetry); wireLegacy();
+    var sb=sf.querySelector("#saveAgain"); if(sb) sb.textContent=acc&&!rd?"看結果":"再存一次";}
 }
-// 只剩舊版時給爸媽的選擇（設計 S1＋補充設計 task-mv6ujb6v-51m58n C4）：兩個選項都要再按一次確定，不暗中預選恢復；選之前不存作答。
-// 每個按鈕（選、確定、取消、重新檢查）都先請核心重讀 V／O／A，用當下的內容判斷；寫入後回讀失敗＝結果未確認，鎖定首次選擇、只剩「重新檢查」。
-var legacyAsk=null, legacyMsg="", restoredNote="";
-function legacyBox(st){
-  var lg=st.legacy||{}, can=!lg.reason&&!lg.conflict;
-  var h='<div class="banner info legacy" id="legacyBox" role="region" aria-labelledby="legacyT"><strong id="legacyT">這台裝置有舊版「自然複習」的作答紀錄</strong>'+
-    '<span class="small">新版還沒有任何紀錄。請爸媽選一個；選好之前，作答不會存。</span>';
-  if(st.choiceLocked) h+='<span class="small">寫入結果尚未確認，請重新檢查。確認之前不能改選另一個。</span><div class="ask"><button class="btn sm" type="button" id="legacyRecheck">重新檢查</button></div>';
-  else if(lg.conflict) h+='<span class="small">這台裝置已經另外存了一份不一樣的舊版備份。為了不蓋掉任何一份，現在不能恢復，也不能從頭開始；兩份舊紀錄都原封不動留著，請找幫忙設定的人處理。</span><div class="ask"><button class="btn ghost sm" type="button" id="legacyRecheck">重新檢查</button></div>';
-  else {
-    if(lg.reason) h+='<span class="small">舊版紀錄的格式讀不懂，沒辦法恢復；可以從頭開始，舊版原文會另外保存在這台裝置、不會刪掉。</span>';
-    if(legacyAsk) h+='<div class="ask"><strong>'+(legacyAsk==="restore"?'確定要恢復舊版紀錄？':'確定要從頭開始？')+'</strong><button class="btn sm" type="button" id="legacyYes">'+(legacyAsk==="restore"?'確定恢復':'確定從頭開始')+'</button><button class="btn ghost sm" type="button" id="legacyNo">取消</button></div>';
-    else h+='<div class="choices">'+(can?'<button class="btn" type="button" id="legacyRestore">恢復舊版紀錄<span class="small">練過的卡片會搬過來，舊版的「畢業」要重新確認一次</span></button>':'')+
-      '<button class="btn ghost" type="button" id="legacyFresh">從頭開始<span class="small">新版從空白開始；舊版原文另外保存，不會刪掉</span></button></div>';
-  }
-  if(legacyMsg) h+='<span class="small" id="legacyMsg" role="status">'+esc(legacyMsg)+'</span>';
-  return h+'</div>';
-}
-var LEGACY_ERR={READ:"暫時讀不到紀錄，先停在這裡，請再試一次。",SAVE_FAILED:"沒有存進這台裝置（可能是儲存空間不夠）。舊紀錄還在、沒有被動；清出一些空間後再按一次。",
-  BAD_V1:"舊版紀錄的格式讀不懂，沒辦法恢復；可以選「從頭開始」。",CONFLICT:"這台裝置有兩份不一樣的舊版紀錄，為了不蓋掉任何一份，現在不能恢復也不能從頭開始。",
-  NOT_WRITTEN:"剛剛那一次沒有寫進去，舊紀錄都還在；請重新選一次。",CHOICE_LOCKED:"寫入結果尚未確認，請先按「重新檢查」。"};
-function legacyMsgOf(r){return r.writeOutcome==="unconfirmed"?"寫入結果尚未確認，請重新檢查。":(LEGACY_ERR[r.error]||"");}
-// 選、取消：先請核心重讀現況；讀不到或發現衝突就停在原處說明，不改變畫面上的選擇
-function legacyRecheck(then){
-  var r=store.restoreLegacy("recheck");
-  if(r.error==="STATE_CHANGED"){outdated();return;}
-  if(r.ok){doneRestore(r);return;}
-  legacyMsg=legacyMsgOf(r);
-  if(r.error==="READ"||r.error==="CONFLICT"||store.get().choiceLocked){legacyAsk=null;banners();return;}
-  then(); banners(); var y=$("#legacyYes"); if(y)y.focus();
-}
-function wireLegacy(){
-  on("#legacyRestore",function(){legacyRecheck(function(){legacyAsk="restore";});});
-  on("#legacyFresh",function(){legacyRecheck(function(){legacyAsk="fresh";});});
-  on("#legacyNo",function(){legacyRecheck(function(){legacyAsk=null;});});
-  on("#legacyYes",function(){var c=legacyAsk;legacyAsk=null;doRestore(c);});
-  on("#legacyRecheck",function(){doRestore("recheck");});
-}
-// 家長按了確定／重新檢查：只有核心確認新版寫入並讀回才公布，而且照核心回報「實際套用的是哪一個選擇」（appliedChoice）說明
-function doRestore(choice){
-  var r=store.restoreLegacy(choice);
-  if(r.error==="STATE_CHANGED"){outdated();return;}
-  if(!r.ok){legacyMsg=legacyMsgOf(r);banners();renderSettings();if(!store.get().loadError&&legacyMsg)$("#storeMsg").textContent=legacyMsg;return;}
-  doneRestore(r);
-}
-function doneRestore(r){
-  legacyMsg=""; legacyAsk=null;
-  restoredNote=r.appliedChoice==="restore"?"已恢復舊版紀錄；舊版的「畢業」要重新確認一次。":r.appliedChoice==="fresh"?"已從頭開始；舊版原文另外保存在這台裝置。":"已載入目前紀錄。";
-  renderHome(); renderSide();
-}
-function archiveRetry(){var r=store.retryArchive();if(r.error==="STATE_CHANGED"){outdated();return;}banners();renderSettings();}   // 讀不到時由 storageStatus 的提示說明
 
 /* ---------- 探險地圖＋成長植物（#1725） ---------- */
 // 走過一站＝觀念卡到「開花了」以上（view().stages ≥ 3，與觀念卡同一份 stageOf）；只讀，不寫 g5sci.v3。
@@ -1577,25 +1517,16 @@ function renderSide(){header();banners();renderConcepts();renderCal();renderExit
 function renderSettings(){
   var s=S(), st=store.get();
   $("#u3").checked=!!s.settings.unit3; $("#snd").innerHTML='<option value="off">關閉</option>'+window.G5Tones.TONES.map(function(t,i){return '<option value="'+i+'">'+(i+1)+'. '+esc(t.name)+'</option>';}).join(""); $("#snd").value=s.settings.sound?String(s.settings.tone||0):"off";
-  $("#storeMsg").textContent=st.loadError?(st.loadError==="SCHEMA"?"存檔讀不出來，目前不會存檔。":st.loadError==="LEGACY"?"這台裝置有舊版紀錄還沒處理：請在最上方選「恢復舊版紀錄」或「從頭開始」。選之前不會存作答（舊紀錄還在）。":"讀不到這台裝置的紀錄，目前不會存檔。"):memoryOnly?"這台裝置存不了作答紀錄。":"作答紀錄只存在這台裝置的瀏覽器（不上傳）。"+(st.migrated?"已恢復舊版紀錄；舊版的「畢業」要重新確認一次。":"")+
-    (st.archive==="conflict"?"這台裝置有兩份不一樣的舊版紀錄（原本的與備份），都原封不動留著、沒有覆蓋；需要時請找幫忙設定的人處理。":"")+
-    (st.archive==="missing"?"舊版原文已經不在原處，但這台裝置找不到它的備份；新版紀錄不受影響，需要時請找幫忙設定的人處理。":"")+
-    (st.legacy&&st.legacy.src==="A"?(st.legacy.reason?"這台裝置有一份封存的舊版紀錄，但格式讀不懂，沒辦法恢復（原文保留著）。":"這台裝置有一份封存的舊版紀錄；還沒開始新紀錄前，可以按下面的「恢復封存的舊版紀錄」。"):"");
+  // 4agent 最終方案 (a)：不讀舊版也不提示有沒有舊版；只放一行固定說明（不讀任何 key）
+  $("#storeMsg").textContent=(st.loadError?(st.loadError==="SCHEMA"?"存檔讀不出來，目前不會存檔。":"讀不到這台裝置的紀錄，目前不會存檔。"):memoryOnly?"這台裝置存不了作答紀錄。":"作答紀錄只存在這台裝置的瀏覽器（不上傳）。")+
+    "10/11 晚上舊版的紀錄不會自動帶入新版；舊版原文仍保留在這台裝置的瀏覽器裡，需要時請找幫忙設定的人處理。";
   var rr=$("#resetRow");
   if(st.loadError==="READ"){rr.innerHTML="";return;}
-  if(st.loadError==="LEGACY"){rr.innerHTML="";return;}
   if(st.loadError){rr.innerHTML='<button class="btn warn sm" id="discard" type="button">清除壞掉的存檔，重新開始</button>';on("#discard",function(){rr.innerHTML='<span>確定要清除？舊存檔會被覆蓋。</span><button class="btn warn sm" id="discardYes" type="button">清除</button><button class="btn ghost sm" id="discardNo" type="button">取消</button>';on("#discardNo",renderSettings);on("#discardYes",function(){if(!store.discardBroken()&&store.get().stale){outdated();return;}renderHome();});});return;}
   if(!rr.dataset.state){rr.innerHTML='<button class="btn ghost sm" id="resetBtn" type="button">清除全部作答紀錄</button>';
     on("#resetBtn",function(){rr.dataset.state="ask";rr.innerHTML='<span>確定要清除所有作答紀錄？</span><button class="btn warn sm" id="resetYes" type="button">清除</button><button class="btn ghost sm" id="resetNo" type="button">取消</button>';
       on("#resetNo",function(){delete rr.dataset.state;renderSettings();});
       on("#resetYes",function(){delete rr.dataset.state;act({type:"reset"});renderHome();});});}
-  // 設計 S1：V、O 都不在、只剩封存 A——不自動恢復，家長另有明確入口（還沒開始新紀錄才有，按了也要再確定一次）
-  if(!rr.dataset.state&&st.legacy&&st.legacy.src==="A"&&!st.legacy.reason){
-    rr.insertAdjacentHTML("beforeend",'<button class="btn ghost sm" id="restoreArchived" type="button">恢復封存的舊版紀錄</button>');
-    on("#restoreArchived",function(){rr.dataset.state="arc";rr.innerHTML='<span>確定要用封存的舊版紀錄開始？</span><button class="btn sm" id="restoreArchivedYes" type="button">確定恢復</button><button class="btn ghost sm" id="restoreArchivedNo" type="button">取消</button>';
-      on("#restoreArchivedNo",function(){delete rr.dataset.state;renderSettings();});
-      on("#restoreArchivedYes",function(){delete rr.dataset.state;doRestore("restore");});});
-  }
 }
 $("#u3").onchange=function(e){act({type:"settings",unit3:e.target.checked});renderSide();};
 $("#snd").onchange=function(e){var v=e.target.value; if(v==="off") act({type:"settings",sound:false}); else { act({type:"settings",sound:true,tone:+v}); chime(+v); }};

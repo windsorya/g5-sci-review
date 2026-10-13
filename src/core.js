@@ -4,7 +4,8 @@
 (function (root) {
   "use strict";
   var LS_KEY = "g5sci.v3";
-  var LS_V1 = "g5sci.v1";            // 舊版（v1）存檔原 key＝設計 task-mv6srlue-pujdyl 的 O；只剩它時等家長選擇，不自動搬
+  var LS_V1 = null;                 // 4agent 最終方案 (a)（docs/design-storage-scopecut-20261014.md）：自然站也不讀、不寫、不刪舊版 g5sci.v1、封存與舊標記；
+                                    // createStore 裡的舊版函式留作死碼（四站逐字相同），另案四站一起清
   var LS_ARC = LS_V1 === null ? null : LS_V1 + ".archived";   // 舊版原文的封存（A）：逐字保存，一般載入永不寫回新版
   var NEW_PER_DAY = 5;
   var NEW_PER_DAY_DIAG = 10;      // 10/14 前的診斷期：先把教過的卡各做一遍

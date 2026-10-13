@@ -1,7 +1,7 @@
 #!/opt/homebrew/opt/python@3.12/bin/python3.12
 """存檔在頁面開著時被別處改掉／刪掉——端到端驗收（設計 g5-sci-review/docs/design-external-change-codex-20261013.md 方案 A，矩陣標 E 的 T01–T15）。
 
-四個同型站（自然、數學、國語、社會）這個檔逐字相同：存檔 key 一律從頁面上的 G5Core.LS_KEY 取，不寫死站名（自然站專屬的舊版 key 只在 is_sci 流程用）；
+四個同型站（自然、數學、國語、社會）共用這個檔（自然站縮範圍後拿掉舊版專屬流程，見 docs/design-storage-scopecut-20261014.md）：存檔 key 一律從頁面上的 G5Core.LS_KEY 取，不寫死站名（自然站專屬的舊版 key 只在 is_sci 流程用）；
 作答、實驗、逐句解說都用畫面上找得到的按鈕操作。
 
 跑法：python3.12 tests/e2e_external.py [--page index.html] [--only T05,T11] [--browser Chromium,WebKit]
@@ -912,45 +912,14 @@ def choose(t, which):
     t.p.locator("#legacyYes").click()
 
 
-def t06(browser, label, dev):
-    ctx = new_ctx(browser, dev)
-    try:
-        B = Tab(ctx)
-        if not is_sci(B):
-            print(f"SKIP {label} T06 本站沒有舊版存檔（設計 S0；改由 T17 驗不碰舊版 key）")
-            return
-        seed(B, {O_KEY: V1})
-        ask = B.has("#legacyBox") and B.raw() is None and B.ev("window.__w") == 0 and B.has("#legacyRestore") and B.has("#legacyFresh")
-        check(f"{label} T06 只剩舊版：不自動搬、顯示家長選擇「恢復舊版紀錄／從頭開始」", ask, {"box": B.has("#legacyBox"), "raw": B.raw()})
-        B.p.locator("#legacyRestore").click()
-        asked = B.raw() is None and B.has("#legacyYes")
-        B.p.locator("#legacyYes").click()
-        s = B.state()
-        done = asked and s is not None and s["settings"]["unit3"] is True and B.raw(O_KEY) is None and B.raw(A_KEY) == V1 and not B.has("#legacyBox")
-        check(f"{label} T06 按「恢復」要再確認一次；確定後 V 建好、O 原文封存進 A、O 刪除", done, {"asked": asked, "O": B.raw(O_KEY), "A": B.raw(A_KEY), "s": s and s["settings"]})
-        A = Tab(ctx)
-        b0 = B.navs
-        A.ev("() => localStorage.removeItem(G5Core.LS_KEY)")
-        reloaded = B.wait_reload(b0)
-        after = B.raw() is None and B.raw(O_KEY) is None and B.raw(A_KEY) == V1 and not B.has("#legacyBox")
-        check(f"{label} T06（修訂）完成封存後刪 V、失效重載：V 不補回、O 不存在、A 原文完整、不再問", reloaded and after, {"重載": reloaded, "raw": B.raw(), "A": B.raw(A_KEY)})
-        B.p.reload(); B.ready()
-        check(f"{label} T06 同一分頁再整理一次也不補回", B.raw() is None and B.raw(A_KEY) == V1, B.raw())
-        start(B); answer(B)
-        s = B.state()
-        check(f"{label} T06 新作答建立新紀錄（不是舊版恢復來的）", s and len(s["log"]) == 1 and s["settings"]["unit3"] is False and B.raw(A_KEY) == V1 and not B.errors and not A.errors,
-              {"log": s and len(s["log"]), "errors": A.errors + B.errors})
-    finally:
-        ctx.close()
-
 
 def t17(browser, label, dev):
     """三站：舊版／標記 key 放好合法 v1，頁面從載入到作答完全不碰它們（也不碰字串 "null"）。"""
     ctx = new_ctx(browser, dev)
     try:
         B = Tab(ctx)
-        if is_sci(B):
-            print(f"SKIP {label} T17 自然站有舊版存檔（改驗 S1／S2）")
+        if B.ev("G5Core.LS_V1") is not None:   # 自然站縮範圍後也是 LS_V1＝null，一樣要跑（docs/design-storage-scopecut-20261014.md）
+            print(f"SKIP {label} T17 本站仍有舊版搬移")
             return
         K = B.key(); pre = K.split(".")[0]
         legacy = [k for k in (pre + ".none", pre + ".v1", K + ".fromV1", K + ".noMigrate", "null") if k != K]
@@ -968,93 +937,8 @@ def t17(browser, label, dev):
         ctx.close()
 
 
-def t18(browser, label, dev):
-    """自然站：封存完成後，分頁暫存寫不進（或連本機存檔也寫不進）時刪 V、重載：V 不補回、O 不存在、A 保留、零寫入。"""
-    for both in (False, True):
-        ctx = new_ctx(browser, dev)
-        try:
-            B = Tab(ctx)
-            if not is_sci(B):
-                print(f"SKIP {label} T18 本站沒有舊版存檔（設計 S0）")
-                return
-            seed(B, {O_KEY: V1}); choose(B, "restore")
-            pre = B.raw() is not None and B.raw(O_KEY) is None and B.raw(A_KEY) == V1
-            B.ev("(b) => { window.__failSession = true; if (b) window.__failSet = true; }", both)
-            b0 = B.navs
-            B.ev("() => localStorage.removeItem(G5Core.LS_KEY)")
-            B.ev("() => document.dispatchEvent(new Event('visibilitychange'))")
-            reloaded = B.wait_reload(b0)
-            how = "分頁暫存與本機存檔都寫不進" if both else "分頁暫存寫不進"
-            check(f"{label} T18 封存完成後{how}、刪 V 重載：V 不補回、O 不存在、A 保留、重載後零寫入",
-                  pre and reloaded and B.raw() is None and B.raw(O_KEY) is None and B.raw(A_KEY) == V1 and B.ev("window.__w") == 0 and not B.has("#legacyBox") and not B.errors,
-                  {"pre": pre, "重載": reloaded, "raw": B.raw(), "A": B.raw(A_KEY), "w": B.ev("window.__w"), "errors": B.errors})
-        finally:
-            ctx.close()
 
 
-def t19(browser, label, dev):
-    ctx = new_ctx(browser, dev)
-    try:
-        B = Tab(ctx)
-        if not is_sci(B):
-            print(f"SKIP {label} T19 本站沒有舊版存檔（設計 S0）")
-            return
-        v3 = B.ev("JSON.stringify(G5Core.blankState())")
-        seed(B, {"g5sci.v3": v3, O_KEY: V1}, {"__failSet": True})
-        note = B.has("#archiveNote") and "封存未完成" in B.p.locator("#archiveNote").inner_text()
-        kept = B.raw() == v3 and B.raw(O_KEY) == V1 and B.raw(A_KEY) is None
-        check(f"{label} T19 舊安裝 V、O 並存、封存寫不進：V 照用、O 保留、顯示「進度已存，舊版封存未完成」", note and kept, {"note": note, "kept": kept})
-        B.ev("() => localStorage.removeItem(G5Core.LS_KEY)")
-        B.p.reload(); B.ready()
-        check(f"{label} T19 接著外部刪 V、強制重開：V 不重建、O 保留、顯示家長選擇（不呈現舊進度已恢復）",
-              B.raw() is None and B.raw(O_KEY) == V1 and B.has("#legacyBox") and B.ev("window.__w") == 0 and not B.errors,
-              {"raw": B.raw(), "O": B.raw(O_KEY), "box": B.has("#legacyBox"), "errors": B.errors})
-    finally:
-        ctx.close()
-
-
-def t24(browser, label, dev):
-    ctx = new_ctx(browser, dev)
-    try:
-        B = Tab(ctx)
-        if not is_sci(B):
-            print(f"SKIP {label} T24 本站沒有舊版存檔（設計 S0）")
-            return
-        other = '{"v":1,"cards":{}}'
-        seed(B, {O_KEY: V1, A_KEY: other})
-        box = B.p.locator("#legacyBox").inner_text() if B.has("#legacyBox") else ""
-        check(f"{label} T24 A 與 O 不同：顯示封存衝突、沒有「恢復」也沒有「從頭開始」（補充設計 C4）、三個 key 都不動",
-              "不一樣" in box and not B.has("#legacyRestore") and not B.has("#legacyFresh") and B.raw() is None and B.raw(O_KEY) == V1 and B.raw(A_KEY) == other and B.ev("window.__w") == 0 and not B.errors,
-              {"box": box[:120], "O": B.raw(O_KEY), "A": B.raw(A_KEY), "errors": B.errors})
-    finally:
-        ctx.close()
-
-
-def t26(browser, label, dev):
-    ctx = new_ctx(browser, dev)
-    try:
-        B = Tab(ctx)
-        if not is_sci(B):
-            print(f"SKIP {label} T26 本站沒有舊版存檔（設計 S0）")
-            return
-        seed(B, {O_KEY: V1})
-        B.p.reload(); B.ready()
-        quiet = B.raw() is None and B.raw(O_KEY) == V1 and B.ev("window.__w") == 0 and B.has("#legacyBox")
-        choose(B, "fresh")
-        s = B.state()
-        fresh = s is not None and s["settings"]["unit3"] is False and s["log"] == [] and B.raw(O_KEY) is None and B.raw(A_KEY) == V1
-        check(f"{label} T26 只剩 O：單純重載兩次零寫入；按「從頭開始」才建立空白 V，O 原文封存進 A", quiet and fresh, {"quiet": quiet, "fresh": fresh})
-        seed(B, {A_KEY: V1})
-        B.p.reload(); B.ready()
-        open_settings(B)
-        quiet = B.raw() is None and B.ev("window.__w") == 0 and not B.has("#legacyBox") and B.has("#restoreArchived")
-        B.p.locator("#restoreArchived").click(); B.p.locator("#restoreArchivedYes").click()
-        s = B.state()
-        ok = s is not None and s["settings"]["unit3"] is True and B.raw(A_KEY) == V1
-        check(f"{label} T26 只剩 A：重載零寫入、不擋作答；家長在設定按「恢復封存的舊版紀錄」並確定才建立 V，A 不變", quiet and ok and not B.errors,
-              {"quiet": quiet, "s": s and s["settings"], "errors": B.errors})
-    finally:
-        ctx.close()
 
 
 def t27(browser, label, dev, how):
@@ -1150,25 +1034,6 @@ def t28(browser, label, dev):
     finally:
         ctx.close()
 
-
-def t29(browser, label, dev):
-    """自然站 makeStorage：probe 寫不進、只剩 A 時，不能換成看不到 A 的記憶體空白模式；讀取拋錯時顯示讀不到。"""
-    ctx = new_ctx(browser, dev)
-    try:
-        B = Tab(ctx)
-        if not is_sci(B):
-            print(f"SKIP {label} T29 本站沒有舊版存檔（設計 S0）")
-            return
-        seed(B, {A_KEY: V1}, {"__failSet": True})
-        ban = B.p.locator("#banners").inner_text()
-        open_settings(B)
-        check(f"{label} T29 probe 寫不進、只剩 A：不落入記憶體空白模式（A 還看得到、有恢復入口）",
-              "存不了" not in ban and B.has("#restoreArchived") and B.raw(A_KEY) == V1 and not B.errors, {"banner": ban[:120], "entry": B.has("#restoreArchived")})
-        seed(B, {A_KEY: V1}, {"__failSet": True, "__failGet": True})
-        ban = B.p.locator("#banners").inner_text()
-        check(f"{label} T29 probe 寫不進、讀取也拋錯：顯示讀不到（READ），不是「存不了」", "讀不到這台裝置的作答紀錄" in ban and "存不了" not in ban and not B.errors, ban[:160])
-    finally:
-        ctx.close()
 
 
 # ---------------------------------------------------------------- 補充設計 task-mv6ujb6v-51m58n（單一存檔狀態＋resume）；R 編號＝補充矩陣 Txx
@@ -1272,47 +1137,6 @@ def r05(browser, label, dev):
         ctx.close()
 
 
-def r13(browser, label, dev):
-    """R13（自然）：開頁只有 O，選項顯示後才出現不同的 A；按「從頭開始」：當下重驗發現衝突，不建立 V、不動 O／A，兩個選項都收起來。"""
-    ctx = new_ctx(browser, dev)
-    try:
-        B = Tab(ctx)
-        if not is_sci(B):
-            print(f"SKIP {label} R13 本站沒有舊版存檔（設計 S0）"); return
-        other = '{"v":1,"cards":{}}'
-        seed(B, {O_KEY: V1})
-        B.ev("(v) => localStorage.setItem('g5sci.v1.archived', v)", other)   # 同頁直接寫，沒有 storage 事件
-        B.p.locator("#legacyFresh").click()
-        if B.has("#legacyYes"):
-            B.p.locator("#legacyYes").click()
-        box = B.p.locator("#legacyBox").inner_text() if B.has("#legacyBox") else ""
-        check(f"{label} R13 選項顯示後才出現不同的備份：按從頭開始時重驗擋下，不建 V、不動舊資料、兩個選項都收起",
-              B.raw() is None and B.raw(O_KEY) == V1 and B.raw(A_KEY) == other and "不一樣" in box and not B.has("#legacyRestore") and not B.has("#legacyFresh") and not B.errors,
-              {"raw": B.raw(), "box": box[:100], "errors": B.errors})
-    finally:
-        ctx.close()
-
-
-def r14(browser, label, dev):
-    """R14（自然）：先選「從頭開始」、V 寫後回讀失敗：畫面只剩「重新檢查」（不能改選恢復）；重新檢查後公布「從頭開始」，實際 V 也是空白。"""
-    ctx = new_ctx(browser, dev)
-    try:
-        B = Tab(ctx)
-        if not is_sci(B):
-            print(f"SKIP {label} R14 本站沒有舊版存檔（設計 S0）"); return
-        seed(B, {O_KEY: V1})
-        B.p.locator("#legacyFresh").click()
-        B.ev("() => { window.__failGetV = 1; }")              # 確定後：前置讀 V 放行，寫入後的回讀失敗一次
-        B.p.locator("#legacyYes").click()
-        box = B.p.locator("#legacyBox").inner_text() if B.has("#legacyBox") else ""
-        locked = "尚未確認" in box and B.has("#legacyRecheck") and not B.has("#legacyRestore") and not B.has("#legacyFresh") and B.raw(O_KEY) == V1
-        B.p.locator("#legacyRecheck").click()
-        s = B.state(); note = B.p.locator("#banners").inner_text()
-        check(f"{label} R14 回讀失敗：鎖定只剩重新檢查；重查後公布「從頭開始」、實際 V 是空白、O 封存",
-              locked and s is not None and s["settings"]["unit3"] is False and "已從頭開始" in note and "恢復舊版紀錄；" not in note and B.raw(O_KEY) is None and B.raw(A_KEY) == V1 and not B.errors,
-              {"locked": locked, "box": box[:120], "note": note[:120], "errors": B.errors})
-    finally:
-        ctx.close()
 
 
 # ---------------------------------------------------------------- 第 3 輪（四站共同）：待存 ID 分離、tick 未完成不前進、READ 時不先標答案
@@ -1425,7 +1249,7 @@ def r31(browser, label, dev):
 
 FLOWS = [
     ("T01", t01, ()), ("T02", t02, ()), ("T03", t03, ()), ("T04", t04, ()),
-    ("T05", t05, ("removeItem",)), ("T05", t05, ("clear",)), ("T06", t06, ()),
+    ("T05", t05, ("removeItem",)), ("T05", t05, ("clear",)),
     ("T07", t07, ("predict",)), ("T07", t07, ("task",)), ("T07", t07, ("complete",)), ("T08", t08, ()),
     ("T09", t09, ("別頁清除",)), ("T09", t09, ("切回頁面",)), ("T09", t09, ("點舊按鈕",)),
     ("T10", t10, ("answer",)), ("T10", t10, ("labTask",)),
@@ -1435,10 +1259,9 @@ FLOWS = [
     ("T14", t14_broken, ()), ("T14", t14_read, ()), ("T15", t15_pending, ()), ("T15", t15_burst, ()),
     ("M", m_save_fail, ()), ("M", m_retry_resume, ()), ("M", m_last_resume, ()),
     ("T08", t08b, ()), ("T15", t15_anim, ()),
-    ("T17", t17, ()), ("T18", t18, ()), ("T19", t19, ()), ("T24", t24, ()), ("T26", t26, ()),
-    ("T27", t27, ("未變",)), ("T27", t27, ("已刪",)), ("T28", t28, ()), ("T29", t29, ()),
+    ("T17", t17, ()),
+    ("T27", t27, ("未變",)), ("T27", t27, ("已刪",)), ("T28", t28, ()),
     ("R01", r01, ()), ("R02", r02, ()), ("R03", r03, ()), ("R04", r04, ("同日",)), ("R04", r04, ("跨日",)), ("R05", r05, ()),
-    ("R13", r13, ()), ("R14", r14, ()),
     ("R27", r27, ()), ("R28", r28, ()), ("R29", r29, ()), ("R30", r30, ()), ("R31", r31, ()),
 ]
 
