@@ -608,7 +608,8 @@ def flow_makeup(browser, device=None, label="chromium"):
         answer_and_next(page)
     check(f"{label} 補做5 做完顯示「10/12 補做完成」", "10/12 補做完成" in page.inner_text("#main"), page.inner_text("#main")[:160])
     st = state(page)
-    check(f"{label} 補做6 存檔：10/12 記成練過、今天的紀錄不變", len(st["days"]["2026-10-12"]["touched"]) > 0 and st["days"]["2026-10-14"]["touched"] == ["s1"] and st["days"]["2026-10-14"]["extraDone"] is False, st["days"])
+    d12 = st["days"]["2026-10-12"]
+    check(f"{label} 補做6 存檔：10/12 結算成練過（madeUp＝10/14、touched＝doneIds）、今天計畫不變", len(d12["touched"]) > 0 and d12.get("madeUp") == "2026-10-14" and sorted(d12["touched"]) == sorted(d12["doneIds"]) and st["days"]["2026-10-14"]["planIds"] == ["s1"], st["days"])
     btn(page, "回首頁").click()
     cell = page.locator("#cal i").nth(1)
     check(f"{label} 補做7 日曆 12 號變成補做色（on mk），按鈕剩 10/11、10/13", "mk" in (cell.get_attribute("class") or "") and "on" in (cell.get_attribute("class") or "") and page.locator("#makeup button[data-mk]").count() == 2, cell.get_attribute("class"))
