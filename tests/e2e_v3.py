@@ -602,6 +602,11 @@ def flow_makeup(browser, device=None, label="chromium"):
     check(f"{label} 補做3 補做前連續練習 1 天", page.inner_text("#streak") == "連續練習 1 天", page.inner_text("#streak"))
     page.locator("button[data-mk='2026-10-12']").click()
     check(f"{label} 補做4 進入練習、題目上方標「補做 10/12」", "補做 10/12" in page.inner_text("#main .qhead"), page.inner_text("#main")[:120])
+    answer_and_next(page)
+    page.reload(); page.wait_for_selector("#main")
+    check(f"{label} 補做4b 做到一半重新整理：日曆下只說還沒做完、沒有別的補做按鈕；有「繼續補做 10/12」",
+          page.locator("#makeup button[data-mk]").count() == 0 and "還沒做完" in page.inner_text("#makeup") and "繼續補做 10/12" in page.inner_text("#main"), (page.inner_text("#makeup"), page.inner_text("#main")[:200]))
+    page.get_by_role("button", name="繼續補做 10/12").first.click()
     for _ in range(25):
         if "補做完成" in page.inner_text("#main"):
             break
