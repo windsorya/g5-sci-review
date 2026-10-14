@@ -6,8 +6,11 @@
 (function (root) {
   "use strict";
   var SEEN_KEY = "g5sci.mapSeen";
-  // 走過一站＝觀念卡到「開花了」以上：core.js stageOf() 的 3（出口題通過）或 4（結果了）
-  var BLOOM = 3;
+  // 走過一站＝觀念卡到「長葉了」以上：core.js stageOf() 的 2（這一站的題目每題都做過一次）、3（出口題通過）或 4（結果了）。
+  // 2026-10-14 律師轉述孩子問「達成什麼條件才能放一本書」，要「直接完成關卡題目，就過那一關」：原本要開花（爸媽考出口題通過）才算 ⇒ 3 → 2（四站同一條）
+  var BLOOM = 2;
+  // 地圖上寫給孩子看的規則、走過的站標的字（數學／國語／社會站的 map.js 也有同名的 RULE／DONE）
+  var RULE = "怎麼讓植物長大：一站的題目，每一題都做過一次，植物就長大一階。", DONE = "長大一階";
   // 階數＝走過站數；0 是還沒種的一盆土，1–7 是律師確認的七階
   var PLANT = ["一盆土", "種子", "發芽", "長出葉子", "長高", "結花苞", "開花", "結果"];
   var MAX = PLANT.length - 1;
@@ -87,6 +90,6 @@
       (ghost ? ' opacity=".4"' : "") + ">" + s + "</svg>";
   }
 
-  var api = { SEEN_KEY: SEEN_KEY, BLOOM: BLOOM, PLANT: PLANT, trail: trail, readSeen: readSeen, writeSeen: writeSeen, growth: growth, plantSvg: plantSvg };
+  var api = { SEEN_KEY: SEEN_KEY, BLOOM: BLOOM, RULE: RULE, DONE: DONE, TITLE: "植物", PLANT: PLANT, trail: trail, readSeen: readSeen, writeSeen: writeSeen, growth: growth, plantSvg: plantSvg };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.G5Map = api;
 })(typeof window !== "undefined" ? window : this);

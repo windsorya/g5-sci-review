@@ -877,7 +877,7 @@ def map_card_ids(cid):
 
 
 def map_seed(n, unit3=True, seen=None, seen_throws=False, grown=False, pending=False):
-    """前 n 個觀念出口題通過（＝觀念卡「開花了」）；grown＝第 n+1 個觀念全部題卡都見過（＝「長葉了」，還不算走過）。
+    """前 n 個觀念出口題通過（＝觀念卡「開花了」）；grown＝第 n+1 個觀念全部題卡都見過（＝「長葉了」；2026-10-14 起也算走過）。
     pending＝第 n+1 個觀念的出口題今天要問（出口題區有「答得出來」）。
     同時記下這一頁對每個 key 的 setItem 次數（window.__mw）；seen_throws＝這一頁寫 g5sci.mapSeen 一律丟例外（種資料用原本的 setItem，不受影響）。"""
     s = {"v": 3, "cards": {}, "exits": {}, "days": {}, "labRuns": {}, "session": None, "log": [], "ops": [], "help": {}, "extra": [],
@@ -921,25 +921,25 @@ MAP_CONTRAST_JS = """() => { const rgb = (s) => (s.match(/[\\d.]+/g) || []).slic
 
 
 def flow_map(browser, label, device=None):
-    # 走過 3 站、第一次看到（沒有 mapSeen）→ 長大動畫一次
+    # 3 站開花＋第 4 站長葉（題目全部做過）＝走過 4 站（2026-10-14 律師：做完一站的題目就算走過）、第一次看到（沒有 mapSeen）→ 長大動畫一次
     ctx, page, errors = new_page(browser, "2026-10-13T19:00:00+08:00", device, init=map_seed(3, grown=True))
     page.wait_for_selector("#mapBox:not([hidden])")
     i = page.evaluate(MAP_INFO_JS)
     check(f"{label} 地圖：首頁有「探險地圖」，在天空大圖下方、今天要練上方",
           i["title"] == "探險地圖" and page.evaluate("(() => { const h = document.querySelector('#hero'), m = document.querySelector('#mapBox'), n = document.querySelector('#main');"
                                                  " return !!(h.compareDocumentPosition(m) & 4) && !!(m.compareDocumentPosition(n) & 4); })()"), i["title"])
-    check(f"{label} 地圖：「走過 3 站／共 7 站・再 4 站到考試」", i["count"] == "走過 3 站／共 7 站・再 4 站到考試", i["count"])
+    check(f"{label} 地圖：「走過 4 站／共 7 站・再 3 站到考試」", i["count"] == "走過 4 站／共 7 站・再 3 站到考試", i["count"])
     order = [s["cid"] for s in i["st"]]
     check(f"{label} 地圖：七站＝觀念卡同一個順序", order == [c["cid"] for c in i["cards"]] and len(order) == 7, order)
-    bloom = {c["cid"]: c["st"] in ("開花了", "結果了") for c in i["cards"]}
+    bloom = {c["cid"]: c["st"] in ("長葉了", "開花了", "結果了") for c in i["cards"]}
     done = {s["cid"]: " done" in s["cls"] for s in i["st"]}
-    check(f"{label} 地圖：打勾的站＝觀念卡顯示開花的觀念（逐一比對）", done == bloom and sum(done.values()) == 3, (done, bloom))
+    check(f"{label} 地圖：打勾的站＝觀念卡顯示長葉了以上的觀念（逐一比對）", done == bloom and sum(done.values()) == 4, (done, bloom))
     grown = {c["cid"]: c["st"] for c in i["cards"]}.get("2-1")
-    check(f"{label} 地圖：「長葉了」（題卡都見過、出口題還沒過）不算走過", grown == "長葉了" and not done["2-1"], grown)
+    check(f"{label} 地圖：「長葉了」（題卡都見過、出口題還沒過）也算走過", grown == "長葉了" and done["2-1"], grown)
     nows = [s["cid"] for s in i["st"] if " now" in s["cls"]]
-    check(f"{label} 地圖：「現在在這裡」＝第一個沒開花的觀念（第 4 站 根莖葉）", nows == ["2-1"] and "現在在這裡" in i["text"], nows)
-    check(f"{label} 地圖：植物第 3 階（長出葉子）＋下一階剪影與提示", i["plant"] == "植物：長出葉子" and "再走過一站，看看它會變成什麼" in i["text"], i["plant"])
-    check(f"{label} 地圖：剛破關（上次沒看過）播長大動畫一次，記下 mapSeen=3", i["grow"] and i["seen"] == "3", (i["grow"], i["seen"]))
+    check(f"{label} 地圖：「現在在這裡」＝第一個題目還沒全部做過的觀念（第 5 站）", nows == ["2-2"] and "現在在這裡" in i["text"], nows)
+    check(f"{label} 地圖：植物第 4 階（長高）＋下一階剪影與提示＋長大規則", i["plant"] == "植物：長高" and "再做完一站的題目，看看它會變成什麼" in i["text"] and "每一題都做過一次" in i["text"], i["plant"])
+    check(f"{label} 地圖：剛破關（上次沒看過）播長大動畫一次，記下 mapSeen=4", i["grow"] and i["seen"] == "4", (i["grow"], i["seen"]))
     check(f"{label} 地圖：觸控目標每站 ≥44px、字級 ≥15px、沒有 emoji", all(s["w"] >= 44 and s["h"] >= 44 for s in i["st"]) and i["minFont"] >= 15 and not i["emoji"],
           (min(s["h"] for s in i["st"]), i["minFont"]))
     shot(page, f"{label}_map_3")

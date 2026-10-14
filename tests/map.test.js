@@ -36,10 +36,17 @@ test("七站全走完：沒有「現在在這裡」，階數 7＝結果，全破
   assert.equal(M.PLANT[t.level], "結果");
 });
 
-test("走過＝開花以上：stage 4（結果了）算走過，stage 2（長葉了）不算", () => {
+// 2026-10-14 律師（孩子問「達成什麼條件才能放一本書」）：做完一站的題目就算走過 ⇒ 長葉了（全部題目做過一次）以上；四站同一條
+test("走過＝長葉了以上（BLOOM 2）：stage 2（長葉了＝題目全部做過）、4（結果了）算走過，stage 1（發芽了）不算", () => {
   assert.equal(M.trail({ cids: CIDS, stages: stages(2, 4), on: allOn }).walked, 2);
-  assert.equal(M.trail({ cids: CIDS, stages: stages(7, 2), on: allOn }).walked, 0);
-  assert.equal(M.BLOOM, 3);
+  assert.equal(M.trail({ cids: CIDS, stages: stages(7, 2), on: allOn }).walked, 7);
+  assert.equal(M.trail({ cids: CIDS, stages: stages(7, 1), on: allOn }).walked, 0);
+  assert.equal(M.BLOOM, 2);
+});
+
+test("地圖寫得出長大規則：有 RULE 與 DONE，規則講「每一題都做過一次」", () => {
+  assert.match(M.RULE || "", /每一題都做過一次/);
+  assert.ok(typeof M.DONE === "string" && M.DONE.length >= 2 && M.DONE.length <= 6, "DONE：" + M.DONE);
 });
 
 test("「現在在這裡」是第一個沒走過的站，不是走過數＋1（中間跳著走）", () => {
