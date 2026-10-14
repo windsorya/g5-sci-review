@@ -526,6 +526,22 @@ def flow_save_fail_then_tick(browser):
     ctx.close()
 
 
+def flow_redo_after_external_clear(browser):
+    """Codex 審 4d8b1e0：做完含答錯題的一輪 → 存檔被別處清掉 → 切回頁面（只重畫側欄，結束畫面還在）→ 按「再練答錯的」，
+    舊版 V().session.wrong 讀 null 拋 TypeError、按鈕沒反應。"""
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00", init="Math.random = () => 0.99;")
+    btn(page, "只做 3 張").click()
+    btn(page, "東邊升起、西邊落下").click(); btn(page, "下一題").click()
+    btn(page, "清晨").click(); btn(page, "知道但選錯了").click(); btn(page, "下一題").click()
+    btn(page, "西邊").click(); btn(page, "下一題").click()
+    check("清檔前：一輪結束畫面有「再練答錯的 1 張」", "再練答錯的 1 張" in page.inner_text("#main"), page.inner_text("#main")[:160])
+    page.evaluate("localStorage.removeItem('g5sci.v3'); document.dispatchEvent(new Event('visibilitychange')); 0")
+    page.locator("#goRedo").click()
+    check("存檔被別處清掉後按舊畫面的「再練答錯的」：不拋錯、回到首頁", not errors and page.get_by_role("button", name="開始今天的練習").count() == 1,
+          errors or page.inner_text("#main")[:160])
+    ctx.close()
+
+
 def flow_season(browser, device=None):
     ctx, page, errors = new_page(browser, "2026-10-11T20:40:00+08:00", device)
     page.locator(".ccard[data-cid='1-3']").click()
@@ -1071,6 +1087,7 @@ def main():
         flow_short_round_and_teach(wk, dict(p.devices["iPad Mini"]))
         flow_save_fail(ch)
         flow_save_fail_then_tick(ch)
+        flow_redo_after_external_clear(ch)
         flow_review_after_plan_done(ch)
         flow_makeup(ch)
         flow_makeup(wk, ipad, "webkit_ipad")
