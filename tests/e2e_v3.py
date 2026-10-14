@@ -582,6 +582,51 @@ def flow_review_after_plan_done(browser):
     ctx.close()
 
 
+def flow_makeup(browser, device=None, label="chromium"):
+    """補做（2026-10-14 律師：「有辦法補做之前沒做的天數嗎」）：今天做完後，日曆下方可補做沒練的日子；補完那天變淺綠、連續天數照算。"""
+    def seed(done):
+        s = {"v": 3, "cards": {}, "exits": {}, "days": {"2026-10-14": {"planIds": ["s1"], "doneIds": ["s1"] if done else [], "touched": ["s1"] if done else [],
+             "extraDone": False, "labRuns": 0, "teach": 0, "mood": None}}, "labRuns": {}, "session": None,
+             "log": [], "ops": [], "help": {}, "extra": [], "settings": {"unit3": False, "sound": False}}
+        if done:
+            s["cards"]["s1"] = {"seen": 1, "goodDays": ["2026-10-14"], "blockedDay": None, "due": "2026-10-15"}
+            s["log"] = [{"op": "x1", "d": "2026-10-14", "card": "s1", "c": "1-1", "ok": True, "hint": False, "unsure": False, "variation": False, "first": True}]
+        return f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', {json.dumps(json.dumps(s))});}}"
+    ctx, page, errors = new_page(browser, "2026-10-14T20:00:00+08:00", device, init=seed(False))
+    txt = page.inner_text("#makeup")
+    check(f"{label} 補做1 今天還沒做完：只說前面 3 天沒練、做完今天可補，沒有補做按鈕", "3 天沒練" in txt and page.locator("#makeup button").count() == 0, txt)
+    ctx.close()
+    ctx, page, errors = new_page(browser, "2026-10-14T20:00:00+08:00", device, init=seed(True))
+    bs = page.locator("#makeup button[data-mk]")
+    check(f"{label} 補做2 今天做完：列出 10/11、10/12、10/13 三個補做按鈕", bs.count() == 3 and [b.inner_text() for b in bs.all()] == ["補做 10/11", "補做 10/12", "補做 10/13"], [b.inner_text() for b in bs.all()])
+    check(f"{label} 補做3 補做前連續練習 1 天", page.inner_text("#streak") == "連續練習 1 天", page.inner_text("#streak"))
+    page.locator("button[data-mk='2026-10-12']").click()
+    check(f"{label} 補做4 進入練習、題目上方標「補做 10/12」", "補做 10/12" in page.inner_text("#main .qhead"), page.inner_text("#main")[:120])
+    for _ in range(25):
+        if "補做完成" in page.inner_text("#main"):
+            break
+        answer_and_next(page)
+    check(f"{label} 補做5 做完顯示「10/12 補做完成」", "10/12 補做完成" in page.inner_text("#main"), page.inner_text("#main")[:160])
+    st = state(page)
+    check(f"{label} 補做6 存檔：10/12 記成練過、今天的紀錄不變", len(st["days"]["2026-10-12"]["touched"]) > 0 and st["days"]["2026-10-14"]["touched"] == ["s1"] and st["days"]["2026-10-14"]["extraDone"] is False, st["days"])
+    btn(page, "回首頁").click()
+    cell = page.locator("#cal i").nth(1)
+    check(f"{label} 補做7 日曆 12 號變成補做色（on mk），按鈕剩 10/11、10/13", "mk" in (cell.get_attribute("class") or "") and "on" in (cell.get_attribute("class") or "") and page.locator("#makeup button[data-mk]").count() == 2, cell.get_attribute("class"))
+    check(f"{label} 補做8 連續天數照算（12 補了、13 沒練 ⇒ 仍是 1 天）", page.inner_text("#streak") == "連續練習 1 天", page.inner_text("#streak"))
+    page.locator("button[data-mk='2026-10-13']").click()
+    for _ in range(25):
+        if "補做完成" in page.inner_text("#main"):
+            break
+        answer_and_next(page)
+    btn(page, "回首頁").click()
+    check(f"{label} 補做9 13 號也補了 ⇒ 連續練習 3 天（12、13、14）", page.inner_text("#streak") == "連續練習 3 天", page.inner_text("#streak"))
+    page.reload(); page.wait_for_selector("#main")
+    check(f"{label} 補做10 重新整理後仍是 3 天、只剩 10/11 可補", page.inner_text("#streak") == "連續練習 3 天" and page.locator("#makeup button[data-mk]").count() == 1)
+    check(f"{label} 補做 沒有 JS 錯誤", not errors, errors)
+    shot(page, f"makeup_{label}")
+    ctx.close()
+
+
 def flow_pending_blocks_new_answer(browser):
     """D1：A 存檔失敗 → 回首頁再開始 → 作答 B 不得覆蓋待存的 A；存好後可以重答 B。"""
     ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00")
@@ -1021,6 +1066,8 @@ def main():
         flow_save_fail(ch)
         flow_save_fail_then_tick(ch)
         flow_review_after_plan_done(ch)
+        flow_makeup(ch)
+        flow_makeup(wk, ipad, "webkit_ipad")
         flow_pending_blocks_new_answer(ch)
         flow_dissolve_fair_test(ch)
         flow_pending_timer_no_hijack(ch)
