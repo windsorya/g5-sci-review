@@ -542,6 +542,55 @@ def flow_redo_after_external_clear(browser):
     ctx.close()
 
 
+def flow_lab_after_external_clear(browser):
+    """Codex 審 g5-chinese-review c28888ed（#1541，四站同型）：實驗做到一半存檔被別處清掉（別的分頁清除、同步換檔）→ 切回頁面
+    → 再按實驗頁的按鈕，核心回 NO_RUN；舊版留在實驗頁、按了沒反應也沒有任何提示。新版照磁碟現況回首頁。
+    光的實驗按「擋住」會先 check 再重畫：驗回首頁不會因為接著重畫已不在的畫面而拋錯。另驗正常完成仍到「實驗完成」。"""
+    clear = "localStorage.removeItem('g5sci.v3'); document.dispatchEvent(new Event('visibilitychange')); 0"
+    when = "2026-10-11T19:00:00+08:00"
+
+    def open_lab(page, cid):
+        page.locator(f".ccard[data-cid='{cid}']").click(); page.locator("#cLab").click()
+        page.wait_for_selector("#labPredict button[data-g]")
+
+    def open_lab_wrong(page, _cid):   # 答錯後補救進來（完成鈕是「我看懂了，換一題確認」）
+        btn(page, "只做 3 張").click()
+        btn(page, "東邊升起、西邊落下").click(); btn(page, "下一題").click()
+        btn(page, "清晨").click(); btn(page, "還不懂這個觀念").click()
+        btn(page, "做觀察任務，再換一題確認").click(); page.wait_for_selector("#labPredict button[data-g]")
+
+    def predict(page):
+        page.locator("#labPredict button[data-g='0']").click()
+
+    def shadow_all(page):
+        predict(page)
+        for t in ("8", "12", "16"):
+            page.evaluate("v => { const r = document.querySelector('#shT'); r.value = v; r.dispatchEvent(new Event('input')); }", t)
+
+    ctx, page, errors = new_page(browser, when)
+    open_lab(page, "1-1"); shadow_all(page); page.locator("#labDone").click()
+    check("實驗（觀念頁進來）：正常完成到「實驗完成」", "實驗完成" in page.inner_text("#main"), page.inner_text("#main")[:120])
+    ctx.close()
+    bg = "localStorage.removeItem('g5sci.v3'); 0"   # 沒切換頁面（同步在背景換檔）：記憶體還有這次實驗，存檔時核心才回 NO_RUN
+    for name, cid, opener, before, js, press in [("三個任務做完後按「完成實驗」", "1-1", open_lab, shadow_all, clear, "#labDone"),
+                                                 ("（答錯補救進來）任務做完後按「我看懂了，換一題確認」", "1-1", open_lab_wrong, shadow_all, clear, "#labDone"),
+                                                 ("光的實驗猜完後按「擋住」（任務後面接著重畫）", "1-2", open_lab, predict, clear, "#lgB"),
+                                                 ("（沒切換頁面）光的實驗猜完後按「擋住」", "1-2", open_lab, predict, bg, "#lgB"),
+                                                 ("還沒猜就點猜測選項", "1-1", open_lab, lambda p: None, clear, "#labPredict button[data-g] >> nth=0")]:
+        ctx, page, errors = new_page(browser, when, init="Math.random = () => 0.99;")
+        opener(page, cid); before(page)
+        page.evaluate(js); page.locator(press).click()
+        try:   # 回首頁排在這次事件跑完之後
+            page.get_by_role("button", name="開始今天的練習").wait_for(timeout=3000)
+        except Exception:
+            pass
+        page.wait_for_timeout(300)   # 動畫若沒停、重畫打到已不在的畫面，錯誤會在這段時間出現
+        check(f"實驗中存檔被別處清掉後{name}：回到首頁、沒有 JS 錯誤",
+              not errors and page.locator("#labNav").count() == 0 and page.get_by_role("button", name="開始今天的練習").count() == 1,
+              errors or page.inner_text("#main")[:120])
+        ctx.close()
+
+
 def flow_season(browser, device=None):
     ctx, page, errors = new_page(browser, "2026-10-11T20:40:00+08:00", device)
     page.locator(".ccard[data-cid='1-3']").click()
@@ -1088,6 +1137,7 @@ def main():
         flow_save_fail(ch)
         flow_save_fail_then_tick(ch)
         flow_redo_after_external_clear(ch)
+        flow_lab_after_external_clear(ch)
         flow_review_after_plan_done(ch)
         flow_makeup(ch)
         flow_makeup(wk, ipad, "webkit_ipad")
