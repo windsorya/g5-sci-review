@@ -592,6 +592,25 @@ def flow_lab_after_external_clear(browser):
               not errors and page.locator("#labNav").count() == 0 and page.get_by_role("button", name="開始今天的練習").count() == 1,
               errors or page.inner_text("#main")[:120])
         ctx.close()
+    # 社會站 Codex 審 e195ef98 第 3 項後半（#1542，四站同型 #2231）：實驗任務存檔失敗（留下待存）→ 恢復 → 存檔被別處清掉 → 按「再存一次」。
+    # 舊版核心回 NO_RUN 但留著待存、狀態仍 failed：按了沒反應、提示列一直在。應該：回首頁、提示列消失。
+    ctx, page, errors = new_page(browser, when, init="Math.random = () => 0.99;")
+    open_lab(page, "1-1"); predict(page)
+    page.evaluate("window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function(){ throw new Error('QuotaExceededError'); }; 0")
+    page.evaluate("v => { const r = document.querySelector('#shT'); r.value = v; r.dispatchEvent(new Event('input')); }", "8")
+    page.evaluate("Storage.prototype.setItem = window.__realSet; 0")
+    had_retry = page.locator("#retrySave").count() == 1
+    page.evaluate(bg); page.locator("#retrySave").click()
+    try:   # 回首頁排在這次事件跑完之後
+        page.get_by_role("button", name="開始今天的練習").wait_for(timeout=3000)
+    except Exception:
+        pass
+    page.wait_for_timeout(300)
+    check("實驗存檔失敗待重試中、存檔又被別處清掉後按「再存一次」：回到首頁、提示列消失、沒有 JS 錯誤",
+          had_retry and not errors and page.locator("#labNav").count() == 0
+          and page.get_by_role("button", name="開始今天的練習").count() == 1 and page.locator("#retrySave").count() == 0,
+          {"先出現再存一次": had_retry, "errors": errors, "main": page.inner_text("#main")[:80], "再存一次": page.locator("#retrySave").count()})
+    ctx.close()
 
 
 def flow_season(browser, device=None):
