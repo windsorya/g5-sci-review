@@ -611,6 +611,22 @@ def flow_lab_after_external_clear(browser):
           and page.get_by_role("button", name="開始今天的練習").count() == 1 and page.locator("#retrySave").count() == 0,
           {"先出現再存一次": had_retry, "errors": errors, "main": page.inner_text("#main")[:80], "再存一次": page.locator("#retrySave").count()})
     ctx.close()
+    # 四站同型（Codex 審數學 baf22229 第 2 項，#2633）：任務存檔失敗 → 回首頁 → 進觀念頁、寫入仍失敗時按「去實驗室動手做」（開不成，人還在觀念頁、screen 卻已是 lab）
+    # → 存檔被別處清掉、寫入恢復 → 按「再存一次」：不得把她從觀念頁甩回首頁。
+    ctx, page, errors = new_page(browser, when, init="Math.random = () => 0.99;")
+    open_lab(page, "1-1"); predict(page)
+    page.evaluate("window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function(){ throw new Error('QuotaExceededError'); }; 0")
+    page.evaluate("v => { const r = document.querySelector('#shT'); r.value = v; r.dispatchEvent(new Event('input')); }", "8")
+    page.locator("#labHome").click()
+    page.locator(".ccard[data-cid='1-1']").click(); page.locator("#cLab").click()
+    on_concept = page.locator("#cLab").count() == 1 and page.locator("#labNav").count() == 0
+    page.evaluate(bg); page.evaluate("Storage.prototype.setItem = window.__realSet; 0"); page.locator("#retrySave").first.click()
+    page.wait_for_timeout(300)   # 回首頁排在事件之後（labLeaveSoon）：等它有機會發生
+    check("實驗頁沒開成、人還在觀念頁時按「再存一次」（那一輪已被別處清掉）：留在觀念頁、提示列消失、沒有 JS 錯誤",
+          on_concept and not errors and page.locator("#cLab").count() == 1
+          and page.get_by_role("button", name="開始今天的練習").count() == 0 and page.locator("#retrySave").count() == 0,
+          {"先在觀念頁": on_concept, "errors": errors, "main": page.inner_text("#main")[:80], "再存一次": page.locator("#retrySave").count()})
+    ctx.close()
 
 
 def flow_season(browser, device=None):
