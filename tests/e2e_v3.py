@@ -926,10 +926,12 @@ def flow_midnight(browser):
     page.evaluate("document.dispatchEvent(new Event('visibilitychange'))")
     main = page.inner_text("#main")
     check("跨午夜後倒數變 24", page.inner_text("#days").strip() == "24", page.inner_text("#days"))
-    check("跨午夜任務換新（矩陣 17）", "1 / 11" in main, main[:120])
-    btn(page, "東邊升起、西邊落下").click()
+    # 2026-10-18 排程改「答對後隔 3 天」（#2696）：s1 10/14 才到期，新一天＝10 張新卡（原 11＝s1＋10 張）；改點新一天第一題，守的情形不變
+    check("跨午夜任務換新（矩陣 17）", "1 / 10" in main, main[:120])
+    first = state(page)["session"]["queue"][0]
+    page.locator("#main .opt").first.click()
     s = state(page)
-    check("跨午夜作答記到新日（矩陣 16）", s["log"][-1]["d"] == "2026-10-12" and s["days"]["2026-10-12"]["doneIds"] == ["s1"], s["log"][-1])
+    check("跨午夜作答記到新日（矩陣 16）", s["log"][-1]["d"] == "2026-10-12" and s["days"]["2026-10-12"]["doneIds"] == [first], s["log"][-1])
     check("跨午夜流程沒有 JS 錯誤", not errors, errors)
     ctx.close()
 

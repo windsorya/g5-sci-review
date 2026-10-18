@@ -138,3 +138,10 @@ test("影片：每個小題型都有、最多 2 支、ID 格式正確、起訖�
     });
   });
 });
+
+// 2026-10-18（Codex 審 ee9c2f4）：被併的題不刪、她練過的照常到期出題，答錯時也要有逐格圖解——借代表題的小題型
+test("被併的題也對得到小題型（借代表題），而且觀念相同", () => {
+  const all = base.concat(require("../src/bank_extra.js"));
+  const miss = all.filter((c) => merged[c.id]).filter((c) => { const tp = S.topicOf(c); return !tp || S.topics[tp].cid !== c.concept; }).map((c) => c.id);
+  assert.deepEqual(miss, []);
+});

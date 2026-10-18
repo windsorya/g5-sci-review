@@ -849,9 +849,12 @@
     "3-1": [["ds-limit", /有限|無限|一直加/], ["ds-fast", /快/], ["ds-stay", /溶解|重量|秤/]]
   };
   function answerOf(c) { return c.type === "recall" ? (c.ans || "") : c.opts && c.opts[c.a] !== undefined ? c.opts[c.a] : ""; }
+  // 被併的題（停止出新、但她練過的照常複習）沒有自己的對照：借它代表題的小題型（Codex 審 ee9c2f4：q13、p27、p55 重新到期時沒有圖解）
+  var MG = typeof module !== "undefined" && module.exports ? require("./merge.js") : (root.G5_MERGED || {});
   function topicOf(card) {
     if (!card) return null;
     var id = OF[card.id];
+    if (!id && MG[card.id]) for (var k = 0; k < MG[card.id].keep.length && !id; k++) id = OF[MG[card.id].keep[k]];
     if (id && TOPICS[id] && TOPICS[id].cid === card.concept) return id;
     var rules = RULES[card.concept] || [], txt = (card.q || "") + " " + answerOf(card);
     for (var i = 0; i < rules.length; i++) if (rules[i][1].test(txt)) return rules[i][0];
