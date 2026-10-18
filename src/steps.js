@@ -816,37 +816,25 @@
 
   /* ---------- 題號 → 小題型（2026-10-11 逐題核對；新匯入的題走 RULES，對不到就用觀念總覽圖） ---------- */
   var OF = {
-    s1: "sun-path", s2: "sun-path", s5: "sun-path", k21: "sun-path", k49: "sun-path", q9: "sun-path", q29: "sun-path", q63: "sun-path",
-    s3: "sh-dir", s23: "sh-dir", k24: "sh-dir", k33: "sh-dir", k41: "sh-dir", k42: "sh-dir", k52: "sh-dir", k65: "sh-dir", k69: "sh-dir", q10: "sh-dir", q28: "sh-dir", q55: "sh-dir", q59: "sh-dir",
-    k25: "sh-len", q25: "sh-len", q61: "sh-len", k60: "sh-len", k70: "sh-len", q24: "sh-len", q56: "sh-len", q57: "sh-len", q58: "sh-len",
-    k26: "sh-move", q62: "sh-move", k71: "sh-move", q11: "sh-move",
-    k47: "fair-test",
-    k5: "ss-rise", q65: "ss-rise", s43: "ss-rise", k50: "ss-rise", k53: "ss-rise", q14: "ss-rise", q15: "ss-rise", q37: "ss-rise", q50: "ss-rise", q52: "ss-rise", q67: "ss-rise", q70: "ss-rise", q72: "ss-rise",
-    k43: "ss-noon", k58: "ss-noon", q16: "ss-noon", q30: "ss-noon", q33: "ss-noon", q34: "ss-noon", q35: "ss-noon", q36: "ss-noon", q48: "ss-noon", q69: "ss-noon", s41: "ss-noon", s42: "ss-noon", s45: "ss-noon",
+    k65: "sh-dir", q61: "sh-len", k25: "sh-len", q62: "sh-move", k27: "lt-straw", q5: "lt-bend", q73: "lt-color", q67: "ss-rise", p77: "pl-root", k62: "pl-flow",   // 10-18 第二輪自審改回保留的 10 題
+    s1: "sun-path", s2: "sun-path", s5: "sun-path", k21: "sun-path", k49: "sun-path", q9: "sun-path", q29: "sun-path", s3: "sh-dir", s23: "sh-dir", k24: "sh-dir", k41: "sh-dir", k42: "sh-dir", k69: "sh-dir", q28: "sh-dir", q55: "sh-dir", k60: "sh-len", k70: "sh-len", q56: "sh-len", q57: "sh-len", q58: "sh-len",
+    k26: "sh-move", k71: "sh-move", k47: "fair-test",
+    k5: "ss-rise", s43: "ss-rise", q37: "ss-rise", q52: "ss-rise", q70: "ss-rise", q72: "ss-rise",
+    k43: "ss-noon", k58: "ss-noon", q34: "ss-noon", q36: "ss-noon", q69: "ss-noon", s41: "ss-noon", s45: "ss-noon",
     k22: "ss-day", q51: "ss-day", q64: "ss-day", s44: "ss-day",
-    k3: "ss-trop", s40: "ss-trop", k4: "ss-trop", k32: "ss-trop", k44: "ss-trop", k48: "ss-trop", s37: "ss-trop", s38: "ss-trop", s39: "ss-trop",
-    k57: "ss-window", k72: "ss-window", k73: "ss-window", k74: "ss-window", q32: "ss-window",
-    s27: "lt-straight", s6: "lt-straight",
+    k3: "ss-trop", s40: "ss-trop", k32: "ss-trop", k44: "ss-trop", s37: "ss-trop", s38: "ss-trop", s39: "ss-trop",
+    k57: "ss-window", k72: "ss-window", k73: "ss-window", k74: "ss-window", s27: "lt-straight", s6: "lt-straight",
     s8: "lt-reflect", s25: "lt-reflect", k55: "lt-reflect",
-    k23: "lt-bend", k30: "lt-bend", k45: "lt-bend", q5: "lt-bend", q6: "lt-bend",
-    k40: "lt-shallow", q1: "lt-shallow", q2: "lt-shallow", q3: "lt-shallow", q4: "lt-shallow",
-    s7: "lt-straw", k27: "lt-straw", q44: "lt-straw",
-    s26: "lt-lens", k34: "lt-lens", k59: "lt-lens", q41: "lt-lens", q42: "lt-lens", q43: "lt-lens",
-    s9: "lt-color", q7: "lt-color", q39: "lt-color", q40: "lt-color", q73: "lt-color",
-    s12: "pl-root", k68: "pl-root", p7: "pl-root", p10: "pl-root", p36: "pl-root", p49: "pl-root", p77: "pl-root",
-    s11: "pl-stem", k46: "pl-stem", k66: "pl-stem", k67: "pl-stem", p5: "pl-stem", p6: "pl-stem", p11: "pl-stem", p38: "pl-stem", p65: "pl-stem", p72: "pl-stem", p76: "pl-stem",
-    s28: "pl-leaf", s30: "pl-leaf", p2: "pl-leaf", p23: "pl-leaf", p26: "pl-leaf", p28: "pl-leaf", p57: "pl-leaf", p75: "pl-leaf",
-    s10: "pl-flow", k54: "pl-flow", k62: "pl-flow",
-    k16: "pl-adapt", k36: "pl-adapt", k61: "pl-adapt", p39: "pl-adapt", p50: "pl-adapt", p58: "pl-adapt", p73: "pl-adapt",
+    k23: "lt-bend", q6: "lt-bend",
+    k40: "lt-shallow", q1: "lt-shallow", q4: "lt-shallow",
+    s7: "lt-straw", s26: "lt-lens", k34: "lt-lens", q41: "lt-lens", q42: "lt-lens", s9: "lt-color", q7: "lt-color", q40: "lt-color", s12: "pl-root", k68: "pl-root", p7: "pl-root", p10: "pl-root", p49: "pl-root", s11: "pl-stem", k46: "pl-stem", k66: "pl-stem", p5: "pl-stem", p6: "pl-stem", p11: "pl-stem", p65: "pl-stem", p72: "pl-stem", p76: "pl-stem",
+    s28: "pl-leaf", s30: "pl-leaf", p2: "pl-leaf", p57: "pl-leaf", s10: "pl-flow", k54: "pl-flow", k16: "pl-adapt", k36: "pl-adapt", k61: "pl-adapt", p50: "pl-adapt", p73: "pl-adapt",
     k28: "rp-flower", k75: "rp-flower", k76: "rp-flower", p21: "rp-flower", p22: "rp-flower", p29: "rp-flower",
-    k6: "rp-fruit", k7: "rp-fruit", k8: "rp-fruit", k56: "rp-fruit", k77: "rp-fruit", k78: "rp-fruit", p42: "rp-fruit", p63: "rp-fruit", p74: "rp-fruit",
-    k9: "rp-spread", k10: "rp-spread", k11: "rp-spread", k12: "rp-spread", k37: "rp-spread", k38: "rp-spread", p31: "rp-spread", p40: "rp-spread", p43: "rp-spread", p54: "rp-spread", p64: "rp-spread",
-    s13: "rp-veg", s14: "rp-veg", s15: "rp-veg", s31: "rp-veg", s32: "rp-veg", k29: "rp-veg", k39: "rp-veg", k63: "rp-veg", p1: "rp-veg",
-    p47: "rp-organ", p69: "rp-organ", p70: "rp-organ", p71: "rp-organ",
-    s16: "us-part", s17: "us-part", s18: "us-part", s33: "us-part", s34: "us-part",
-    k51: "us-econ", p52: "us-econ", p12: "us-econ", p13: "us-econ", p14: "us-econ", p15: "us-econ", p16: "us-econ", p51: "us-econ", p78: "us-econ", p79: "us-econ", p82: "us-econ", p83: "us-econ",
-    k35: "us-bio", p18: "us-bio", p19: "us-bio", p80: "us-bio", p81: "us-bio",
-    s19: "ds-stay", s22: "ds-stay", s20: "ds-fast", s35: "ds-fast", s21: "ds-limit"
+    k6: "rp-fruit", k7: "rp-fruit", k8: "rp-fruit", k56: "rp-fruit", k77: "rp-fruit", k78: "rp-fruit", p42: "rp-fruit", p74: "rp-fruit",
+    k9: "rp-spread", k10: "rp-spread", k11: "rp-spread", k12: "rp-spread", k37: "rp-spread", k38: "rp-spread", p31: "rp-spread", p40: "rp-spread", p54: "rp-spread", s13: "rp-veg", s14: "rp-veg", s15: "rp-veg", s31: "rp-veg", k29: "rp-veg", k39: "rp-veg", k63: "rp-veg", p1: "rp-veg",
+    p47: "rp-organ", p70: "rp-organ", s16: "us-part", s17: "us-part", s18: "us-part", s33: "us-part", s34: "us-part",
+    k51: "us-econ", p12: "us-econ", p13: "us-econ", p14: "us-econ", p15: "us-econ", p78: "us-econ", p82: "us-econ", p83: "us-econ",
+    k35: "us-bio", p19: "us-bio", p80: "us-bio", s19: "ds-stay", s22: "ds-stay", s20: "ds-fast", s35: "ds-fast", s21: "ds-limit"
   };
   // 新匯入的題（設定頁貼 JSON）：同一個觀念裡，依題目與正確答案的關鍵字對小題型；對不到就回 null（用觀念總覽圖）
   var RULES = {

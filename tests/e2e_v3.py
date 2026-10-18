@@ -401,7 +401,7 @@ def flow_review(browser, device=None):
     main = page.inner_text("#main")
     check("首頁有小考複習兩個單元、溶解未開放不出現", "第一單元 太陽與光" in main and "第二單元 植物世界" in main and "第三單元" not in main, main[-200:])
     n1 = int(main.split("第一單元 太陽與光（")[1].split(" 題")[0])
-    check("重複題只留一題：第一單元 108 題、含安親班卷 59 題；被併掉的 q8 不在題庫", n1 == 108 and "含安親班卷 59 題" in main and page.evaluate("!!(window.G5_MERGED && G5_MERGED.q8)") is True, main[-300:])
+    check("重複題只留一題：第一單元 77 題、含安親班卷 46 題（10-18 第二輪合併後；node 用題庫＋merge.js 獨立算）；被併掉的 q8 不在題庫", n1 == 77 and "含安親班卷 46 題" in main and page.evaluate("!!(window.G5_MERGED && G5_MERGED.q8)") is True, main[-300:])
     page.locator("button[data-rv='u1']").click()
     m = page.inner_text("#main")
     check("小考複習一段＝20 題（不是從第 1 題排到最後一題）", "小考複習" in m and "1 / 20" in m, m[:160])
@@ -416,7 +416,7 @@ def flow_review(browser, device=None):
     # R1／M20（4agent 2026-10-11）：小考複習做到一半，首頁仍要有「開始今天的練習」，複習另有續接鈕
     check("小考複習中首頁仍有「開始今天的練習」（M20）", "開始今天的練習" in home and "繼續小考複習（還有" in home and "繼續這一輪" not in home, home[:240])
     check("小考複習中首頁仍顯示今天要練幾張", "今天還有" in home or "今天要練" in home, home[:120])
-    check("首頁顯示練過幾題（隔天接著練，不會從頭來）", "練過 1／108 題" in home, home[-400:])
+    check("首頁顯示練過幾題（隔天接著練，不會從頭來）", "練過 1／77 題" in home, home[-400:])
     btn(page, "開始今天的練習").click()
     check("從首頁開今天的練習＝計畫回合", state(page)["session"]["kind"] == "plan" and "小考複習" not in page.inner_text("#main")[:40], json.dumps(state(page)["session"])[:160])
     page.reload(); page.wait_for_selector("#main")
@@ -425,7 +425,7 @@ def flow_review(browser, device=None):
     n2 = int(home.split("安親班複習卷：植物世界（")[1].split(" 題")[0])
     page.locator("button[data-rvall='a2']").click()
     m = page.inner_text("#main")
-    check("安親班卷一次做完全部＝整份植物世界（重複題只留一題）", f"1 / {n2}" in m and n2 == 69, m[:160])
+    check("安親班卷一次做完全部＝整份植物世界（重複題只留一題）", f"1 / {n2}" in m and n2 == 53, m[:160])
     # 測試自己用公開的題庫檔＋合併表重算一次「安親班卷」的範圍，當獨立對照
     ok_set = page.evaluate("""(() => { const M = window.G5_MERGED, X = window.G5_EXTRA_CARDS, ok = new Set();
       X.forEach(c => { if (c.set !== 'anqin') return; if (M[c.id]) M[c.id].keep.forEach(k => ok.add(k)); else ok.add(c.id); });
@@ -655,6 +655,10 @@ def answer_and_next(page):
     """隨便作答一題並前進：選擇題按第一個選項；答錯就選「先跳過」錯因，再按下一題。"""
     if page.locator("#main .opt").count():
         page.locator("#main .opt").first.click()
+    elif page.locator("#main .blank").count():   # 概念圖題（2026-10-18 題庫裁重複後，補做會排到 s10）：點開每個空格再自評
+        for b in page.locator("#main .blank").all():
+            b.click()
+        page.locator("#grade button[data-g='1']").click()
     elif page.locator("#reveal").count():
         page.locator("#reveal").click(); page.locator("#selfGrade button").first.click()
     if page.locator("#errq").count():

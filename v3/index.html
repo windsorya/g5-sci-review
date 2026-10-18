@@ -1346,37 +1346,25 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
 
   /* ---------- 題號 → 小題型（2026-10-11 逐題核對；新匯入的題走 RULES，對不到就用觀念總覽圖） ---------- */
   var OF = {
-    s1: "sun-path", s2: "sun-path", s5: "sun-path", k21: "sun-path", k49: "sun-path", q9: "sun-path", q29: "sun-path", q63: "sun-path",
-    s3: "sh-dir", s23: "sh-dir", k24: "sh-dir", k33: "sh-dir", k41: "sh-dir", k42: "sh-dir", k52: "sh-dir", k65: "sh-dir", k69: "sh-dir", q10: "sh-dir", q28: "sh-dir", q55: "sh-dir", q59: "sh-dir",
-    k25: "sh-len", q25: "sh-len", q61: "sh-len", k60: "sh-len", k70: "sh-len", q24: "sh-len", q56: "sh-len", q57: "sh-len", q58: "sh-len",
-    k26: "sh-move", q62: "sh-move", k71: "sh-move", q11: "sh-move",
-    k47: "fair-test",
-    k5: "ss-rise", q65: "ss-rise", s43: "ss-rise", k50: "ss-rise", k53: "ss-rise", q14: "ss-rise", q15: "ss-rise", q37: "ss-rise", q50: "ss-rise", q52: "ss-rise", q67: "ss-rise", q70: "ss-rise", q72: "ss-rise",
-    k43: "ss-noon", k58: "ss-noon", q16: "ss-noon", q30: "ss-noon", q33: "ss-noon", q34: "ss-noon", q35: "ss-noon", q36: "ss-noon", q48: "ss-noon", q69: "ss-noon", s41: "ss-noon", s42: "ss-noon", s45: "ss-noon",
+    k65: "sh-dir", q61: "sh-len", k25: "sh-len", q62: "sh-move", k27: "lt-straw", q5: "lt-bend", q73: "lt-color", q67: "ss-rise", p77: "pl-root", k62: "pl-flow",   // 10-18 第二輪自審改回保留的 10 題
+    s1: "sun-path", s2: "sun-path", s5: "sun-path", k21: "sun-path", k49: "sun-path", q9: "sun-path", q29: "sun-path", s3: "sh-dir", s23: "sh-dir", k24: "sh-dir", k41: "sh-dir", k42: "sh-dir", k69: "sh-dir", q28: "sh-dir", q55: "sh-dir", k60: "sh-len", k70: "sh-len", q56: "sh-len", q57: "sh-len", q58: "sh-len",
+    k26: "sh-move", k71: "sh-move", k47: "fair-test",
+    k5: "ss-rise", s43: "ss-rise", q37: "ss-rise", q52: "ss-rise", q70: "ss-rise", q72: "ss-rise",
+    k43: "ss-noon", k58: "ss-noon", q34: "ss-noon", q36: "ss-noon", q69: "ss-noon", s41: "ss-noon", s45: "ss-noon",
     k22: "ss-day", q51: "ss-day", q64: "ss-day", s44: "ss-day",
-    k3: "ss-trop", s40: "ss-trop", k4: "ss-trop", k32: "ss-trop", k44: "ss-trop", k48: "ss-trop", s37: "ss-trop", s38: "ss-trop", s39: "ss-trop",
-    k57: "ss-window", k72: "ss-window", k73: "ss-window", k74: "ss-window", q32: "ss-window",
-    s27: "lt-straight", s6: "lt-straight",
+    k3: "ss-trop", s40: "ss-trop", k32: "ss-trop", k44: "ss-trop", s37: "ss-trop", s38: "ss-trop", s39: "ss-trop",
+    k57: "ss-window", k72: "ss-window", k73: "ss-window", k74: "ss-window", s27: "lt-straight", s6: "lt-straight",
     s8: "lt-reflect", s25: "lt-reflect", k55: "lt-reflect",
-    k23: "lt-bend", k30: "lt-bend", k45: "lt-bend", q5: "lt-bend", q6: "lt-bend",
-    k40: "lt-shallow", q1: "lt-shallow", q2: "lt-shallow", q3: "lt-shallow", q4: "lt-shallow",
-    s7: "lt-straw", k27: "lt-straw", q44: "lt-straw",
-    s26: "lt-lens", k34: "lt-lens", k59: "lt-lens", q41: "lt-lens", q42: "lt-lens", q43: "lt-lens",
-    s9: "lt-color", q7: "lt-color", q39: "lt-color", q40: "lt-color", q73: "lt-color",
-    s12: "pl-root", k68: "pl-root", p7: "pl-root", p10: "pl-root", p36: "pl-root", p49: "pl-root", p77: "pl-root",
-    s11: "pl-stem", k46: "pl-stem", k66: "pl-stem", k67: "pl-stem", p5: "pl-stem", p6: "pl-stem", p11: "pl-stem", p38: "pl-stem", p65: "pl-stem", p72: "pl-stem", p76: "pl-stem",
-    s28: "pl-leaf", s30: "pl-leaf", p2: "pl-leaf", p23: "pl-leaf", p26: "pl-leaf", p28: "pl-leaf", p57: "pl-leaf", p75: "pl-leaf",
-    s10: "pl-flow", k54: "pl-flow", k62: "pl-flow",
-    k16: "pl-adapt", k36: "pl-adapt", k61: "pl-adapt", p39: "pl-adapt", p50: "pl-adapt", p58: "pl-adapt", p73: "pl-adapt",
+    k23: "lt-bend", q6: "lt-bend",
+    k40: "lt-shallow", q1: "lt-shallow", q4: "lt-shallow",
+    s7: "lt-straw", s26: "lt-lens", k34: "lt-lens", q41: "lt-lens", q42: "lt-lens", s9: "lt-color", q7: "lt-color", q40: "lt-color", s12: "pl-root", k68: "pl-root", p7: "pl-root", p10: "pl-root", p49: "pl-root", s11: "pl-stem", k46: "pl-stem", k66: "pl-stem", p5: "pl-stem", p6: "pl-stem", p11: "pl-stem", p65: "pl-stem", p72: "pl-stem", p76: "pl-stem",
+    s28: "pl-leaf", s30: "pl-leaf", p2: "pl-leaf", p57: "pl-leaf", s10: "pl-flow", k54: "pl-flow", k16: "pl-adapt", k36: "pl-adapt", k61: "pl-adapt", p50: "pl-adapt", p73: "pl-adapt",
     k28: "rp-flower", k75: "rp-flower", k76: "rp-flower", p21: "rp-flower", p22: "rp-flower", p29: "rp-flower",
-    k6: "rp-fruit", k7: "rp-fruit", k8: "rp-fruit", k56: "rp-fruit", k77: "rp-fruit", k78: "rp-fruit", p42: "rp-fruit", p63: "rp-fruit", p74: "rp-fruit",
-    k9: "rp-spread", k10: "rp-spread", k11: "rp-spread", k12: "rp-spread", k37: "rp-spread", k38: "rp-spread", p31: "rp-spread", p40: "rp-spread", p43: "rp-spread", p54: "rp-spread", p64: "rp-spread",
-    s13: "rp-veg", s14: "rp-veg", s15: "rp-veg", s31: "rp-veg", s32: "rp-veg", k29: "rp-veg", k39: "rp-veg", k63: "rp-veg", p1: "rp-veg",
-    p47: "rp-organ", p69: "rp-organ", p70: "rp-organ", p71: "rp-organ",
-    s16: "us-part", s17: "us-part", s18: "us-part", s33: "us-part", s34: "us-part",
-    k51: "us-econ", p52: "us-econ", p12: "us-econ", p13: "us-econ", p14: "us-econ", p15: "us-econ", p16: "us-econ", p51: "us-econ", p78: "us-econ", p79: "us-econ", p82: "us-econ", p83: "us-econ",
-    k35: "us-bio", p18: "us-bio", p19: "us-bio", p80: "us-bio", p81: "us-bio",
-    s19: "ds-stay", s22: "ds-stay", s20: "ds-fast", s35: "ds-fast", s21: "ds-limit"
+    k6: "rp-fruit", k7: "rp-fruit", k8: "rp-fruit", k56: "rp-fruit", k77: "rp-fruit", k78: "rp-fruit", p42: "rp-fruit", p74: "rp-fruit",
+    k9: "rp-spread", k10: "rp-spread", k11: "rp-spread", k12: "rp-spread", k37: "rp-spread", k38: "rp-spread", p31: "rp-spread", p40: "rp-spread", p54: "rp-spread", s13: "rp-veg", s14: "rp-veg", s15: "rp-veg", s31: "rp-veg", k29: "rp-veg", k39: "rp-veg", k63: "rp-veg", p1: "rp-veg",
+    p47: "rp-organ", p70: "rp-organ", s16: "us-part", s17: "us-part", s18: "us-part", s33: "us-part", s34: "us-part",
+    k51: "us-econ", p12: "us-econ", p13: "us-econ", p14: "us-econ", p15: "us-econ", p78: "us-econ", p82: "us-econ", p83: "us-econ",
+    k35: "us-bio", p19: "us-bio", p80: "us-bio", s19: "ds-stay", s22: "ds-stay", s20: "ds-fast", s35: "ds-fast", s21: "ds-limit"
   };
   // 新匯入的題（設定頁貼 JSON）：同一個觀念裡，依題目與正確答案的關鍵字對小題型；對不到就回 null（用觀念總覽圖）
   var RULES = {
@@ -1846,21 +1834,21 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     q71: { keep: ["q72"], why: "春分、秋分路線相同（q72）就包含日出位置相同（q71）" },
     q68: { keep: ["s41"], why: "s41 已包含「夏至中午影子最短」" },
     q31: { keep: ["k43"], why: "k43 已包含「春分中午約 67 度」" },
-    q13: { keep: ["q16"], why: "q13 是 q16 反過來說的是非題" },
+    q13: { keep: ["q34"], why: "q13 是 q16 反過來說的是非題（10-18 原代表題 q16 也被併，改由 q34 代表）" },
     q49: { keep: ["k22"], why: "都問一年中哪個月日出最早（六月）" },
     q66: { keep: ["q69"], why: "春分、冬至中午竿影都朝正北，道理相同，留一題" },
     k64: { keep: ["k72", "k74"], why: "冬至中午陽光照進屋子最深，看圖題 k72、k74 已經考了" },
     // ---------- 1-2 光的現象 ----------
     q18: { keep: ["s7"], why: "都考水中的吸管（筷子）像折斷是折射" },
     q20: { keep: ["s7"], why: "q20 是 s7 反過來說的是非題（不是反射）" },
-    q45: { keep: ["q5"], why: "q5 的正確答案已包含「在交界處偏折」" },
-    q46: { keep: ["q5"], why: "q5 的正確答案已包含「會偏折」" },
+    q45: { keep: ["k23"], why: "q5 的正確答案已包含「在交界處偏折」（10-18 原代表題 q5 也被併，改由 k23 代表）" },
+    q46: { keep: ["k23"], why: "q5 的正確答案已包含「會偏折」（10-18 原代表題 q5 也被併，改由 k23 代表）" },
     q17: { keep: ["k23"], why: "都考光斜斜從水進入空氣會偏折" },
     q21: { keep: ["q1"], why: "q21 是 q1 反過來說（腿變長是錯的＝腳看起來變短）" },
-    q38: { keep: ["q2"], why: "游泳池換成溪水，答案和道理一樣" },
+    q38: { keep: ["q1", "k40"], why: "游泳池換成溪水，答案和道理一樣（10-18 原代表題 q2 也被併，改由 q1、k40 代表）" },
     q19: { keep: ["q4"], why: "q4 已包含「看不準水的深度」" },
     q23: { keep: ["q7"], why: "都考沒有光就看不到彩虹" },
-    q22: { keep: ["q73"], why: "q22 是 q73 反過來說的是非題" },
+    q22: { keep: ["q7"], why: "q22 是 q73 反過來說的是非題（10-18 原代表題 q73 也被併，改由 q7 代表）" },
     // ---------- 2-1 根莖葉 ----------
     p61: { keep: ["s11"], why: "都是紅色水實驗，證明莖會運輸水分" },
     p37: { keep: ["s12"], why: "s12 已包含「根可以固定植物」" },
@@ -1870,7 +1858,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     p25: { keep: ["s30"], why: "都考水分從葉子散失（蒸散作用）" },
     p32: { keep: ["p57"], why: "同一個夾鏈袋實驗，問法不同" },
     p9:  { keep: ["k16"], why: "p9 是 k16 反過來說的是非題（針狀葉減少水分散失）" },
-    p8:  { keep: ["p58"], why: "都考捕蠅草的葉子會誘捕昆蟲" },
+    p8:  { keep: ["k61"], why: "都考捕蠅草的葉子會誘捕昆蟲（10-18 原代表題 p58 也被併，改由 k61 代表）" },
     p4:  { keep: ["p73"], why: "都考含羞草受刺激葉片閉合、葉柄下垂" },
     k31: { keep: ["p11"], why: "都考絲瓜的莖柔軟、要攀附" },
     p48: { keep: ["p10"], why: "都考銀葉樹的板根像三角形翅膀、增加抓地面積" },
@@ -1879,7 +1867,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     p67: { keep: ["k6"], why: "番茄換成芒果，答案一樣是子房" },
     p34: { keep: ["k6", "k7"], why: "「子房→果實、胚珠→種子」就是 k6 加 k7" },
     p30: { keep: ["k7"], why: "都考胚珠發育成種子" },
-    p41: { keep: ["p63"], why: "都考授粉、受精以後胚珠發育成種子" },
+    p41: { keep: ["k7"], why: "都考授粉、受精以後胚珠發育成種子（10-18 原代表題 p63 也被併，改由 k7 代表）" },
     p20: { keep: ["k7"], why: "p20 是 k7 反過來說的是非題（不是花瓣）" },
     p45: { keep: ["k10"], why: "都考蒲公英靠風散播" },
     p44: { keep: ["k11"], why: "都考非洲鳳仙花靠彈力散播" },
@@ -1887,7 +1875,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     p27: { keep: ["k56"], why: "都考玉米靠風授粉" },
     p55: { keep: ["k39"], why: "都考黃金葛莖上的節會長出根和葉" },
     p46: { keep: ["s31"], why: "都考地瓜（根）埋在土裡會長出新植物" },
-    p35: { keep: ["s32"], why: "p35 是 s32 反過來說的是非題" },
+    p35: { keep: ["s13"], why: "p35 是 s32 反過來說的是非題（10-18 原代表題 s32 也被併，改由 s13 代表）" },
     p3:  { keep: ["p70"], why: "都考繁殖器官是花、果實、種子" },
     // ---------- 2-3 植物與生活 ----------
     p33: { keep: ["s18"], why: "都考蘿蔔是根" },
@@ -1895,7 +1883,64 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     p53: { keep: ["p80"], why: "p53 是 p80 反過來說的是非題（不是桃花心木）" },
     p84: { keep: ["p80"], why: "p80 的答案已包含「果實的倒鉤刺」" },
     // ---------- 3-1 溶解 ----------
-    s36: { keep: ["s22"], why: "s36 是 s22 反過來說的是非題（重量不變）" }
+    s36: { keep: ["s22"], why: "s36 是 s22 反過來說的是非題（重量不變）" },
+    // ========== 2026-10-18 第二輪（律師新判準） ==========
+    // 律師：「如果數個題目是在測試是否理解同一個觀念，是否有必要出這麼多題目？」「其他科目也請比照」；
+    // 判準（律師原話）：「重複是指a題可以答對，也能夠答對b或c題，那b、c題就可能是重複觀念題」——比 10-11 嚴：反過來問、換例子同方法也算。
+    // 被併題若有保留題沒考到的錯誤選項（另一個誤解），就不算重複、不併（同 Codex 審社會 51496e7、國語 86f9e81 的尺）。
+    // 知識題一組留 1 題；方法題（考卷會換新情境要她自己判斷）一組留 2 題——同一張卡隔天再出會被背答案。看圖題照舊一律保留。
+    k33: { keep: ["q55", "k24"], why: "由影子方向推太陽在相反方向（方法題留 q55、k24 兩題）：影子西北⇒太陽東南" },
+    q59: { keep: ["q55", "k24"], why: "由影子方向推太陽在相反方向（方法題留 q55、k24 兩題）：影子西偏北⇒太陽東偏南" },
+    q10: { keep: ["q55", "k24"], why: "答得出 q55、k24 就知道太陽和竿影方位相反" },
+    k52: { keep: ["k24", "s1"], why: "影子在西⇒太陽在東（k24）⇒早上（s1 東升西落）" },
+    q24: { keep: ["q58", "k60"], why: "一天中影子先變短再變長、中午最短（方法題留 q58、k60）：12 點比 3 點短" },
+    q25: { keep: ["q58", "k60"], why: "一天中影子先變短再變長、中午最短（方法題留 q58、k60）：10 點比 12 點長" },
+    q63: { keep: ["s2"], why: "s2 知道太陽中午前後最高，就知道高度角愈來愈大是在中午以前" },
+    q11: { keep: ["k26"], why: "k26 知道竿影一天中由西向東移動，就知道竿影方位會改變" },
+    q44: { keep: ["s7"], why: "s7 的題目就寫著斜插進水裡的筷子看起來像折斷" },
+    q2: { keep: ["q1", "k40"], why: "水裡的東西因折射看起來變淺、變高（方法題留 q1、k40）：池水看起來比實際淺" },
+    q3: { keep: ["k40"], why: "k40 正解就是「光的折射讓它看起來變高」，看不準水深是折射不是反射" },
+    k30: { keep: ["k23"], why: "k23 的錯誤選項就是「光垂直照進水面」，答對就知道垂直射入不偏折" },
+    k45: { keep: ["s7", "k23"], why: "s7 知道這叫折射、k23 知道斜斜穿過交界會偏折，就知道不是反射" },
+    k59: { keep: ["k34"], why: "k34 要知道放大鏡能看到放大正立、縮小倒立、放大倒立，就知道紙板上可能出現倒立的影像" },
+    q43: { keep: ["k34"], why: "k34 知道放大鏡和物體距離不同，影像就不同" },
+    q39: { keep: ["q7"], why: "q7 的選項有「背對陽光看瀑布濺起的水花」，答對就知道沒下雨也看得到彩虹" },
+    k48: { keep: ["s39"], why: "s39 知道冬至太陽直射南回歸線" },
+    s42: { keep: ["s41"], why: "s41 知道夏至中午太陽最高、影子最短，就知道冬至中午影子比較長" },
+    q30: { keep: ["s41", "q34"], why: "中午太陽夏至最高、冬至最低（方法題留 s41、q34）：夏至中午竿影比春分短" },
+    q33: { keep: ["s41", "q34"], why: "q34 知道夏至最大、冬至最小，春分在中間，所以春分比冬至大" },
+    q35: { keep: ["s41", "q34"], why: "q34 知道夏至最大，從春分到夏至就漸漸變大" },
+    q48: { keep: ["q34", "s38"], why: "q34 知道夏至中午高度角最大，夏至約 6 月 21 日（s38）" },
+    q16: { keep: ["q34"], why: "q34 知道中午高度角夏至最大、冬至最小，就知道中午太陽位置隨季節不同" },
+    q32: { keep: ["k57"], why: "k57 知道冬天朝南的窗戶比較容易照到陽光，就知道不同季節照進教室的陽光不一樣多" },
+    k50: { keep: ["s43"], why: "s43 知道夏天太陽從東偏北升起，就知道夏至日出不在東南方" },
+    k53: { keep: ["k5"], why: "k5 知道冬天太陽從東偏南升起" },
+    q65: { keep: ["q37"], why: "q65 是 q37 的一部分：春分從正東方升起" },
+    q15: { keep: ["q37"], why: "q37 知道春分從正東方升起，就知道不是只有冬至" },
+    q14: { keep: ["q37", "s43"], why: "春分從正東升（q37）、夏天從東偏北升（s43），從春分到夏至日出位置就往北移" },
+    q50: { keep: ["q52", "q69", "q37", "q72"], why: "季節的太陽方位加上影子在相反方向（方法題留 q52、q69）：秋分日出在正東，竿影朝正西" },
+    k4: { keep: ["k3"], why: "k3 知道只有北回歸線上或以南才看得到立竿不見影，臺北在北回歸線以北" },
+    p23: { keep: ["k54"], why: "k54 知道水是根吸收的，不是葉" },
+    p26: { keep: ["k54"], why: "k54 知道水是莖輸送的，不是葉" },
+    p75: { keep: ["s28", "s30"], why: "s28 知道葉製造養分、s30 知道葉會蒸散" },
+    p28: { keep: ["p57", "s30"], why: "p57 知道袋子裡出現小水珠、s30 知道那是葉子散失水分（蒸散），不是吸收" },
+    k67: { keep: ["p11"], why: "p11 的選項有榕樹，答對（絲瓜）就知道榕樹的莖不是柔軟要攀附的" },
+    p38: { keep: ["p6"], why: "p6 知道馬鈴薯是短而膨大的塊莖，不是柔軟纏繞的莖" },
+    p36: { keep: ["p7"], why: "p7 知道榕樹有氣生根，就知道不是所有根都長在土裡" },
+    p58: { keep: ["k61"], why: "k61 的題目就寫著捕蠅草的葉子會捕捉小昆蟲" },
+    p39: { keep: ["k16"], why: "k16 知道仙人掌的葉長成刺是為了適應乾燥，就知道不同環境的根莖葉不一樣" },
+    s32: { keep: ["s13"], why: "s13 知道落地生根不用種子也能繁殖" },
+    p63: { keep: ["k7"], why: "和 k7 是同一題：胚珠發育成種子" },
+    p69: { keep: ["p70"], why: "p70 知道花、果實、種子是繁殖器官，所以花不是營養器官" },
+    p71: { keep: ["p70"], why: "p70 知道繁殖是花、果實、種子的事，所以繁衍後代不是根莖葉的功能" },
+    p64: { keep: ["k10"], why: "k10 的題目就寫著蒲公英果實有像小傘的白毛" },
+    p43: { keep: ["k9", "k11"], why: "k9 靠動物、k11 靠彈力，就知道不是只靠風" },
+    p16: { keep: ["p12"], why: "p12 知道鳳梨釋迦是給人食用的經濟植物，所以不是只有觀賞的才算" },
+    p52: { keep: ["p82"], why: "p82 知道經濟植物能人工栽培，就知道不是不容易繁殖、看不到" },
+    p79: { keep: ["p15"], why: "p15 知道品種改良是讓經濟植物更有價值，就知道不會是為了增加栽培難度" },
+    p51: { keep: ["p83"], why: "p83 知道外銷的是蘭花、茶葉、芒果、鳳梨釋迦，不是小麥" },
+    p81: { keep: ["p80"], why: "p81 是 p80 反過來問：魔鬼氈參考大花咸豐草果實的倒鉤刺" },
+    p18: { keep: ["p80"], why: "p80 知道魔鬼氈是參考倒鉤刺做的，就知道它有小倒鉤" }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = M; else root.G5_MERGED = M;
 })(typeof window !== "undefined" ? window : this);
@@ -2080,11 +2125,18 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   }
   function pruneVanished(state, bank, day) {
     var ok = function (id) { return !!cardById(state, bank, id); }, d = state.days[day];
-    if (d) { d.planIds = d.planIds.filter(ok); d.doneIds = d.doneIds.filter(ok); }
+    // 只拿掉「還沒做」的：今天計畫裡未完成的、這一輪待答的。已做完的是歷史，照留——
+    // 2026-10-18 題庫裁重複題後（Codex 審 g5-math-review 3751016）：原本連已完成的也刪，今天的「完成」倒退、補做被鎖，進行中的補做也失去已答紀錄而無法結算
+    if (d) d.planIds = d.planIds.filter(function (id) { return ok(id) || d.doneIds.indexOf(id) >= 0; });
     if (state.session) {
-      state.session.queue = state.session.queue.filter(ok);
-      state.session.answered = state.session.answered.filter(ok);
-      state.session.wrong = state.session.wrong.filter(ok);
+      var se = state.session, before = se.queue.length;
+      se.queue = se.queue.filter(ok);
+      // 補做做到一半、剩下的題剛好全被拿掉：當場把已答的結算到那天（和做完補做一樣）。
+      // 不結算的話畫面沒有「繼續補做」也不會結算，再按補做還會清掉已答（Codex 審 g5-math-review 9af8526）
+      if (se.makeup && before && !se.queue.length && se.answered.length && se.day === day && se.makeup < day && !(state.days[se.makeup] && state.days[se.makeup].touched.length)) {
+        var got = claimable(state, day, se.answered);
+        if (got.length) { var cd = state.days[se.makeup] || (state.days[se.makeup] = blankDay()); cd.planIds = got.slice(); cd.doneIds = got.slice(); cd.touched = got.slice(); cd.madeUp = day; }
+      }
     }
   }
   // 跨午夜：日期與任務一起切換（矩陣 16、17）
@@ -3094,6 +3146,7 @@ function $(s){return document.querySelector(s);}
 function esc(t){return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function md(k){return k?(+k.slice(5,7))+"/"+(+k.slice(8,10)):"";}
 function card(id){return C.cardById(S(),BANK,id);}
+function redoIds(se){return se.wrong.filter(function(id){return !!card(id);});}   // 「再練答錯的」只算題庫裡還在的卡（題庫裁重複題後，答錯過的卡可能已被拿掉；Codex 審 g5-math-review 9af8526）
 function conceptOn(cid){return C.conceptOn(S(),BANK,cid);}
 function srcLine(c){return '<div class="src">'+esc(c.page?("出處："+c.page):SAMPLE)+"</div>";}
 function on(sel,fn){var el=typeof sel==="string"?$(sel):sel;if(el)el.onclick=fn;}
@@ -3225,8 +3278,8 @@ function renderHome(){
   if(!v.planIds.length){
     h='<div class="done"><b class="t">今天沒有排定卡片</b><p class="muted" style="margin:0">可以點下面的觀念看圖解、去實驗室玩，或「考考爸媽」。</p>'+cont+'<div class="row" style="justify-content:center"><button class="btn ghost" type="button" id="goTeach">考考爸媽</button></div></div>';
   }else if(v.completed){
-    h='<div class="done"><b class="t">今天的卡片都做完了</b><p class="muted" style="margin:0">今天 '+v.M.cardProgress.planned+' 張全部完成。想加碼可以去實驗室、考考爸媽'+(se&&se.wrong.length?'，或再練答錯的卡':'')+'。</p>'+cont+
-      '<div class="row" style="justify-content:center">'+(se&&se.wrong.length?'<button class="btn ghost" type="button" id="goRedo">再練答錯的 '+se.wrong.length+' 張</button>':'')+'<button class="btn ghost" type="button" id="goTeach">考考爸媽</button></div></div>';
+    h='<div class="done"><b class="t">今天的卡片都做完了</b><p class="muted" style="margin:0">今天 '+v.M.cardProgress.planned+' 張全部完成。想加碼可以去實驗室、考考爸媽'+(se&&redoIds(se).length?'，或再練答錯的卡':'')+'。</p>'+cont+
+      '<div class="row" style="justify-content:center">'+(se&&redoIds(se).length?'<button class="btn ghost" type="button" id="goRedo">再練答錯的 '+redoIds(se).length+' 張</button>':'')+'<button class="btn ghost" type="button" id="goTeach">考考爸媽</button></div></div>';
   }else{
     var due=v.planIds.filter(function(id){return C.cardState(S(),id).seen>0;}).length, fresh=v.planIds.length-due;
     var parts=[]; if(due) parts.push("到期複習 "+due+" 張"); if(fresh) parts.push("新卡 "+fresh+" 張"); if(v.doneIds.length) parts.push("已做 "+v.doneIds.length+" 張");
@@ -3243,7 +3296,7 @@ function renderHome(){
   on("#goLight",function(){beginRound({type:"sessionStart",size:3});});
   on("#goOn",function(){var se2=V().session;if(se2&&se2.makeup)myMakeup=se2.makeup;startRound();});   // 按「繼續補做」＝本分頁接手這份補做
   on("#goTeach",function(){renderTeach();});
-  on("#goRedo",function(){var se2=V().session;if(!se2){renderHome();return;}beginRound({type:"sessionStart",kind:"redo",ids:se2.wrong.slice()});});   // 存檔被別處清掉後按舊畫面的按鈕：照磁碟現況回首頁，不拋錯（Codex 審 4d8b1e0）
+  on("#goRedo",function(){var se2=V().session;if(!se2){renderHome();return;}beginRound({type:"sessionStart",kind:"redo",ids:redoIds(se2)});});   // 存檔被別處清掉後按舊畫面的按鈕：照磁碟現況回首頁，不拋錯（Codex 審 4d8b1e0）
   renderSide();
 }
 // 小考複習：把整個單元（或一個觀念）排成一輪；作答照規則記分、隔天照樣複習，不改今天的計畫
@@ -3587,13 +3640,13 @@ function renderEnd(){
     '<p style="margin:0">這一輪做了 '+se.answered.length+' 張'+(se.answered.length?'，第一次就答對 '+Math.max(0,right)+' 張':'')+'。</p>'+
     (v.completed?'':v.planIds.length?'<p class="muted" style="margin:0">今天的卡片完成 '+v.M.cardProgress.done+' / '+v.M.cardProgress.planned+' 張，還有 '+v.remainingIds.length+' 張，等一下想做再按開始。</p>':'')+
     '<div class="row" style="justify-content:center">'+(!v.completed&&v.remainingIds.length?'<button class="btn" type="button" id="goMore">繼續做剩下的 '+v.remainingIds.length+' 張</button>':'')+
-    (se.wrong.length?'<button class="btn ghost" type="button" id="goRedo">再練答錯的 '+se.wrong.length+' 張</button>':'')+
+    (redoIds(se).length?'<button class="btn ghost" type="button" id="goRedo">再練答錯的 '+redoIds(se).length+' 張</button>':'')+
     '<button class="btn ghost" type="button" id="goTeach">考考爸媽</button><button class="btn ghost" type="button" id="goHome">回首頁</button></div>'+
     segMore(se)+
     '<div style="display:grid;gap:8px;justify-items:center"><span class="small muted">今天練習的感覺？（可以不選）</span><div class="moods" id="moods">'+
     ["good","ok","tired"].map(function(m){return '<button type="button" data-m="'+m+'" aria-label="'+MOOD_NAME[m]+'"'+(v.day.mood===m?' class="on"':'')+'>'+FACES[m]+'</button>';}).join("")+'</div></div></div>';
   on("#goMore",function(){beginRound({type:"sessionStart"});});
-  on("#goRedo",function(){var se2=V().session;if(!se2){renderHome();return;}beginRound({type:"sessionStart",kind:"redo",ids:se2.wrong.slice()});});   // 存檔被別處清掉後按舊畫面的按鈕：照磁碟現況回首頁，不拋錯（Codex 審 4d8b1e0）
+  on("#goRedo",function(){var se2=V().session;if(!se2){renderHome();return;}beginRound({type:"sessionStart",kind:"redo",ids:redoIds(se2)});});   // 存檔被別處清掉後按舊畫面的按鈕：照磁碟現況回首頁，不拋錯（Codex 審 4d8b1e0）
   on("#goTeach",function(){renderTeach();});
   on("#goHome",renderHome);
   on("#goSeg",function(){startReview(lastReview,false);});
