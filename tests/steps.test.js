@@ -145,3 +145,21 @@ test("被併的題也對得到小題型（借代表題），而且觀念相同",
   const miss = all.filter((c) => merged[c.id]).filter((c) => { const tp = S.topicOf(c); return !tp || S.topics[tp].cid !== c.concept; }).map((c) => c.id);
   assert.deepEqual(miss, []);
 });
+
+// M08（Codex 審 a7aa191）：CommonJS 測試直接 require("./merge.js")，看不到網頁的載入順序。這裡照 src/app.html 的 @INLINE 順序、
+// 用瀏覽器模式（沒有 module）在同一個 window 依序載入，被併題的逐格圖解要跟 CommonJS 版查到同一個小題型
+test("M08 照網頁實際載入順序：被併題 q13／p27／p55 查得到逐格圖解", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../src/app.html"), "utf8");
+  const order = [...html.matchAll(/<!--@INLINE (src\/[A-Za-z0-9_.-]+\.js)-->/g)].map((m) => m[1]);
+  assert.ok(order.indexOf("src/merge.js") < order.indexOf("src/steps.js"), "merge.js 要在 steps.js 之前");
+  const win = {}; win.window = win; const ctx = vm.createContext(win);
+  order.slice(0, order.indexOf("src/steps.js") + 1).forEach((f) => vm.runInContext(fs.readFileSync(path.join(__dirname, "..", f), "utf8"), ctx, { filename: f }));
+  const grab = (a, b) => { const i = html.indexOf(a) + a.length; return html.slice(i, html.indexOf(b, i)); };
+  const base = vm.runInNewContext("(" + grab("var BASE_CARDS = ", ";\nvar ALL_CARDS") + ")");
+  const extra = require("../src/bank_extra.js"), all = base.concat(extra);
+  ["q13", "p27", "p55"].forEach((id) => {
+    const card = all.find((c) => c.id === id); assert.ok(card, id);
+    const t = win.G5_STEPS.topicOf(card);
+    assert.ok(t, id + " 網頁版查得到小題型"); assert.equal(t, S.topicOf(card), id);
+  });
+});
