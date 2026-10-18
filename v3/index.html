@@ -1346,6 +1346,8 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
 
   /* ---------- 題號 → 小題型（2026-10-11 逐題核對；新匯入的題走 RULES，對不到就用觀念總覽圖） ---------- */
   var OF = {
+    q63: "sun-path", k59: "lt-lens", q35: "ss-noon", q32: "ss-window", q14: "ss-rise", k4: "ss-trop", p38: "pl-stem", p69: "rp-organ", p71: "rp-organ", p52: "us-econ", p79: "us-econ", p51: "us-econ", p63: "rp-fruit", p58: "pl-adapt",   // 10-18 Codex 審 b746bec 改回保留
+    h1: "ss-window", h2: "sh-dir", h3: "pl-leaf", h4: "rp-spread", h7: "ss-noon", h11: "pl-root",   // 10-18 第三批加題（和順 114 卷）
     k65: "sh-dir", q61: "sh-len", k25: "sh-len", q62: "sh-move", k27: "lt-straw", q5: "lt-bend", q73: "lt-color", q67: "ss-rise", p77: "pl-root", k62: "pl-flow",   // 10-18 第二輪自審改回保留的 10 題
     s1: "sun-path", s2: "sun-path", s5: "sun-path", k21: "sun-path", k49: "sun-path", q9: "sun-path", q29: "sun-path", s3: "sh-dir", s23: "sh-dir", k24: "sh-dir", k41: "sh-dir", k42: "sh-dir", k69: "sh-dir", q28: "sh-dir", q55: "sh-dir", k60: "sh-len", k70: "sh-len", q56: "sh-len", q57: "sh-len", q58: "sh-len",
     k26: "sh-move", k71: "sh-move", k47: "fair-test",
@@ -1362,8 +1364,8 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     k28: "rp-flower", k75: "rp-flower", k76: "rp-flower", p21: "rp-flower", p22: "rp-flower", p29: "rp-flower",
     k6: "rp-fruit", k7: "rp-fruit", k8: "rp-fruit", k56: "rp-fruit", k77: "rp-fruit", k78: "rp-fruit", p42: "rp-fruit", p74: "rp-fruit",
     k9: "rp-spread", k10: "rp-spread", k11: "rp-spread", k12: "rp-spread", k37: "rp-spread", k38: "rp-spread", p31: "rp-spread", p40: "rp-spread", p54: "rp-spread", s13: "rp-veg", s14: "rp-veg", s15: "rp-veg", s31: "rp-veg", k29: "rp-veg", k39: "rp-veg", k63: "rp-veg", p1: "rp-veg",
-    p47: "rp-organ", p70: "rp-organ", s16: "us-part", s17: "us-part", s18: "us-part", s33: "us-part", s34: "us-part",
-    k51: "us-econ", p12: "us-econ", p13: "us-econ", p14: "us-econ", p15: "us-econ", p78: "us-econ", p82: "us-econ", p83: "us-econ",
+    p70: "rp-organ", s16: "us-part", s17: "us-part", s18: "us-part", s33: "us-part", s34: "us-part",
+    k51: "us-econ", p12: "us-econ", p13: "us-econ", p15: "us-econ", p78: "us-econ", p82: "us-econ", p83: "us-econ",
     k35: "us-bio", p19: "us-bio", p80: "us-bio", s19: "ds-stay", s22: "ds-stay", s20: "ds-fast", s35: "ds-fast", s21: "ds-limit"
   };
   // 新匯入的題（設定頁貼 JSON）：同一個觀念裡，依題目與正確答案的關鍵字對小題型；對不到就回 null（用觀念總覽圖）
@@ -1550,6 +1552,8 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   var R5 = "題型參考：中正國小 112 學年度第一學期五年級自然第一次段考（學習方舟）";
   var R6 = "題型參考：臺北市實踐國小 112 學年度第一學期五年級自然期中評量（學習方舟）";
   var R7 = "題型參考：南投縣社寮國小 112 學年度第一學期五年級自然第一次成績考查（學習方舟）";
+  // 第三批（h1–h11，2026-10-18）：米蘭老師雲端資料夾「自然｜南一｜上｜期中」的 114 學年卷，逐題比對後只補站上沒有、也不能由既有題推得的題型
+  var M1 = "題型參考：臺南市和順國小 114 學年度第一學期五年級自然第一次評量（米蘭老師雲端資料夾）";
   function anqin(page) { return /^改寫自安親班複習卷/.test(page); }
   function tf(id, concept, statement, isTrue, why, page) {
     return { id: id, concept: concept, type: "choice", q: "是非題：「" + statement + "」", opts: ["對", "錯"], a: isTrue ? 0 : 1, why: why, page: page, set: anqin(page) ? "anqin" : undefined };
@@ -1787,7 +1791,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     ch("p67", "2-2", "芒果的果實，是由芒果花的哪個構造發育而成的？", ["花藥", "子房", "胚珠", "柱頭"], 1, "果實是子房發育成的；胚珠發育成種子。", P),
     ch("p68", "2-1", "植物進行光合作用的目的是什麼？", ["照亮周圍", "製造需要的養分", "減少空氣汙染", "增加土裡的水分"], 1, "光合作用是植物用陽光製造養分。", P),
     ch("p69", "2-2", "下列哪一個通常「不是」營養器官？", ["根", "莖", "葉", "花"], 3, "根、莖、葉是營養器官；花是繁殖器官。", P),
-    ch("p70", "2-2", "下列哪一組都是植物的繁殖器官？", ["根、莖、葉", "花、果實、種子", "只有花", "只有根"], 1, "花、果實、種子是繁殖器官。", P),
+    ch("p70", "2-2", "下列哪一組，完整列出了植物的繁殖器官？", ["根、莖、葉", "花、果實、種子", "只有花", "只有根"], 1, "花、果實、種子是繁殖器官。", P),
     ch("p71", "2-2", "下列哪一項通常「不是」營養器官（根、莖、葉）的功能？", ["吸收水分", "運輸水分", "製造養分", "繁衍後代"], 3, "繁衍後代主要是花、果實、種子（繁殖器官）的工作。", P),
     ch("p72", "2-1", "哪一種植物有「走莖」，走莖前端可以長出新的小苗？", ["榕樹", "樟樹", "吊蘭", "石蓮"], 2, "吊蘭的走莖伸出去，前端會長出小吊蘭。", P),
     ch("p73", "2-1", "含羞草的葉子有什麼特色？", ["像瓶子，裡面有蜜露吸引昆蟲", "像針一樣，可以減少水分散失", "受到刺激時葉片會閉合、葉柄會下垂", "葉子上有很多會分泌黏液的細毛"], 2, "含羞草被碰到，葉片合起來、葉柄垂下。", P),
@@ -1801,7 +1805,19 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     ch("p81", "2-3", "下列哪一樣東西，是模仿大花咸豐草果實的倒鉤刺做的？", ["橡皮擦", "魔鬼氈", "雙面膠", "釘書機"], 1, "魔鬼氈模仿倒鉤刺。", P),
     ch("p82", "2-3", "經濟植物通常「不」具有哪一種特性？", ["生長快速", "無法人工栽培", "受到人們喜愛", "能增加收入"], 1, "經濟植物大多可以人工栽培。", P),
     ch("p83", "2-3", "蘭花、茶葉、芒果、鳳梨釋迦，哪些是臺灣外銷到世界各地的商品？", ["只有蘭花、茶葉", "只有芒果、鳳梨釋迦", "只有蘭花、茶葉、芒果", "四種都是"], 3, "這四種都是臺灣外銷的農產品。", P),
-    ch("p84", "2-3", "發明魔鬼氈的人，主要是觀察大花咸豐草的哪個構造得到靈感？", ["葉", "花", "果實", "根"], 2, "靈感來自果實上的倒鉤刺。", P)
+    ch("p84", "2-3", "發明魔鬼氈的人，主要是觀察大花咸豐草的哪個構造得到靈感？", ["葉", "花", "果實", "根"], 2, "靈感來自果實上的倒鉤刺。", P),
+    ch("h1", "1-3", "住在北回歸線經過的地方，哪一天的下午 4 點，陽光最容易從朝南的窗戶照進屋裡？", ["春分", "夏至", "秋分", "冬至"], 3,
+       "冬至前後，太陽整天都走在偏南的天空（從東南升起、西南落下），下午的陽光從南邊斜射進來；夏至下午太陽在西北方，照不進朝南的窗。", M1),
+    ch("h2", "1-1", "籃球架的影子在東北方。同一時間，小明從球場南邊跑到北邊，他的影子會在哪一方？", ["一直在東北方", "一直在西南方", "從北方慢慢移到南方", "無法判斷"], 0,
+       "影子的方向只看太陽在哪裡，和人站在哪裡、往哪裡跑無關。同一時間太陽沒動，所以小明的影子和籃球架一樣在東北方。", M1),
+    ch("h3", "2-1", "關於植物的光合作用，哪一句是錯的？", ["葉子照到陽光，會進行光合作用", "水是光合作用的原料之一", "光合作用會產生二氧化碳", "光合作用產生的氧氣，可以供其他生物呼吸"], 2,
+       "光合作用是用水和二氧化碳，在陽光下做出養分和氧氣；二氧化碳是原料，不是產生出來的。", M1),
+    ch("h4", "2-2", "榕樹的果實小小的、熟了以後鳥很愛吃，鳥把種子帶到別的地方。榕樹的種子主要靠什麼傳播？", ["風", "水", "動物", "彈力"], 2,
+       "鳥吃了果實，種子跟著鳥飛到別處排出來，是靠動物傳播。", M1),
+    ch("h7", "1-3", "從 9 月到 12 月，每天下午 4 點測量太陽的高度角，會有什麼變化？", ["漸漸變大", "漸漸變小", "都一樣", "先變大再變小"], 1,
+       "從秋分到冬至，太陽在天空中的位置一天比一天低，同一時間測到的高度角就漸漸變小。", M1),
+    ch("h11", "2-1", "榕樹的支柱根，通常「沒有」哪一種功能？", ["撐住龐大的樹幹和枝葉", "吸收空氣中的水分", "讓樹站得更穩", "向四周擴展，長成一大片樹林"], 1,
+       "吸收空氣中水分的是還懸在空中的氣生根；氣生根伸進土裡、長得像樹幹之後叫支柱根，主要用來支撐和穩固。", M1)
   ];
   cards.forEach(function (c) { if (c.set === undefined) delete c.set; });
   if (typeof module !== "undefined" && module.exports) module.exports = cards; else root.G5_EXTRA_CARDS = cards;
@@ -1841,8 +1857,8 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     // ---------- 1-2 光的現象 ----------
     q18: { keep: ["s7"], why: "都考水中的吸管（筷子）像折斷是折射" },
     q20: { keep: ["s7"], why: "q20 是 s7 反過來說的是非題（不是反射）" },
-    q45: { keep: ["k23"], why: "q5 的正確答案已包含「在交界處偏折」（10-18 原代表題 q5 也被併，改由 k23 代表）" },
-    q46: { keep: ["k23"], why: "q5 的正確答案已包含「會偏折」（10-18 原代表題 q5 也被併，改由 k23 代表）" },
+    q45: { keep: ["q5"], why: "q5 的正確答案已包含「在交界處偏折」（10-18 Codex 審 b746bec：k23 沒考偏折發生在交界，改回原代表題 q5）" },
+    q46: { keep: ["q5"], why: "q5 的正確答案已包含「會偏折」（10-18 Codex 審 b746bec：改回原代表題 q5）" },
     q17: { keep: ["k23"], why: "都考光斜斜從水進入空氣會偏折" },
     q21: { keep: ["q1"], why: "q21 是 q1 反過來說（腿變長是錯的＝腳看起來變短）" },
     q38: { keep: ["q1", "k40"], why: "游泳池換成溪水，答案和道理一樣（10-18 原代表題 q2 也被併，改由 q1、k40 代表）" },
@@ -1858,7 +1874,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     p25: { keep: ["s30"], why: "都考水分從葉子散失（蒸散作用）" },
     p32: { keep: ["p57"], why: "同一個夾鏈袋實驗，問法不同" },
     p9:  { keep: ["k16"], why: "p9 是 k16 反過來說的是非題（針狀葉減少水分散失）" },
-    p8:  { keep: ["k61"], why: "都考捕蠅草的葉子會誘捕昆蟲（10-18 原代表題 p58 也被併，改由 k61 代表）" },
+    p8:  { keep: ["p58"], why: "都考捕蠅草的葉子會誘捕昆蟲（10-18 Codex 審 b746bec：k61 沒考「葉像夾子」，改回原代表題 p58）" },
     p4:  { keep: ["p73"], why: "都考含羞草受刺激葉片閉合、葉柄下垂" },
     k31: { keep: ["p11"], why: "都考絲瓜的莖柔軟、要攀附" },
     p48: { keep: ["p10"], why: "都考銀葉樹的板根像三角形翅膀、增加抓地面積" },
@@ -1867,7 +1883,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     p67: { keep: ["k6"], why: "番茄換成芒果，答案一樣是子房" },
     p34: { keep: ["k6", "k7"], why: "「子房→果實、胚珠→種子」就是 k6 加 k7" },
     p30: { keep: ["k7"], why: "都考胚珠發育成種子" },
-    p41: { keep: ["k7"], why: "都考授粉、受精以後胚珠發育成種子（10-18 原代表題 p63 也被併，改由 k7 代表）" },
+    p41: { keep: ["p63"], why: "都考授粉、受精以後胚珠發育成種子（10-18 Codex 審 b746bec：k7 沒考「授粉後還要受精」，改回原代表題 p63）" },
     p20: { keep: ["k7"], why: "p20 是 k7 反過來說的是非題（不是花瓣）" },
     p45: { keep: ["k10"], why: "都考蒲公英靠風散播" },
     p44: { keep: ["k11"], why: "都考非洲鳳仙花靠彈力散播" },
@@ -1895,52 +1911,40 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     k52: { keep: ["k24", "s1"], why: "影子在西⇒太陽在東（k24）⇒早上（s1 東升西落）" },
     q24: { keep: ["q58", "k60"], why: "一天中影子先變短再變長、中午最短（方法題留 q58、k60）：12 點比 3 點短" },
     q25: { keep: ["q58", "k60"], why: "一天中影子先變短再變長、中午最短（方法題留 q58、k60）：10 點比 12 點長" },
-    q63: { keep: ["s2"], why: "s2 知道太陽中午前後最高，就知道高度角愈來愈大是在中午以前" },
     q11: { keep: ["k26"], why: "k26 知道竿影一天中由西向東移動，就知道竿影方位會改變" },
     q44: { keep: ["s7"], why: "s7 的題目就寫著斜插進水裡的筷子看起來像折斷" },
     q2: { keep: ["q1", "k40"], why: "水裡的東西因折射看起來變淺、變高（方法題留 q1、k40）：池水看起來比實際淺" },
     q3: { keep: ["k40"], why: "k40 正解就是「光的折射讓它看起來變高」，看不準水深是折射不是反射" },
     k30: { keep: ["k23"], why: "k23 的錯誤選項就是「光垂直照進水面」，答對就知道垂直射入不偏折" },
     k45: { keep: ["s7", "k23"], why: "s7 知道這叫折射、k23 知道斜斜穿過交界會偏折，就知道不是反射" },
-    k59: { keep: ["k34"], why: "k34 要知道放大鏡能看到放大正立、縮小倒立、放大倒立，就知道紙板上可能出現倒立的影像" },
     q43: { keep: ["k34"], why: "k34 知道放大鏡和物體距離不同，影像就不同" },
     q39: { keep: ["q7"], why: "q7 的選項有「背對陽光看瀑布濺起的水花」，答對就知道沒下雨也看得到彩虹" },
     k48: { keep: ["s39"], why: "s39 知道冬至太陽直射南回歸線" },
     s42: { keep: ["s41"], why: "s41 知道夏至中午太陽最高、影子最短，就知道冬至中午影子比較長" },
     q30: { keep: ["s41", "q34"], why: "中午太陽夏至最高、冬至最低（方法題留 s41、q34）：夏至中午竿影比春分短" },
     q33: { keep: ["s41", "q34"], why: "q34 知道夏至最大、冬至最小，春分在中間，所以春分比冬至大" },
-    q35: { keep: ["s41", "q34"], why: "q34 知道夏至最大，從春分到夏至就漸漸變大" },
     q48: { keep: ["q34", "s38"], why: "q34 知道夏至中午高度角最大，夏至約 6 月 21 日（s38）" },
     q16: { keep: ["q34"], why: "q34 知道中午高度角夏至最大、冬至最小，就知道中午太陽位置隨季節不同" },
-    q32: { keep: ["k57"], why: "k57 知道冬天朝南的窗戶比較容易照到陽光，就知道不同季節照進教室的陽光不一樣多" },
     k50: { keep: ["s43"], why: "s43 知道夏天太陽從東偏北升起，就知道夏至日出不在東南方" },
     k53: { keep: ["k5"], why: "k5 知道冬天太陽從東偏南升起" },
     q65: { keep: ["q37"], why: "q65 是 q37 的一部分：春分從正東方升起" },
     q15: { keep: ["q37"], why: "q37 知道春分從正東方升起，就知道不是只有冬至" },
-    q14: { keep: ["q37", "s43"], why: "春分從正東升（q37）、夏天從東偏北升（s43），從春分到夏至日出位置就往北移" },
     q50: { keep: ["q52", "q69", "q37", "q72"], why: "季節的太陽方位加上影子在相反方向（方法題留 q52、q69）：秋分日出在正東，竿影朝正西" },
-    k4: { keep: ["k3"], why: "k3 知道只有北回歸線上或以南才看得到立竿不見影，臺北在北回歸線以北" },
     p23: { keep: ["k54"], why: "k54 知道水是根吸收的，不是葉" },
     p26: { keep: ["k54"], why: "k54 知道水是莖輸送的，不是葉" },
     p75: { keep: ["s28", "s30"], why: "s28 知道葉製造養分、s30 知道葉會蒸散" },
     p28: { keep: ["p57", "s30"], why: "p57 知道袋子裡出現小水珠、s30 知道那是葉子散失水分（蒸散），不是吸收" },
     k67: { keep: ["p11"], why: "p11 的選項有榕樹，答對（絲瓜）就知道榕樹的莖不是柔軟要攀附的" },
-    p38: { keep: ["p6"], why: "p6 知道馬鈴薯是短而膨大的塊莖，不是柔軟纏繞的莖" },
     p36: { keep: ["p7"], why: "p7 知道榕樹有氣生根，就知道不是所有根都長在土裡" },
-    p58: { keep: ["k61"], why: "k61 的題目就寫著捕蠅草的葉子會捕捉小昆蟲" },
     p39: { keep: ["k16"], why: "k16 知道仙人掌的葉長成刺是為了適應乾燥，就知道不同環境的根莖葉不一樣" },
     s32: { keep: ["s13"], why: "s13 知道落地生根不用種子也能繁殖" },
-    p63: { keep: ["k7"], why: "和 k7 是同一題：胚珠發育成種子" },
-    p69: { keep: ["p70"], why: "p70 知道花、果實、種子是繁殖器官，所以花不是營養器官" },
-    p71: { keep: ["p70"], why: "p70 知道繁殖是花、果實、種子的事，所以繁衍後代不是根莖葉的功能" },
     p64: { keep: ["k10"], why: "k10 的題目就寫著蒲公英果實有像小傘的白毛" },
     p43: { keep: ["k9", "k11"], why: "k9 靠動物、k11 靠彈力，就知道不是只靠風" },
     p16: { keep: ["p12"], why: "p12 知道鳳梨釋迦是給人食用的經濟植物，所以不是只有觀賞的才算" },
-    p52: { keep: ["p82"], why: "p82 知道經濟植物能人工栽培，就知道不是不容易繁殖、看不到" },
-    p79: { keep: ["p15"], why: "p15 知道品種改良是讓經濟植物更有價值，就知道不會是為了增加栽培難度" },
-    p51: { keep: ["p83"], why: "p83 知道外銷的是蘭花、茶葉、芒果、鳳梨釋迦，不是小麥" },
     p81: { keep: ["p80"], why: "p81 是 p80 反過來問：魔鬼氈參考大花咸豐草果實的倒鉤刺" },
-    p18: { keep: ["p80"], why: "p80 知道魔鬼氈是參考倒鉤刺做的，就知道它有小倒鉤" }
+    p18: { keep: ["p80"], why: "p80 知道魔鬼氈是參考倒鉤刺做的，就知道它有小倒鉤" },
+    p47: { keep: ["p70"], why: "p70 要選出「花、果實、種子」是繁殖器官，答對就知道它們都是植物的器官（Codex 審 b746bec 建議）" },
+    p14: { keep: ["p82"], why: "p82 的選項有「能增加收入」，答對就知道經濟植物能帶來收入（Codex 審 b746bec 建議）" }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = M; else root.G5_MERGED = M;
 })(typeof window !== "undefined" ? window : this);
@@ -2019,6 +2023,16 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   function enabledCards(state, bank) {
     return allCards(state, bank).filter(function (c) { return conceptOn(state, bank, c.concept); });
   }
+  // 2026-10-18 設計（Codex 設計者 L20261018061404-4e46e8 推薦方案③）：題庫＝完整目錄（查得到題）＋ bank.active（能不能排成新卡）。
+  // 停止出新的題不刪：她練過的照常複習到畢業；計畫、回合、補做都查得回原題；不搬成績、不複製有效日給保留題。
+  function isActive(bank, id) { return !bank.active || !!bank.active[id]; }
+  // 觀念進度、單元／觀念題數、直接闖關、小考複習的母體＝能出新卡的 ∪ 練過的 ∪ 最近一天計畫或回合裡還在用的。單純裁題不會讓「做過幾題」或植物階段倒退
+  function poolCards(state, bank) {
+    var ref = {}, last = Object.keys(state.days).sort().pop();
+    if (last) state.days[last].planIds.forEach(function (id) { ref[id] = 1; });
+    if (state.session) state.session.queue.concat(state.session.answered).forEach(function (id) { ref[id] = 1; });
+    return enabledCards(state, bank).filter(function (c) { return isActive(bank, c.id) || cardState(state, c.id).seen > 0 || ref[c.id]; });
+  }
   function cardState(state, id) { return state.cards[id] || { seen: 0, goodDays: [], blockedDay: null, due: null }; }
   function retired(cs) { return cs.goodDays.length >= 3; }
 
@@ -2036,7 +2050,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     cards.forEach(function (c) {
       var cs = cardState(state, c.id);
       if (cs.seen > 0) { if (!retired(cs) && cs.due && cs.due <= day) due.push(c.id); }
-      else fresh.push(c.id);
+      else if (isActive(bank, c.id)) fresh.push(c.id);   // 新卡只從 active 挑；練過的照到期日複習
     });
     var pick = {}; due.concat(fresh.slice(0, newQuota(day))).forEach(function (id) { pick[id] = 1; });
     return cards.filter(function (c) { return pick[c.id]; }).map(function (c) { return c.id; });   // 固定題庫順序
@@ -2054,7 +2068,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   function makeupCards(state, bank, today0, td, mk) {
     var cards = enabledCards(state, bank), n = newQuota(mk), hit = {};
     state.log.forEach(function (e) { if (e.d === td) hit[e.card] = 1; });
-    var fresh = cards.filter(function (c) { return cardState(state, c.id).seen === 0 && today0.planIds.indexOf(c.id) < 0 && !hit[c.id]; }).map(function (c) { return c.id; });
+    var fresh = cards.filter(function (c) { return cardState(state, c.id).seen === 0 && isActive(bank, c.id) && today0.planIds.indexOf(c.id) < 0 && !hit[c.id]; }).map(function (c) { return c.id; });
     if (fresh.length) return fresh.slice(0, n);
     var old = cards.filter(function (c) { var cs = cardState(state, c.id); return cs.seen > 0 && !retired(cs) && today0.planIds.indexOf(c.id) < 0 && !hit[c.id]; }).map(function (c) { return c.id; });
     return reviewOrder(state, bank, old).slice(0, n);
@@ -2128,16 +2142,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     // 只拿掉「還沒做」的：今天計畫裡未完成的、這一輪待答的。已做完的是歷史，照留——
     // 2026-10-18 題庫裁重複題後（Codex 審 g5-math-review 3751016）：原本連已完成的也刪，今天的「完成」倒退、補做被鎖，進行中的補做也失去已答紀錄而無法結算
     if (d) d.planIds = d.planIds.filter(function (id) { return ok(id) || d.doneIds.indexOf(id) >= 0; });
-    if (state.session) {
-      var se = state.session, before = se.queue.length;
-      se.queue = se.queue.filter(ok);
-      // 補做做到一半、剩下的題剛好全被拿掉：當場把已答的結算到那天（和做完補做一樣）。
-      // 不結算的話畫面沒有「繼續補做」也不會結算，再按補做還會清掉已答（Codex 審 g5-math-review 9af8526）
-      if (se.makeup && before && !se.queue.length && se.answered.length && se.day === day && se.makeup < day && !(state.days[se.makeup] && state.days[se.makeup].touched.length)) {
-        var got = claimable(state, day, se.answered);
-        if (got.length) { var cd = state.days[se.makeup] || (state.days[se.makeup] = blankDay()); cd.planIds = got.slice(); cd.doneIds = got.slice(); cd.touched = got.slice(); cd.madeUp = day; }
-      }
-    }
+    if (state.session) state.session.queue = state.session.queue.filter(ok);   // 只有完整目錄裡真的查不到的卡才拿掉（停止出新的題仍查得到，不會走到這裡）；補做一律由畫面明確送 makeupClaim 結算
   }
   // 跨午夜：日期與任務一起切換（矩陣 16、17）
   function syncSession(state, bank, day) {
@@ -2172,7 +2177,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
         if (action.kind === "makeup") {
           var mk = action.day;
           if (!isDay(mk) || mk >= today || (s.days[mk] && s.days[mk].touched.length)) return fail(state0, "MAKEUP_DAY");
-          if (!dayCompleted(day)) return fail(state0, "MAKEUP_TODAY_FIRST");
+          if (!dayCompleted(day) && remainingOf(day).length) return fail(state0, "MAKEUP_TODAY_FIRST");   // 只有今天還有沒做完的卡才擋；空計畫（沒有任務）不是完成，但也不擋補做
           var mq = makeupCards(s, bank, day, today, mk);
           if (!mq.length) {
             // 全部卡都畢業了＝以後也排不出補做卡；其餘（今天都練過）明天就有（Grok 審 1b0aebe：原本一律說「明天再來補」）
@@ -2436,6 +2441,9 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     Object.keys(bank.concepts).forEach(function (cid) { stages[cid] = stageOf(s, bank, cid); });
     return {
       today: today, planIds: d.planIds.slice(), doneIds: d.doneIds.slice(), remainingIds: remainingOf(d),
+      // 補做已答、剩下的題沒了、那天還沒結算 ⇒ 首頁給「結算」入口（設計 T06）
+      makeupPending: (s.session && s.session.makeup && s.session.day === today && !s.session.queue.length && s.session.answered.length &&
+        !(s.days[s.session.makeup] && s.days[s.session.makeup].touched.length)) ? s.session.makeup : null,
       completed: dayCompleted(d), session: s.session, stages: stages, day: d,
       M: { cardProgress: { done: d.doneIds.length, planned: d.planIds.length }, exitPending: exitPending, extraDone: d.extraDone },
       exitLater: exitLater,
@@ -2444,7 +2452,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   }
   // 植物階段完全由狀態派生（矩陣 26）：0 種子＝沒見過；1 發芽＝見過部分；2 長葉＝全部見過；3 開花＝出口題通過；4 結果＝出口通過且全部畢業
   function stageOf(s, bank, cid) {
-    var cards = enabledCards(s, bank).filter(function (c) { return c.concept === cid; });
+    var cards = poolCards(s, bank).filter(function (c) { return c.concept === cid; });
     if (!cards.length) return 0;
     var seen = cards.filter(function (c) { return cardState(s, c.id).seen > 0; }).length;
     var e = s.exits[cid], pass = !!e && e.status === "pass";
@@ -2718,7 +2726,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     dayKey: dayKey, isDay: isDay, addDays: addDays, diffDays: diffDays, weekday: weekday,
     validCard: validCard, blankState: blankState, reduce: reduce, view: view, endTitle: endTitle, exitList: exitList,
     checkState: checkState, decode: decode, migrateV1: migrateV1, createStore: createStore,
-    cardState: cardState, cardById: cardById, conceptOn: conceptOn, allCards: allCards, missedDays: missedDays,
+    cardState: cardState, cardById: cardById, isActive: isActive, poolCards: poolCards, conceptOn: conceptOn, allCards: allCards, missedDays: missedDays,
     dissolveNew: dissolveNew, dissolveAddSugar: dissolveAddSugar, dissolveAddSalt: dissolveAddSalt,
     dissolveStep: dissolveStep, dissolveRead: dissolveRead, shadowFromSun: shadowFromSun, dirName: dirName
   };
@@ -2909,7 +2917,8 @@ var ALL_CARDS = BASE_CARDS.concat(window.G5_EXTRA_CARDS||[]);   // 加題在 src
 // 重複題只留一題（src/merge.js）；被併掉的安親班題，由留下來的那一題代表進「安親班複習卷」
 var MERGED = window.G5_MERGED||{}, ANQIN_ALSO = {};
 ALL_CARDS.forEach(function(c){if(MERGED[c.id]&&c.set==="anqin")MERGED[c.id].keep.forEach(function(k){ANQIN_ALSO[k]=1;});});
-var BANK = {cards:ALL_CARDS.filter(function(c){return !MERGED[c.id];}), concepts:{}, figs:FIGS};
+var ACTIVE = {}; ALL_CARDS.forEach(function(c){if(!MERGED[c.id])ACTIVE[c.id]=1;});   // 2026-10-18：被併題不刪，只是不再排成新卡（設計方案③）
+var BANK = {cards:ALL_CARDS, active:ACTIVE, concepts:{}, figs:FIGS};
 CIDS.forEach(function(k){BANK.concepts[k]={unit:CONCEPTS[k].unit};});
 
 var ERRS = {concept:"還不懂這個觀念", reading:"看錯題目", slip:"知道但選錯了"};
@@ -3225,7 +3234,7 @@ function renderMap(){
   var box=$("#mapBox"); if(!box||!MAPX) return;
   var v=V(), t=MAPX.trail({cids:CIDS, stages:v.stages, on:conceptOn});
   // 每站做過幾題：和 stageOf 同一個母體（開放中的觀念的全部卡片，含補題區加的），seen>0＝做過
-  var prog={}; C.allCards(S(),BANK).forEach(function(c){if(!conceptOn(c.concept))return;var p=prog[c.concept]||(prog[c.concept]={n:0,seen:0});p.n++;if(C.cardState(S(),c.id).seen>0)p.seen++;});
+  var prog={}; C.poolCards(S(),BANK).forEach(function(c){if(!conceptOn(c.concept))return;var p=prog[c.concept]||(prog[c.concept]={n:0,seen:0});p.n++;if(C.cardState(S(),c.id).seen>0)p.seen++;});
   var key=JSON.stringify([t,prog]);
   // 內容沒變：不重畫；從別的畫面回來（地圖原本收著）時先拿掉動畫 class——display:none 再出現會讓 CSS 動畫重播
   if(key===mapKey&&box.firstChild){if(box.hidden)mapStill(box);showMap(true);return;}
@@ -3300,8 +3309,8 @@ function renderHome(){
   renderSide();
 }
 // 小考複習：把整個單元（或一個觀念）排成一輪；作答照規則記分、隔天照樣複習，不改今天的計畫
-function unitCards(unit){return C.allCards(S(),BANK).filter(function(c){return CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
-function setCards(unit){return C.allCards(S(),BANK).filter(function(c){return (c.set==="anqin"||ANQIN_ALSO[c.id])&&CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
+function unitCards(unit){return C.poolCards(S(),BANK).filter(function(c){return CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
+function setCards(unit){return C.poolCards(S(),BANK).filter(function(c){return (c.set==="anqin"||ANQIN_ALSO[c.id])&&CONCEPTS[c.concept].unit===unit&&conceptOn(c.concept);}).map(function(c){return c.id;});}
 // 2026-10-11 律師：「每次複習都要從頭來一遍嗎？」「當天時間夠，想要全部做完，可以嗎？」
 // ⇒ 一段 20 題（排序在 core.js reviewOrder：答錯過的→沒練過的→已經會的），做完可以馬上再練一段；也可以一次做完全部。
 var SEG=20;   // 一段 20 題：每題約 40–60 秒 [推估]，一段約 15–20 分鐘，是五年級一次坐得住的長度；不是總量上限，可以一直接著練
@@ -3380,8 +3389,9 @@ function renderCal(){
   var miss=C.missedDays(s,START,v.today), mkEl=$("#makeup");
   if(mkEl){
     var mkOn=v.session&&v.session.makeup&&v.session.queue.length&&!v.session.halted;   // 補做做到一半：只給「繼續補做」，不讓別的補做按鈕蓋掉進度
-    mkEl.innerHTML=!miss.length?'':mkOn?'<span class="small muted">'+md(v.session.makeup)+' 的補做還沒做完，按上面的「繼續補做」接著做。</span>':!v.completed?'<span class="small muted">前面有 '+miss.length+' 天沒練。今天的卡做完後，可以在這裡補做。</span>':
+    mkEl.innerHTML=!miss.length?'':mkOn?'<span class="small muted">'+md(v.session.makeup)+' 的補做還沒做完，按上面的「繼續補做」接著做。</span>':v.makeupPending?'<span class="small muted">'+md(v.makeupPending)+' 的補做已經做了 '+v.session.answered.length+' 題，還沒結算：</span><div class="row"><button class="btn ghost sm" type="button" id="goSettle">結算 '+md(v.makeupPending)+' 補做</button></div>':v.remainingIds.length?'<span class="small muted">前面有 '+miss.length+' 天沒練。今天的卡做完後，可以在這裡補做。</span>':
       '<span class="small muted">補做前面沒練的日子（每天補一份新卡）：</span><div class="row">'+miss.map(function(x){return '<button class="btn ghost sm" type="button" data-mk="'+x+'">補做 '+md(x)+'</button>';}).join("")+'</div>';
+    var gs=$("#goSettle"); if(gs) gs.onclick=function(){var v2=V();if(!v2.makeupPending){renderHome();return;}myMakeup=v2.makeupPending;renderEnd();};   // 設計 T06：補做剩下的題沒了也有結算入口；結算照舊由結束畫面送 makeupClaim
     mkEl.querySelectorAll("button[data-mk]").forEach(function(b){b.onclick=function(){lastReview=null;myMakeup=b.dataset.mk;var r=beginRound({type:"sessionStart",kind:"makeup",day:b.dataset.mk});if(!r.ok&&r.error)toast(MAKEUP_MSG[r.error]||"現在不能補做");};});
   }
   var n=0; k=v.today;
@@ -3392,7 +3402,7 @@ function renderCal(){
 function toast(t){var el=$("#main"),d=document.createElement("div");d.className="hint";d.textContent=t;el.prepend(d);setTimeout(function(){d.remove();},3500);}
 
 /* ---------- 觀念頁（概念入口） ---------- */
-function conceptCards(cid){return C.allCards(S(),BANK).filter(function(c){return c.concept===cid;}).map(function(c){return c.id;});}
+function conceptCards(cid){return C.poolCards(S(),BANK).filter(function(c){return c.concept===cid;}).map(function(c){return c.id;});}
 function renderConcept(cid){
   screen="concept"; leaveLab();
   var c=CONCEPTS[cid], v=V(), ex=EXPLAIN[cid][0];

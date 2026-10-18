@@ -46,7 +46,9 @@ test("每個觀念都有卡、都有出口題與兩種說法", () => {
 
 test("加題檔有接進 app（ALL_CARDS＝BASE_CARDS.concat(G5_EXTRA_CARDS)，BANK 濾掉重複題），且 build 有內嵌它", () => {
   assert.ok(/var ALL_CARDS = BASE_CARDS\.concat\(window\.G5_EXTRA_CARDS\|\|\[\]\)/.test(html));
-  assert.ok(/var BANK = \{cards:ALL_CARDS\.filter\(function\(c\)\{return !MERGED\[c\.id\];\}\)/.test(html));
+  // 2026-10-18 設計方案③：被併題不刪，BANK 放完整目錄、ACTIVE 標出能排成新卡的（扣掉 MERGED）
+  assert.ok(/var ACTIVE = \{\}; ALL_CARDS\.forEach\(function\(c\)\{if\(!MERGED\[c\.id\]\)ACTIVE\[c\.id\]=1;\}\);/.test(html));
+  assert.ok(/var BANK = \{cards:ALL_CARDS, active:ACTIVE,/.test(html));
   assert.ok(html.includes("<!--@INLINE src/merge.js-->"));
   assert.ok(html.includes("<!--@INLINE src/bank_extra.js-->"));
   assert.ok(extra.length >= 150, "加題只有 " + extra.length);
@@ -109,9 +111,9 @@ test("看圖題一律保留（看圖是另一種考法）", () => {
   assert.deepEqual(figDropped, []);
 });
 
-test("合併後題數：第一單元 77、第二單元 76、第三單元 5（10-11 第一輪 108／97／5；10-18 律師新判準第二輪再併 52 題）；安親班卷每一題都還練得到（本身留下或由留下的題代表）", () => {
+test("合併後題數：第一單元 86、第二單元 85、第三單元 5（10-11 第一輪 108／97／5；10-18 律師新判準第二輪再併 40 題、依和順 114 卷加 h 系列 6 題）；安親班卷每一題都還練得到（本身留下或由留下的題代表）", () => {
   const unit = (c) => c.concept[0];
-  assert.deepEqual(["1", "2", "3"].map((u) => kept.filter((c) => unit(c) === u).length), [77, 76, 5]);
+  assert.deepEqual(["1", "2", "3"].map((u) => kept.filter((c) => unit(c) === u).length), [86, 85, 5]);
   const anqinAll = cards.filter((c) => c.set === "anqin");
   anqinAll.forEach((c) => {
     if (!merged[c.id]) return;

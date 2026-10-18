@@ -816,6 +816,8 @@
 
   /* ---------- 題號 → 小題型（2026-10-11 逐題核對；新匯入的題走 RULES，對不到就用觀念總覽圖） ---------- */
   var OF = {
+    q63: "sun-path", k59: "lt-lens", q35: "ss-noon", q32: "ss-window", q14: "ss-rise", k4: "ss-trop", p38: "pl-stem", p69: "rp-organ", p71: "rp-organ", p52: "us-econ", p79: "us-econ", p51: "us-econ", p63: "rp-fruit", p58: "pl-adapt",   // 10-18 Codex 審 b746bec 改回保留
+    h1: "ss-window", h2: "sh-dir", h3: "pl-leaf", h4: "rp-spread", h7: "ss-noon", h11: "pl-root",   // 10-18 第三批加題（和順 114 卷）
     k65: "sh-dir", q61: "sh-len", k25: "sh-len", q62: "sh-move", k27: "lt-straw", q5: "lt-bend", q73: "lt-color", q67: "ss-rise", p77: "pl-root", k62: "pl-flow",   // 10-18 第二輪自審改回保留的 10 題
     s1: "sun-path", s2: "sun-path", s5: "sun-path", k21: "sun-path", k49: "sun-path", q9: "sun-path", q29: "sun-path", s3: "sh-dir", s23: "sh-dir", k24: "sh-dir", k41: "sh-dir", k42: "sh-dir", k69: "sh-dir", q28: "sh-dir", q55: "sh-dir", k60: "sh-len", k70: "sh-len", q56: "sh-len", q57: "sh-len", q58: "sh-len",
     k26: "sh-move", k71: "sh-move", k47: "fair-test",
@@ -832,8 +834,8 @@
     k28: "rp-flower", k75: "rp-flower", k76: "rp-flower", p21: "rp-flower", p22: "rp-flower", p29: "rp-flower",
     k6: "rp-fruit", k7: "rp-fruit", k8: "rp-fruit", k56: "rp-fruit", k77: "rp-fruit", k78: "rp-fruit", p42: "rp-fruit", p74: "rp-fruit",
     k9: "rp-spread", k10: "rp-spread", k11: "rp-spread", k12: "rp-spread", k37: "rp-spread", k38: "rp-spread", p31: "rp-spread", p40: "rp-spread", p54: "rp-spread", s13: "rp-veg", s14: "rp-veg", s15: "rp-veg", s31: "rp-veg", k29: "rp-veg", k39: "rp-veg", k63: "rp-veg", p1: "rp-veg",
-    p47: "rp-organ", p70: "rp-organ", s16: "us-part", s17: "us-part", s18: "us-part", s33: "us-part", s34: "us-part",
-    k51: "us-econ", p12: "us-econ", p13: "us-econ", p14: "us-econ", p15: "us-econ", p78: "us-econ", p82: "us-econ", p83: "us-econ",
+    p70: "rp-organ", s16: "us-part", s17: "us-part", s18: "us-part", s33: "us-part", s34: "us-part",
+    k51: "us-econ", p12: "us-econ", p13: "us-econ", p15: "us-econ", p78: "us-econ", p82: "us-econ", p83: "us-econ",
     k35: "us-bio", p19: "us-bio", p80: "us-bio", s19: "ds-stay", s22: "ds-stay", s20: "ds-fast", s35: "ds-fast", s21: "ds-limit"
   };
   // 新匯入的題（設定頁貼 JSON）：同一個觀念裡，依題目與正確答案的關鍵字對小題型；對不到就回 null（用觀念總覽圖）
