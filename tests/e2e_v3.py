@@ -452,12 +452,13 @@ def flow_review_segments(browser):
         else:
             break
     main = page.inner_text("#main")
-    check("一段做完：結束畫面有「再練一段」，並說還有幾題沒練過", "再練一段" in main and "還有" in main and "題沒練過" in main, main[:300])
+    check("一段做完：結束畫面有「再練一段」，並說還有幾題沒做過", "再練一段" in main and "還有" in main and "題沒做過" in main, main[:300])
     shot(page, "review_segment_end")
     page.locator("#goSeg").click()
     second = state(page)["session"]["queue"][:]
-    right = [e["card"] for e in state(page)["log"] if e["ok"]]
-    check("再練一段：沒有重複已經答對的題", not (set(second) & set(right)) and len(second) == 20, (len(set(second) & set(right)), len(second)))
+    done = [e["card"] for e in state(page)["log"]]
+    # 2026-10-19 律師：「為何已做過的題目還要做？」原本只驗「沒重複已答對的」，答錯的每段都重出也照過——改驗做過的一律不出
+    check("再練一段：沒有任何做過的題（答對、答錯都不重出）", not (set(second) & set(done)) and len(second) == 20, (len(set(second) & set(done)), len(second)))
     check("分段流程沒有 JS 錯誤", not errors, errors)
     ctx.close()
 
