@@ -139,13 +139,13 @@ def main():
             pg.evaluate("window.__si=Storage.prototype.setItem; Storage.prototype.setItem=function(){throw new Error('QuotaExceededError');}; 0")
             if other:
                 pg.locator(f'button[data-rv="{other[0]}"]').click()
-            stayed = pg.locator("#main .qhead").count() == 0
+            stayed = pg.locator("#main .qhead").count() == 0 and "這一輪還沒開始" in pg.inner_text("#main")   # 明示沒開成（Codex 設計者 C）
             pg.evaluate("Storage.prototype.setItem=window.__si; 0")
             pg.locator("#goOn").click()
             pg.wait_for_selector("#main .q")
             head = pg.locator("#main .qhead").first.inner_text()
             q = queue(pg, key)
-            check(f"{tag} ⑩ 開別的單元時存檔失敗：停在首頁；按「繼續」還是原本那一輪「全部再練一遍」", bool(other) and stayed and "全部再練一遍" in head
+            check(f"{tag} ⑩ 開別的單元時存檔失敗：停在首頁、說這一輪還沒開始；按「繼續」還是原本那一輪「全部再練一遍」", bool(other) and stayed and "全部再練一遍" in head
                   and q == again["s"]["session"]["queue"], (other[:1], stayed, head, q))
             check(f"{tag} ⑥ 沒有 JS 錯誤（存檔失敗）", not errs, errs)
             ctx.close()
