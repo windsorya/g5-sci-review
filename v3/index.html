@@ -3553,12 +3553,14 @@ function startReview(key,mode){
   if(mode!=="all") a.size=SEG;
   beginRound(a,function(){lastReview=key;});   // 存檔成功才記住是哪個單元：存失敗時「繼續」的還是原本那一輪（Codex 審 b6c9b5e F4）
 }
-var EMPTY_MSG={weak:"現在沒有要加強的題（今天練過的明天再練）。",again:"今天這裡的題目都練過了，明天再練。"};   // 依這一輪的種類說明（Codex 審 b6c9b5e F3）
+var EMPTY_MSG={weak:"現在沒有要加強的題（今天練過的明天再練）。",again:"今天沒有可以再練的題了（今天練過的明天再練）。"};
+// 只有「做過題數＝總題數」才能說每題都做過；可以出的新題 0 題可能是剩下的停止出新（Codex 審 c07244c F1）
+function doneAll(st){return st.seen>=st.total;}   // 依這一輪的種類說明（Codex 審 b6c9b5e F3）
 // 「沒做過的」沒題：每題都做過才說做過；還有沒做過但停止出新的題，就說沒有可以出的新題（Codex 設計者 C：不能因停出被排除就宣稱做過）
 function emptyMsg(a){if(a.pick==="weak"||a.pick==="again")return EMPTY_MSG[a.pick];var st=reviewStats(a.ids||[]);return st.seen>=st.total?"這裡的題目都做過了。":"這裡沒有可以出的新題了。";}
 function rvButtons(k,st){
   return (st.fresh?'<button class="btn ghost sm" type="button" data-rv="'+k+'">練一段 '+Math.min(SEG,st.fresh)+' 題</button>'+
-      (st.fresh>SEG?'<button class="btn ghost sm" type="button" data-rvall="'+k+'">沒做過的 '+st.fresh+' 題一次做完</button>':''):'<span class="small muted">每題都做過了</span>')+
+      (st.fresh>SEG?'<button class="btn ghost sm" type="button" data-rvall="'+k+'">沒做過的 '+st.fresh+' 題一次做完</button>':''):'<span class="small muted">'+(doneAll(st)?'每題都做過了':'沒有可以出的新題了')+'</span>')+
     (st.weakNow?'<button class="btn ghost sm" type="button" data-rvweak="'+k+'">練待加強的 '+Math.min(SEG,st.weakNow)+' 題</button>':st.weak?'<span class="small muted">待加強的今天都練過了，明天再練</span>':'')+
     (st.seen&&st.againNow?'<button class="btn ghost sm" type="button" data-rvagain="'+k+'">考前全部再練一遍</button>':'');
 }
@@ -3904,9 +3906,10 @@ function segMore(se){
   if(se.kind!=="review"||!lastReview) return '';
   var r=reviewSets()[lastReview]; if(!r) return '';
   var st=reviewStats(r.ids());
-  if(se.pick==="again") return '<div class="fb" style="justify-self:stretch;text-align:left;background:var(--sun-soft)"><strong>'+esc(r.name)+'：'+(st.againNow?'全部再練一遍，今天還有 '+st.againNow+' 題沒練到':'今天每題都練過了')+'</strong>'+
+  if(se.pick==="again") return '<div class="fb" style="justify-self:stretch;text-align:left;background:var(--sun-soft)"><strong>'+esc(r.name)+'：'+(st.againNow?'全部再練一遍，今天還有 '+st.againNow+' 題沒練到':'今天沒有可以再練的題了')+'</strong>'+
     (st.againNow?'<div class="row"><button class="btn" type="button" id="goSegAgain">再練一段 '+Math.min(SEG,st.againNow)+' 題</button></div>':'')+'</div>';
-  var left=st.fresh?'還有 '+st.fresh+' 題沒做過'+(st.weakNow?'、'+st.weakNow+' 題待加強':''):st.weakNow?'每題都做過了，還有 '+st.weakNow+' 題待加強':st.weak?'每題都做過了；待加強的今天練過，明天再練':'每題都做過，也都答對過了';
+  var head=doneAll(st)?'每題都做過了':'沒有可以出的新題了';
+  var left=st.fresh?'還有 '+st.fresh+' 題沒做過'+(st.weakNow?'、'+st.weakNow+' 題待加強':''):st.weakNow?head+'，還有 '+st.weakNow+' 題待加強':st.weak?head+'；待加強的今天練過，明天再練':doneAll(st)?'每題都做過，也都答對過了':head;
   return '<div class="fb" style="justify-self:stretch;text-align:left;background:var(--sun-soft)"><strong>'+esc(r.name)+'：'+left+'</strong>'+
     '<div class="row">'+(st.fresh?'<button class="btn" type="button" id="goSeg">再練一段 '+Math.min(SEG,st.fresh)+' 題</button>'+
     (st.fresh>SEG?'<button class="btn ghost" type="button" id="goSegAll">沒做過的一次做完</button>':''):'')+

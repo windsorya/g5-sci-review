@@ -1680,6 +1680,13 @@ test("C02 資格與計數：active 未做／停出未做／待加強／已學會
   assert.deepEqual([pick("fresh"), pick("weak"), pick("again")], [["a1"], ["a3"], ["a1", "a4", "a3"]]);
   const c = C.reviewCounts(s, b, ids.filter((id) => !!C.cardById(s, b, id)), D);
   assert.deepEqual([c.fresh, c.weakNow, c.againNow], [1, 1, 3]);
+  // C02b（Codex 審 c07244c F2）：27 題候選——三種計數都是 27（切段前），開一段才是 20
+  const many = Array.from({ length: 27 }, (_, i) => "m" + i), bm = { cards: many.map((id) => card(id)), concepts: CONCEPTS, figs: FIGS };
+  let sm = C.blankState();
+  many.forEach((id) => { sm = run(sm, bm, NOON("2026-10-19"), op("answer", { cardId: id, ok: false })); });   // 全部做過、待加強、今天沒練
+  const cm = C.reviewCounts(sm, bm, many, D), cf = C.reviewCounts(C.blankState(), bm, many, D);
+  assert.deepEqual([cf.fresh, cm.weakNow, cm.againNow], [27, 27, 27]);
+  assert.equal(run(sm, bm, NOON(D), op("sessionStart", { kind: "review", ids: many, pick: "weak", size: 20 })).session.queue.length, 20);
 });
 
 test("C03 空題：三種回合各自沒有合格題 → REVIEW_EMPTY，不建空回合、原回合不變、不自動換成別種", () => {
@@ -1704,7 +1711,8 @@ test("C04 舊→新：舊核心補救插入做過的題、回合沒有 pick → 
   const n = viaJSON(C, o, b);
   assert.deepEqual(C.view(n, env(b, NOON(D))).session.queue, ["s3"]);
   const t = run(n, b, NOON(D), op("tick"));
-  assert.deepEqual([t.session.queue, t.session.answered, t.cards.s1.seen, t.log.length], [["s3"], ["s2"], 1, o.log.length]);
+  assert.deepEqual([t.session.queue, t.session.answered, t.session.wrong], [["s3"], ["s2"], ["s2"]]);
+  assert.deepEqual([t.cards, t.log, t.days], [o.cards, o.log, o.days], "作答歷史整份不變（Codex 審 c07244c F2）");
 });
 
 test("C05 新→舊→新：新核心的 fresh 回合交給舊核心續接並補救插題，再交回 → pick 照用、做過的題排除；舊核心另開的回合（沒有 pick）新核心當 fresh", () => {
@@ -1733,7 +1741,8 @@ test("C06 標記不能豁免：同一份不合格候選標普通或 variation，
   assert.deepEqual(C.checkState(w, b), []);
   const wv = C.view(w, env(b, NOON(D))).session;
   assert.deepEqual([wv.queue, wv.kinds.a3], [["a3", "a2"], "variation"]);
-  assert.equal(C.reduce(w, op("answer", { cardId: "a3", ok: true }), env(b, NOON(D))).info.variation, true, "合格變式照 variation 計分");
+  const va = C.reduce(w, op("answer", { cardId: "a3", ok: true }), env(b, NOON(D)));
+  assert.deepEqual([va.info.variation, va.state.cards.a3.goodDays, va.state.log[va.state.log.length - 1].variation], [true, [], true], "合格變式照 variation 計分：答對不記有效日（Codex 審 c07244c F2）");
 });
 
 test("C07 整份替換（同步換進別台的存檔）後續接：照新讀入的作答歷史重算題集與計數", () => {
@@ -1756,6 +1765,19 @@ test("C08 fresh 補救：候選有做過、停出未做、active 未做，且指
   s = run(s, b, NOON(D), op("answer", { cardId: "a2", ok: false }));
   const r = cLab(C, s, b, "a2", "a1");
   assert.deepEqual([r.info.variation, r.state.session.queue], ["a5", ["a5"]]);
+  let t = C.blankState();   // 佇列裡沒有候選：只能從目錄挑，停出的 a3 排在 a4 前面也不能選（Codex 審 c07244c F2）
+  t = run(t, b, NOON("2026-10-19"), op("answer", { cardId: "a1", ok: true }));
+  t = run(t, b, NOON("2026-10-19"), op("answer", { cardId: "a5", ok: true }));
+  t = run(t, b, NOON(D), op("sessionStart", { kind: "review", ids: ["a2"] }));
+  t = run(t, b, NOON(D), op("answer", { cardId: "a2", ok: false }));
+  const r2 = cLab(C, t, b, "a2", "a3");
+  assert.deepEqual([r2.info.variation, r2.state.session.queue], ["a4", ["a4"]]);
+  let u = C.blankState();   // 同觀念全部做過或停出：不換題
+  ["a1", "a4", "a5"].forEach((id) => { u = run(u, b, NOON("2026-10-19"), op("answer", { cardId: id, ok: true })); });
+  u = run(u, b, NOON(D), op("sessionStart", { kind: "review", ids: ["a2"] }));
+  u = run(u, b, NOON(D), op("answer", { cardId: "a2", ok: false }));
+  const r3 = cLab(C, u, b, "a2");
+  assert.deepEqual([r3.info.variation, r3.state.session.queue], [undefined, []]);
 });
 
 test("C09 weak／again 補救：今天練過的一律不選；weak 不取已學會的；可用合格的未做變式，續接後不會自己消失", () => {
@@ -1815,8 +1837,8 @@ test("C12 沒有待存的失敗狀態、磁碟已被換成 S2 → 恢復後再�
   mem.raw[C.LS_KEY] = JSON.stringify(s2);
   mem.setWrite(false);
   const n0 = mem.attempts(), r = S.retry();
-  assert.deepEqual([r.ok, mem.attempts() - n0, S.get().saveStatus, S.get().state.cards.a3.seen], [true, 1, "ok", 1]);
-  assert.equal(mem.raw[C.LS_KEY], JSON.stringify(S.get().state));
+  assert.deepEqual([r.ok, mem.attempts() - n0, S.get().saveStatus], [true, 1, "ok"]);
+  assert.deepEqual([JSON.parse(mem.raw[C.LS_KEY]), S.get().state], [s2, s2], "寫進去的是整份 S2（Codex 審 c07244c F2）");
   assert.equal(S.get().state.session.queue.includes("b1"), false, "沒開成的回合不補開");
 });
 
@@ -1885,5 +1907,6 @@ test("C16 補做隔離：未結算、已有作答的補做（佇列含練過的�
   assert.equal(C.reduce(t, op("sessionStart", { kind: "review", ids: B12.cards.map((c) => c.id) }), env(B12, NOON(D))).error, "MAKEUP_IN_PROGRESS");
   const done = run(t, B12, NOON(D), op("makeupClaim", { answerDay: D, day: MK, ids: t.session.answered }));
   assert.deepEqual(done.days[MK].touched, a0);
-  assert.ok(C.reduce(done, op("sessionStart", { kind: "review", ids: B12.cards.map((c) => c.id) }), env(B12, NOON(D))).state.session);
+  const nx = C.reduce(done, op("sessionStart", { kind: "review", ids: B12.cards.map((c) => c.id) }), env(B12, NOON(D)));
+  assert.deepEqual([nx.error, nx.state.session.kind, nx.state.session.makeup, nx.state.session.pick], [undefined, "review", undefined, "fresh"], "結算後新回合真的開了（Codex 審 c07244c F2）");
 });
