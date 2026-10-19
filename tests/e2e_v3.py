@@ -701,8 +701,8 @@ def flow_makeup(browser, device=None, label="chromium"):
         if done:
             s["cards"]["s1"] = {"seen": 1, "goodDays": ["2026-10-14"], "blockedDay": None, "due": "2026-10-15"}
             s["log"] = [{"op": "x1", "d": "2026-10-14", "card": "s1", "c": "1-1", "ok": True, "hint": False, "unsure": False, "variation": False, "first": True}]
-        # 補做 2026-10-18 起預設關閉（縮範圍）；本段測的是補做功能本身 ⇒ 以 g5.makeupOn=1 打開
-        return f"localStorage.setItem('g5.makeupOn','1');if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', {json.dumps(json.dumps(s))});}}"
+        # 補做 2026-10-19 起預設開啟（律師要求修好並固化）：不設任何旗標
+        return f"if(!sessionStorage.getItem('seeded')){{sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', {json.dumps(json.dumps(s))});}}"
     ctx, page, errors = new_page(browser, "2026-10-14T20:00:00+08:00", device, init=seed(False))
     txt = page.inner_text("#makeup")
     check(f"{label} 補做1 今天還沒做完：只說前面 3 天沒練、做完今天可補，沒有補做按鈕", "3 天沒練" in txt and page.locator("#makeup button").count() == 0, txt)
