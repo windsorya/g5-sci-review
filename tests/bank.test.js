@@ -47,7 +47,10 @@ test("每個觀念都有卡、都有出口題與兩種說法", () => {
 test("加題檔有接進 app（ALL_CARDS＝BASE_CARDS.concat(G5_EXTRA_CARDS)，BANK 濾掉重複題），且 build 有內嵌它", () => {
   assert.ok(/var ALL_CARDS = BASE_CARDS\.concat\(window\.G5_EXTRA_CARDS\|\|\[\]\)/.test(html));
   // 2026-10-18 設計方案③：被併題不刪，BANK 放完整目錄、ACTIVE 標出能排成新卡的（扣掉 MERGED）
-  assert.ok(/var ACTIVE = \{\}; ALL_CARDS\.forEach\(function\(c\)\{if\(!MERGED\[c\.id\]\)ACTIVE\[c\.id\]=1;\}\);/.test(html));
+  // 2026-10-19 範圍稽核：再扣掉 src/retired.js 的停出題
+  assert.ok(/var RETIRED = window\.G5_RETIRED\|\|\{\};/.test(html));
+  assert.ok(/var ACTIVE = \{\}; ALL_CARDS\.forEach\(function\(c\)\{if\(!MERGED\[c\.id\]&&!RETIRED\[c\.id\]\)ACTIVE\[c\.id\]=1;\}\);/.test(html));
+  assert.ok(html.includes("<!--@INLINE src/retired.js-->"));
   assert.ok(/var BANK = \{cards:ALL_CARDS, active:ACTIVE,/.test(html));
   assert.ok(html.includes("<!--@INLINE src/merge.js-->"));
   assert.ok(html.includes("<!--@INLINE src/bank_extra.js-->"));

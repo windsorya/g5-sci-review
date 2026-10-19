@@ -310,6 +310,7 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 <!--@INLINE src/tones.js-->
 <!--@INLINE src/figs.js-->
 <!--@INLINE src/merge.js-->   <!-- 要在 steps.js 之前：steps.js 載入當下就讀 G5_MERGED（Codex 審 a7aa191：順序反了，被併題的逐格圖解在網頁上全失效） -->
+<!--@INLINE src/retired.js-->   <!-- 範圍稽核停出名單（2026-10-19）：ACTIVE 扣掉，練過的照常複習 -->
 <!--@INLINE src/steps.js-->
 <!--@INLINE src/videos.js-->
 <!--@INLINE src/bank_extra.js-->
@@ -400,7 +401,8 @@ var ALL_CARDS = BASE_CARDS.concat(window.G5_EXTRA_CARDS||[]);   // 加題在 src
 // 重複題只留一題（src/merge.js）；被併掉的安親班題，由留下來的那一題代表進「安親班複習卷」
 var MERGED = window.G5_MERGED||{}, ANQIN_ALSO = {};
 ALL_CARDS.forEach(function(c){if(MERGED[c.id]&&c.set==="anqin")MERGED[c.id].keep.forEach(function(k){ANQIN_ALSO[k]=1;});});
-var ACTIVE = {}; ALL_CARDS.forEach(function(c){if(!MERGED[c.id])ACTIVE[c.id]=1;});   // 2026-10-18：被併題不刪，只是不再排成新卡（設計方案③）
+var RETIRED = window.G5_RETIRED||{};   // 2026-10-19 範圍稽核：超出學校教學重點的題停出（src/retired.js，每題附理由）
+var ACTIVE = {}; ALL_CARDS.forEach(function(c){if(!MERGED[c.id]&&!RETIRED[c.id])ACTIVE[c.id]=1;});   // 2026-10-18：被併題不刪，只是不再排成新卡（設計方案③）；10-19 停出題同理
 var BANK = {cards:ALL_CARDS, active:ACTIVE, concepts:{}, figs:FIGS};
 CIDS.forEach(function(k){BANK.concepts[k]={unit:CONCEPTS[k].unit};});
 

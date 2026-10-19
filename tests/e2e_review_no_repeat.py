@@ -39,11 +39,11 @@ def seed_state(all_done=False):
     if banks:
         js = ("const C=require('./src/core.js'),B=require('./src/" + banks[0].name + "');"
               "console.log(JSON.stringify(" + SEED_JS + "(C,B.CARDS,B.CONCEPTS," + arg + ")));")
-    else:   # 自然站：題庫＝app.html 的 BASE_CARDS＋src/bank_extra.js，扣掉 src/merge.js 合併掉的（同 tests/e2e_map_rule.py）
+    else:   # 自然站：題庫＝app.html 的 BASE_CARDS＋src/bank_extra.js，扣掉 src/merge.js 合併掉的與 src/retired.js 停出的（同 tests/e2e_map_rule.py）
         js = ("const fs=require('fs'),vm=require('vm'),C=require('./src/core.js');const h=fs.readFileSync('src/app.html','utf8');"
               "const grab=(a,b)=>{const i=h.indexOf(a),j=h.indexOf(b,i);if(i<0||j<i)throw new Error('找不到 '+a);return h.slice(i+a.length,j);};"
               "const base=Array.from(vm.runInNewContext('('+grab('var BASE_CARDS = ',';\\nvar ALL_CARDS')+')'));"
-              "const M=require('./src/merge.js');const cards=base.concat(require('./src/bank_extra.js')).filter(c=>!M[c.id]);"
+              "const M=require('./src/merge.js'),R=require('./src/retired.js');const cards=base.concat(require('./src/bank_extra.js')).filter(c=>!M[c.id]&&!R[c.id]);"
               "const cons=vm.runInNewContext('('+grab('var CONCEPTS = ',';\\nvar CIDS')+')');"
               "console.log(JSON.stringify(" + SEED_JS + "(C,cards,cons," + arg + ")));")
     return json.loads(subprocess.check_output(["node", "-e", js], cwd=ROOT))
