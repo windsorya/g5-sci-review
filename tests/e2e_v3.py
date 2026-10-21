@@ -632,6 +632,72 @@ def flow_lab_after_external_clear(browser):
     ctx.close()
 
 
+LAB_BREAK = "window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function(){ throw new Error('QuotaExceededError'); }; 0"
+LAB_FIX = "Storage.prototype.setItem = window.__realSet; 0"
+LAB_LAST_RUN = """() => { const s = JSON.parse(localStorage.getItem('g5sci.v3') || 'null'); if (!s) return null;
+  const ids = Object.keys(s.labRuns || {}); const r = s.labRuns[ids[ids.length - 1]];
+  return r ? {id: ids[ids.length - 1], n: ids.length, tasksDone: r.tasksDone.slice().sort(), tasks: r.tasks} : null; }"""
+SH_SET = "v => { const r = document.querySelector('#shT'); r.value = v; r.dispatchEvent(new Event('input')); }"
+
+
+def open_shadow_wrong(page):   # 答錯後補救進來的影子實驗（完成鈕是「我看懂了，換一題確認」），先猜一個
+    btn(page, "只做 3 張").click()
+    btn(page, "東邊升起、西邊落下").click(); btn(page, "下一題").click()
+    btn(page, "清晨").click(); btn(page, "還不懂這個觀念").click()
+    btn(page, "做觀察任務，再換一題確認").click(); page.wait_for_selector("#labPredict button[data-g]")
+    page.locator("#labPredict button[data-g='0']").click(); page.wait_for_selector("#shT")
+
+
+def flow_lab_last_resume(browser):
+    """社會站 #1542 ①（e554ab6）三姊妹站同型（#2632）：影子實驗最後一個任務存檔失敗→恢復→切回分頁（visibilitychange 補存）
+    →再把拉桿拉到同一個時間。舊版切回分頁只重繪側欄，check() 見任務已記過就直接 return，任務與完成鈕停在存檔前，完成鈕一直停用。
+    應該：補存後完成鈕可按。"""
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00", init="Math.random = () => 0.99;")
+    open_shadow_wrong(page)
+    page.evaluate(SH_SET, "8"); page.evaluate(SH_SET, "12")
+    page.evaluate(LAB_BREAK); page.evaluate(SH_SET, "16")
+    had_retry = page.locator("#retrySave").count() >= 1
+    page.evaluate(LAB_FIX)
+    page.evaluate("() => document.dispatchEvent(new Event('visibilitychange'))")
+    back = {"完成鈕": page.locator("#labDone").is_enabled(), "打勾": page.locator("#labTask .ck.got").count()}   # 切回分頁當下就要照存檔重繪
+    page.evaluate(SH_SET, "16.2")   # 再拉到同一個時間：check() 見任務已記過，也要重繪
+    run = page.evaluate(LAB_LAST_RUN)
+    check("影子實驗最後一個任務存檔失敗→恢復→切回分頁補存：三個任務都記到、切回當下就打勾三個且完成鈕可按、提示列消失",
+          had_retry and run and run["tasksDone"] == [0, 1, 2] and back == {"完成鈕": True, "打勾": 3}
+          and page.locator("#retrySave").count() == 0 and page.locator("#labDone").is_enabled(),
+          {"先出現再存一次": had_retry, "run": run, "切回當下": back, "再存一次": page.locator("#retrySave").count(), "完成鈕": page.locator("#labDone").is_enabled()})
+    if page.locator("#labDone").is_enabled():
+        page.locator("#labDone").click()
+    check("影子實驗補存後按「我看懂了，換一題確認」：回到練習換一題", page.locator("#main .opt").count() >= 2 and page.locator("#labNav").count() == 0, page.inner_text("#main")[:120])
+    check("影子實驗最後一個任務補存流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
+def flow_lab_retry_resume(browser):
+    """社會站 #1542 ②（e554ab6）三姊妹站同型（#2632）：影子實驗第二個任務存檔失敗→恢復→按「再存一次」。
+    舊版存成功後 route() 把 screen="lab" 導回首頁、lab=null，只能重開一輪。應該：留在原本那一輪，同一個 runId 做到完。"""
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00", init="Math.random = () => 0.99;")
+    open_shadow_wrong(page)
+    page.evaluate(SH_SET, "8")
+    page.evaluate(LAB_BREAK); page.evaluate(SH_SET, "12")
+    before = page.evaluate(LAB_LAST_RUN)
+    page.evaluate(LAB_FIX); page.locator("#retrySave").first.click()
+    page.wait_for_timeout(300)
+    after = page.evaluate(LAB_LAST_RUN)
+    still_lab = page.locator("#labNav").count() == 1 and page.locator("#shT").count() == 1
+    check("影子實驗「再存一次」成功後留在原本那一輪：兩個任務都記到、任務清單打勾、提示列消失",
+          still_lab and after and after["tasksDone"] == [0, 1] and page.locator("#labTask .ck.got").count() == 2 and page.locator("#retrySave").count() == 0,
+          {"還在實驗頁": still_lab, "打勾": page.locator("#labTask .ck.got").count(), "run": after, "main": page.inner_text("#main")[:80]})
+    if still_lab:
+        page.evaluate(SH_SET, "16")
+    end = page.evaluate(LAB_LAST_RUN)
+    check("影子實驗「再存一次」後續接同一輪（同一個 runId、沒有多開一輪）做到完、完成鈕可按",
+          bool(still_lab and end and before and end["id"] == before["id"] and end["n"] == before["n"]
+               and end["tasksDone"] == [0, 1, 2] and page.locator("#labDone").is_enabled()), {"before": before, "end": end})
+    check("影子實驗「再存一次」續接流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
 def flow_season(browser, device=None):
     ctx, page, errors = new_page(browser, "2026-10-11T20:40:00+08:00", device)
     page.locator(".ccard[data-cid='1-3']").click()
@@ -1186,6 +1252,8 @@ def main():
         flow_save_fail_then_tick(ch)
         flow_redo_after_external_clear(ch)
         flow_lab_after_external_clear(ch)
+        flow_lab_last_resume(ch)
+        flow_lab_retry_resume(ch)
         flow_review_after_plan_done(ch)
         flow_makeup(ch)
         flow_makeup(wk, ipad, "webkit_ipad")
