@@ -3820,6 +3820,7 @@ function retrySave(){
 // 只重繪預測、任務與完成鈕（依存檔裡的 tasksDone）；實驗本身（拉桿、動畫）照原樣。回傳 true＝已在原畫面重繪；false＝交給 route()
 function labRefresh(){
   if(screen!=="lab"||!lab||lab.gone||!run()) return false;
+  if(run().phase==="complete"){labFinish();return true;}   // 補存進去的是完成：照完成鈕成功時的去向
   drawPredict(); drawTasks(); drawNav();
   return true;
 }
@@ -4053,16 +4054,23 @@ function drawNav(){
   var rr=run(), all=rr.prediction!==null&&rr.tasksDone.length>=rr.tasks, nav=$("#labNav");
   if(lab.ctx.from==="wrong"){
     nav.innerHTML='<button class="btn" type="button" id="labDone"'+(all?'':' disabled')+'>'+(all?'我看懂了，換一題確認':(rr.prediction===null?'先猜猜看，再完成任務':'完成任務後就能換一題確認'))+'</button><button class="btn ghost sm" type="button" id="labSkip">先回到練習</button>';
-    on("#labDone",function(){stopAnim();var r=act({type:"labComplete",runId:lab.runId});if(labGone(r))return;if(!r.ok&&!r.dup)return;lab=null;screen="practice";route();});
+    on("#labDone",function(){stopAnim();var r=act({type:"labComplete",runId:lab.runId});if(labGone(r))return;if(!r.ok&&!r.dup)return;labFinish();});
     on("#labSkip",function(){stopAnim();lab=null;screen="practice";route();});
   }else{
     nav.innerHTML='<button class="btn" type="button" id="labDone"'+(all?'':' disabled')+'>'+(all?'完成實驗':'完成任務後按這裡')+'</button><button class="btn ghost sm" type="button" id="labHome">回首頁</button>';
-    on("#labDone",function(){stopAnim();var r=act({type:"labComplete",runId:lab.runId});if(labGone(r))return;if(!r.ok&&!r.dup)return;lab=null;
-      $("#main").innerHTML='<div class="done"><b class="t">實驗完成</b><p class="muted" style="margin:0">做完實驗，再回去練卡片或考考爸媽。</p><div class="row" style="justify-content:center"><button class="btn ghost" type="button" id="back3">回首頁</button></div></div>';on("#back3",renderHome);renderSide();});
+    on("#labDone",function(){stopAnim();var r=act({type:"labComplete",runId:lab.runId});if(labGone(r))return;if(!r.ok&&!r.dup)return;labFinish();});
     on("#labHome",function(){stopAnim();lab=null;renderHome();});
   }
 }
 
+// 這一輪已完成（按完成鈕存好，或完成鈕那一下沒存到、之後補存進去）：答錯補救進來的回練習換一題確認，其他到完成畫面
+// （#2632：補存的是 labComplete 時，labRefresh 原本留在已完成的頁面、要再按一次完成；更早的版本 route() 則甩回首頁）
+function labFinish(){
+  stopAnim();
+  if(lab.ctx.from==="wrong"){lab=null;screen="practice";route();return;}
+  lab=null;
+  $("#main").innerHTML='<div class="done"><b class="t">實驗完成</b><p class="muted" style="margin:0">做完實驗，再回去練卡片或考考爸媽。</p><div class="row" style="justify-content:center"><button class="btn ghost" type="button" id="back3">回首頁</button></div></div>';on("#back3",renderHome);renderSide();
+}
 var LABS={};
 /* 1-1 影子：台中今天的真實太陽位置（NOAA 簡化公式，約略計算）；從上往下看的方位盤＋高度角條 */
 LABS.shadow=function(box){

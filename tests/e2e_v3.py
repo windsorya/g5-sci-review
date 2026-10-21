@@ -698,6 +698,40 @@ def flow_lab_retry_resume(browser):
     ctx.close()
 
 
+def flow_lab_done_resume(browser):
+    """#2632 第 2 輪（Codex 審 aa365726 P2）：影子實驗三個任務做完→寫入壞掉→按完成鈕（沒存到）→恢復→補存。
+    第 1 輪 labRefresh 把她留在已完成的實驗頁、要再按一次完成；更早的版本 route() 甩回首頁。應該：照完成鈕成功時的去向
+    （答錯補救進來＝回練習換一題確認；觀念頁進來＝「實驗完成」）。"""
+    def open_menu(page):
+        page.locator(".ccard[data-cid='1-1']").click(); page.locator("#cLab").click()
+        page.wait_for_selector("#labPredict button[data-g]"); page.locator("#labPredict button[data-g='0']").click(); page.wait_for_selector("#shT")
+    phase = """() => { const s = JSON.parse(localStorage.getItem('g5sci.v3') || 'null'); const ids = Object.keys((s && s.labRuns) || {});
+      return ids.length ? s.labRuns[ids[ids.length - 1]].phase : null; }"""
+    for ctxname, opener, how in (("答錯補救進來", open_shadow_wrong, "再存一次"), ("答錯補救進來", open_shadow_wrong, "切回分頁"), ("觀念頁進來", open_menu, "再存一次")):
+        ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00", init="Math.random = () => 0.99;")
+        opener(page)
+        for t in ("8", "12", "16"):
+            page.evaluate(SH_SET, t)
+        page.evaluate(LAB_BREAK); page.locator("#labDone").click()
+        failed = {"還在實驗頁": page.locator("#labNav").count() == 1, "再存一次": page.locator("#retrySave").count() >= 1}
+        page.evaluate(LAB_FIX)
+        if how == "再存一次":
+            page.locator("#retrySave").first.click()
+        else:
+            page.evaluate("() => document.dispatchEvent(new Event('visibilitychange'))")
+        page.wait_for_timeout(300)
+        ph = page.evaluate(phase)
+        if ctxname == "答錯補救進來":
+            dest = page.locator("#main .opt").count() >= 2
+        else:
+            dest = "實驗完成" in page.inner_text("#main")
+        check(f"影子實驗（{ctxname}）完成鈕那一下沒存到→恢復→{how}：存成完成、離開實驗頁到該去的地方、提示列消失、沒有 JS 錯誤",
+              failed == {"還在實驗頁": True, "再存一次": True} and ph == "complete" and dest and page.locator("#labNav").count() == 0
+              and page.locator("#retrySave").count() == 0 and not errors,
+              {"失敗時": failed, "phase": ph, "到該去的地方": dest, "main": page.inner_text("#main")[:80], "errors": errors})
+        ctx.close()
+
+
 def flow_season(browser, device=None):
     ctx, page, errors = new_page(browser, "2026-10-11T20:40:00+08:00", device)
     page.locator(".ccard[data-cid='1-3']").click()
@@ -1254,6 +1288,7 @@ def main():
         flow_lab_after_external_clear(ch)
         flow_lab_last_resume(ch)
         flow_lab_retry_resume(ch)
+        flow_lab_done_resume(ch)
         flow_review_after_plan_done(ch)
         flow_makeup(ch)
         flow_makeup(wk, ipad, "webkit_ipad")
