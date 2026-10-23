@@ -2528,3 +2528,182 @@ test("L11 回合帶 makeup 卻不是父版補做回合（review＋makeup）＝�
     assert.deepEqual([rs.state.days[LEG.DAY].madeUp, C.missedDays(rs.state, "2026-10-12", LEG.TODAY).includes(LEG.DAY)], [undefined, true], v + " 那天沒補到、可以再補");
   });
 });
+
+/* ---------- 考古挑戰（2026-10-23 交辦 #3006）：CH01–CH11 ---------- */
+// 1-1：基本題 b1–b5、挑戰題 x1–x4；1-2：基本題 c1、c2、挑戰題 y1。挑戰題不在 active（和 app.html 組法相同）
+const CH_FUT = "2026-10-25";
+function chBank(basics11, ch11) {
+  const b11 = basics11 || ["b1", "b2", "b3", "b4", "b5"], x = ch11 || ["x1", "x2", "x3", "x4"];
+  const cards = b11.map((id) => card(id, "1-1")).concat(x.map((id) => card(id, "1-1")), ["c1", "c2"].map((id) => card(id, "1-2")), [card("y1", "1-2")]);
+  const active = {}; b11.concat(["c1", "c2"]).forEach((id) => { active[id] = 1; });
+  const challenge = {}; x.concat(["y1"]).forEach((id) => { challenge[id] = 1; });
+  return { cards, concepts: CONCEPTS, figs: FIGS, active, challenge };
+}
+function solid(s, ids, due) { ids.forEach((id) => { s.cards[id] = learned(1, ["2026-10-18"], due || CH_FUT); }); }
+function shaky(s, ids) { ids.forEach((id) => { s.cards[id] = { seen: 1, goodDays: [], blockedDay: "2026-10-19", due: CH_FUT }; }); }
+const isCh = (b) => (id) => !!b.challenge[id];
+function noAdjacent(q, b) { for (let i = 1; i < q.length; i++) if (isCh(b)(q[i]) && isCh(b)(q[i - 1])) return false; return true; }
+function chClone(x) { return JSON.parse(JSON.stringify(x)); }
+
+test("CH01 基本題還沒每題都做過：這個觀念的挑戰題不開放、不排進計畫", () => {
+  const b = chBank(); const s = C.blankState(); solid(s, ["b1", "b2", "b3", "b4"]);
+  const st = C.challengeStatus(s, b, "1-1");
+  assert.deepEqual([st.open, st.basics, st.basicSeen, st.total, st.done], [false, 5, 4, 4, 0]);
+  const plan = C.view(s, env(b, NOON(D))).planIds;
+  assert.ok(plan.includes("b5"), "沒做過的基本題照常排新卡");
+  assert.deepEqual(plan.filter(isCh(b)), [], "挑戰題不排");
+});
+
+test("CH02 基本題都做過且都答對：每天的計畫放挑戰題（其他卡少於 8 張放 2 題、題庫順序觀念輪流）", () => {
+  const b = chBank(); const s = C.blankState(); solid(s, ["b1", "b2", "b3", "b4", "b5", "c1", "c2"]);
+  assert.equal(C.challengeStatus(s, b, "1-1").open, true);
+  assert.equal(C.challengeStatus(s, b, "1-2").open, true);
+  const plan = C.view(s, env(b, NOON(D))).planIds;
+  assert.deepEqual(plan, ["x1", "y1"], "x1（1-1 第一題）、y1（1-2 第一題）輪流各一題");
+});
+
+test("CH03 八成門檻：5 題基本題 4 題答對就開放；3 題答對不開放（待加強的練對才開）", () => {
+  const b = chBank();
+  const s1 = C.blankState(); solid(s1, ["b1", "b2", "b3", "b4"]); shaky(s1, ["b5"]);
+  const t1 = C.challengeStatus(s1, b, "1-1");
+  assert.deepEqual([t1.open, t1.basicOk, t1.need], [true, 4, 4]);
+  const s2 = C.blankState(); solid(s2, ["b1", "b2", "b3"]); shaky(s2, ["b4", "b5"]);
+  const t2 = C.challengeStatus(s2, b, "1-1");
+  assert.deepEqual([t2.open, t2.basicOk, t2.need], [false, 3, 4]);
+  assert.deepEqual(C.view(s2, env(b, NOON(D))).planIds.filter(isCh(b)), []);
+  // 舊版畢業待確認（needsRecheck）也算還沒把握
+  const s3 = C.blankState(); solid(s3, ["b1", "b2", "b3"]);
+  s3.cards.b4 = learned(2, ["2026-10-15", "2026-10-18"], null, { needsRecheck: true }); s3.cards.b5 = learned(2, ["2026-10-15", "2026-10-18"], null, { needsRecheck: true });
+  assert.equal(C.challengeStatus(s3, b, "1-1").open, false);
+});
+
+test("CH04 這個觀念待協助（換題還是錯、要爸媽陪看）：挑戰題不開放", () => {
+  const b = chBank(); const s = C.blankState(); solid(s, ["b1", "b2", "b3", "b4", "b5"]);
+  s.help["1-1"] = { count: 2, last: "2026-10-19", way: 1, needsHelp: true };
+  const st = C.challengeStatus(s, b, "1-1");
+  assert.deepEqual([st.open, st.stuck], [false, true]);
+  assert.deepEqual(C.view(s, env(b, NOON(D))).planIds.filter(isCh(b)), []);
+});
+
+test("CH05 每天幾題：其他卡 8 張以上放 3 題、7 張以下放 2 題；只出沒做過的、開放觀念的", () => {
+  const ten = ["a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9"];
+  const b = chBank(ten);
+  const s = C.blankState(); solid(s, ten, D); solid(s, ["c1", "c2"]);   // 10 張到期（都還是答對狀態）
+  s.help["1-2"] = { count: 1, last: "2026-10-19", way: 0, needsHelp: true };   // 1-2 不開放：只看 1-1
+  let plan = C.view(s, env(b, NOON(D))).planIds;
+  assert.deepEqual(plan.filter(isCh(b)), ["x1", "x2", "x3"], "其他卡 10 張 ⇒ 3 題");
+  const s7 = C.blankState(); solid(s7, ten.slice(0, 7), D); solid(s7, ten.slice(7)); solid(s7, ["c1", "c2"]); s7.help["1-2"] = s.help["1-2"];
+  plan = C.view(s7, env(b, NOON(D))).planIds;
+  assert.deepEqual(plan.filter(isCh(b)), ["x1", "x2"], "其他卡 7 張 ⇒ 2 題");
+  // 做過的挑戰題不再當新題排（它照自己的到期日）
+  solid(s, ["x1"]);
+  plan = C.view(s, env(b, NOON(D))).planIds;
+  assert.deepEqual(plan.filter(isCh(b)), ["x2", "x3", "x4"]);
+});
+
+test("CH06 每日練習回合：挑戰題不排第一、不相鄰；選觀念先練、切段、待協助排最後也一樣", () => {
+  const six = ["a0", "a1", "a2", "a3", "a4", "a5"];
+  const b = chBank(six, ["x1", "x2"]);
+  const s0 = C.blankState(); solid(s0, six, D); solid(s0, ["c1", "c2"], D);   // 8 張到期 ⇒ 3 題：x1、y1、x2
+  let s = run(s0, b, NOON(D), op("sessionStart"));
+  let q = s.session.queue;
+  assert.deepEqual(q.filter(isCh(b)).sort(), ["x1", "x2", "y1"]);
+  assert.ok(!isCh(b)(q[0]), "第一題不是挑戰題：" + q.join());
+  assert.ok(noAdjacent(q, b), "挑戰題不相鄰：" + q.join());
+  assert.equal(q.length, 11);
+  // 選 1-2 先練：1-2 那一段在前，兩段各自插開
+  s = run(s0, b, NOON(D), op("sessionStart", { focus: "1-2" }));
+  q = s.session.queue;
+  assert.deepEqual(q.slice(0, 3).map((id) => C.cardById(s, b, id).concept), ["1-2", "1-2", "1-2"]);
+  assert.ok(!isCh(b)(q[0]) && noAdjacent(q, b), q.join());
+  // 一次只練 4 張：切段前已插開，前 4 張也不會從挑戰題開始
+  s = run(s0, b, NOON(D), op("sessionStart", { size: 4 }));
+  assert.ok(!isCh(b)(s.session.queue[0]) && noAdjacent(s.session.queue, b), s.session.queue.join());
+  // 計畫排好之後 1-2 才標待協助：1-2 的卡照樣排最後，前段的挑戰題照樣插開
+  const pre = chClone(C.reduce(s0, { type: "tick" }, env(b, NOON(D))).state);
+  pre.help["1-2"] = { count: 2, last: D, way: 1, needsHelp: true };
+  s = run(pre, b, NOON(D), op("sessionStart"));
+  q = s.session.queue;
+  assert.deepEqual(q.slice(-3).map((id) => C.cardById(s, b, id).concept), ["1-2", "1-2", "1-2"], "待協助的觀念排最後：" + q.join());
+  assert.ok(!isCh(b)(q[0]) && noAdjacent(q.slice(0, -3), b), q.join());
+});
+
+test("CH07 做過的挑戰題照自己的到期日複習（觀念沒開放也一樣）；還沒到期不排", () => {
+  const b = chBank(); const s = C.blankState(); solid(s, ["b1"]);   // 1-1 沒開放
+  s.cards.x1 = learned(1, ["2026-10-17"], D);
+  s.cards.x2 = learned(1, ["2026-10-19"], "2026-10-22");
+  const plan = C.view(s, env(b, NOON(D))).planIds;
+  assert.ok(plan.includes("x1"), "到期 ⇒ 排");
+  assert.ok(!plan.includes("x2"), "還沒到期 ⇒ 不排");
+  assert.ok(!plan.includes("x3"), "沒做過、沒開放 ⇒ 不排");
+});
+
+test("CH08 已排進今天計畫的挑戰題：之後基本題答錯（觀念關掉）照樣做得了，做完今天就完成", () => {
+  const b = chBank(); let s = C.blankState(); solid(s, ["b1", "b2", "b3", "b4", "b5", "c1", "c2"]);
+  s = run(s, b, NOON(D), op("tick"));
+  assert.deepEqual(s.days[D].planIds, ["x1", "y1"]);
+  s = run(s, b, NOON(D), op("answer", { cardId: "b1", ok: false }));
+  s = run(s, b, NOON(D), op("answer", { cardId: "b2", ok: false }));
+  assert.equal(C.challengeStatus(s, b, "1-1").open, false, "前置：1-1 已關");
+  let v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual([v.remainingIds, v.missingIds, v.completed], [["x1", "y1"], [], false], "已排的不變成『不用做』");
+  s = run(s, b, NOON(D), op("sessionStart"));
+  assert.deepEqual(s.session.queue.slice().sort(), ["x1", "y1"]);
+  s = run(s, b, NOON(D), op("answer", { cardId: "x1", ok: false }));
+  s = run(s, b, NOON(D), op("answer", { cardId: "y1", ok: true }));
+  v = C.view(s, env(b, NOON(D)));
+  assert.deepEqual([v.completed, v.planStatus], [true, "complete"]);
+  // 隔天：1-1 關著 ⇒ 沒做過的 x2 不排；答錯的 x1 照到期日（明天）回來
+  const next = C.view(s, env(b, NOON("2026-10-21"))).planIds;
+  assert.ok(next.includes("x1") && !next.includes("x2"), next.join());
+});
+
+test("CH09 觀念進度與地圖：沒做過的挑戰題不算進母體（排進今天計畫也一樣），做過才算一題——基本題都做過的「長葉了」不倒退", () => {
+  const b = chBank(); let s = C.blankState(); solid(s, ["b1", "b2", "b3", "b4", "b5", "c1", "c2"]);
+  assert.equal(C.view(s, env(b, NOON(D))).stages["1-1"], 2);
+  s = run(s, b, NOON(D), op("tick"));   // 計畫排進 x1
+  assert.ok(s.days[D].planIds.includes("x1"));
+  assert.deepEqual(C.poolCards(s, b, D).map((c) => c.id).filter(isCh(b)), []);
+  assert.equal(C.view(s, env(b, NOON(D))).stages["1-1"], 2, "排進挑戰題後仍是長葉了");
+  s = run(s, b, NOON(D), op("answer", { cardId: "x1", ok: false }));
+  assert.deepEqual(C.poolCards(s, b, D).map((c) => c.id).filter(isCh(b)), ["x1"], "做過就算");
+  assert.equal(C.view(s, env(b, NOON(D))).stages["1-1"], 2);
+});
+
+test("CH10 小考複習、補做不出沒做過的挑戰題（開放了也一樣）；練過的挑戰題照一般規則進「練待加強的」", () => {
+  const b = chBank(); let s = C.blankState(); solid(s, ["b1", "b2", "b3", "b4", "b5", "c1", "c2"]);
+  const all = ["b1", "b2", "b3", "b4", "b5", "x1", "x2", "x3", "x4"];
+  const r = C.reduce(s, op("sessionStart", { kind: "review", ids: all }), env(b, NOON(D)));
+  assert.equal(r.error, "REVIEW_EMPTY");
+  assert.equal(C.reviewCounts(s, b, all, D).fresh, 0);
+  s = run(s, b, NOON(D), op("tick"));
+  s = run(s, b, NOON(D), op("answer", { cardId: "x1", ok: true }));
+  s = run(s, b, NOON(D), op("answer", { cardId: "y1", ok: true }));
+  const mk = C.reduce(s, op("sessionStart", { kind: "makeup", day: "2026-10-19" }), env(b, NOON(D)));
+  assert.equal(mk.error, "MAKEUP_EMPTY", "補做不拿沒做過的挑戰題 x2–x4 來補");
+  // 隔天 x1 答錯過 ⇒ 待加強，照一般規則進「練待加強的」
+  s.cards.x1 = { seen: 2, goodDays: [], blockedDay: D, due: "2026-10-21" };
+  const w = run(s, b, NOON("2026-10-21"), op("sessionStart", { kind: "review", pick: "weak", ids: all }));
+  assert.deepEqual(w.session.queue, ["x1"]);
+});
+
+test("CH11 題庫沒有 challenge（或觀念沒開放）＝和原本一樣：挑戰題永遠不排、回合順序不動", () => {
+  const b = chBank(), nob = Object.assign({}, b); delete nob.challenge;
+  const s = C.blankState(); solid(s, ["b1", "b2", "b3", "b4", "b5", "c1", "c2"], D);
+  assert.deepEqual(C.view(s, env(nob, NOON(D))).planIds, ["b1", "b2", "b3", "b4", "b5", "c1", "c2"]);
+  const locked = C.blankState(); solid(locked, ["b1", "b2", "b3"], D); solid(locked, ["c1"], D);
+  assert.deepEqual(C.view(locked, env(b, NOON(D))).planIds, C.view(locked, env(nob, NOON(D))).planIds);
+  const q1 = run(locked, b, NOON(D), op("sessionStart")).session.queue, q0 = run(locked, nob, NOON(D), op("sessionStart")).session.queue;
+  assert.deepEqual(q1, q0);
+});
+
+test("CH12 插開挑戰題時，待協助觀念的卡仍整段排在最後（不被挑戰題插進去）；同時是考不到的題（out）永遠不排", () => {
+  const cards = ["a0", "a1", "x1", "x2"].map((id) => card(id, "1-1")).concat(["c1", "c2", "c3", "c4"].map((id) => card(id, "1-2")));
+  const b = { cards, concepts: CONCEPTS, figs: FIGS, active: { a0: 1, a1: 1, c1: 1, c2: 1, c3: 1, c4: 1 }, challenge: { x1: 1, x2: 1 } };
+  const s0 = C.blankState(); solid(s0, ["a0", "a1", "c1", "c2", "c3", "c4"], D);
+  s0.help["1-2"] = { count: 2, last: "2026-10-19", way: 1, needsHelp: true };
+  const s = run(s0, b, NOON(D), op("sessionStart"));
+  assert.deepEqual(s.session.queue, ["a0", "x1", "a1", "x2", "c1", "c2", "c3", "c4"]);
+  const ob = Object.assign({}, b, { out: { x1: 1 } });
+  assert.deepEqual(C.view(s0, env(ob, NOON(D))).planIds.filter((id) => id[0] === "x"), ["x2"], "x1 考不到：不因為是挑戰題就排");
+});

@@ -178,6 +178,17 @@ test("標準③白話：補救每一句（含影片說明）不超過小五句�
   assert.deepEqual(longSentences(S.topics, V), []);
 });
 
+// 考古挑戰題答錯時的「這題一步一步解」（src/solve.js，#3006）也是給孩子看的解說（app.html solveBlock 一樣 esc() 後放進畫面），同一把尺
+const SOLVE = require("../src/solve.js");
+const solveLong = (m) => Object.keys(m).map((id) => m[id].map((t) => tooLong(t).map((s) => id + "：" + s)).flat()).flat();
+test("標準③白話-考古挑戰解法：每一步的每一句不超過小五句長上限", () => {
+  assert.deepEqual(solveLong(SOLVE), []);
+});
+test("自檢③d：考古挑戰解法有一句超過上限，要抓到", () => {
+  const m = clone(SOLVE); m.s37[0] = "字".repeat(MAX_SENTENCE + 1) + "。";
+  assert.ok(solveLong(m).length);
+});
+
 test("標準④三站切換列：siteNav 連到另外兩站、本站標 aria-current", () => {
   assert.deepEqual(navProblems(HTML, SELF), []);
 });

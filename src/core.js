@@ -76,11 +76,43 @@
   function isActive(bank, id) { return !bank.active || !!bank.active[id] || !bank.cards.some(function (c) { return c.id === id; }); }
   // 考不到的題（bank.out＝範圍稽核 kind:"out"；2026-10-19 #2997 拍板、#3010）：不排新卡、不排到期複習、不進任何回合；目錄與作答紀錄照留（做過幾題不倒退）
   function isOut(bank, id) { return !!(bank.out && bank.out[id]); }
+  /* ---------- 考古挑戰（2026-10-23 交辦 #3006；律師 10-19 目標「小考、期中考考高分」）----------
+   * 範圍稽核（#2997）把 23 題「主題在範圍內、他校考卷或安親班卷出過的難題」停出新卡；10-19 晚複習回合連出這類題，95 次作答錯 22 次。
+   * 現制：某個觀念的基本題（不是挑戰題、還在出或練過的）每題都做過、而且八成以上現在是答對的（不在待加強）、沒有待協助 ⇒ 這個觀念的挑戰題開放；
+   * 每天的計畫放 3 題沒做過的挑戰題（其他卡少於 8 張的日子放 2 題），回合裡不排第一、不連著出。做過以後就是一般的卡（到期複習、待加強、考前再練）。
+   * 八成：基本題不必全對才開放（「季節與回歸線」有 22 題基本題，每天總有一兩題答錯就回到待加強，全對才開放考前可能一次都開不了）；也不能太低（10-19 是基本題沒把握時連出難題）。
+   * 只看作答事實（cards）與求助紀錄（help），不新增存檔欄位；小考複習、補做不出沒做過的挑戰題（那兩條的資格判準不動）。 */
+  var CH_OPEN_RATE = 0.8, CH_PER_DAY = 3, CH_PER_DAY_LIGHT = 2, CH_LIGHT_BELOW = 8;
+  function isChallenge(bank, id) { return !!(bank.challenge && bank.challenge[id]); }
+  function challengeStatus(state, bank, cid) {
+    var mine = enabledCards(state, bank).filter(function (c) { return c.concept === cid && !isOut(bank, c.id); });
+    var basics = mine.filter(function (c) { return !isChallenge(bank, c.id) && (isActive(bank, c.id) || cardState(state, c.id).seen > 0); });
+    var ch = mine.filter(function (c) { return isChallenge(bank, c.id); });
+    var seen = 0, ok = 0;
+    basics.forEach(function (c) { var cs = cardState(state, c.id); if (cs.seen) { seen++; if (!weakCard(cs)) ok++; } });
+    var need = Math.ceil(basics.length * CH_OPEN_RATE), stuck = !!(state.help[cid] && state.help[cid].needsHelp);
+    return { total: ch.length, done: ch.filter(function (c) { return cardState(state, c.id).seen > 0; }).length,
+             basics: basics.length, basicSeen: seen, basicOk: ok, need: need, stuck: stuck,
+             open: basics.length > 0 && seen === basics.length && ok >= need && !stuck };
+  }
+  // 回合裡的考古挑戰題（做過、沒做過都算）：基本題順序不動，挑戰題平均插在基本題之間——第 j 題放在第 ceil((j+1)·b/(k+1)) 張基本題後面。
+  // 基本題至少和挑戰題一樣多時，挑戰題不會排第一、也不會相鄰；不夠才會相鄰（例如當天只剩挑戰題）。純排序，不增減題目
+  function spreadChallenge(bank, ids) {
+    var basic = ids.filter(function (id) { return !isChallenge(bank, id); }), ch = ids.filter(function (id) { return isChallenge(bank, id); });
+    if (!ch.length) return ids.slice();
+    var out = [], b = 0;
+    ch.forEach(function (id, j) { var at = Math.ceil((j + 1) * basic.length / (ch.length + 1)); while (b < at) out.push(basic[b++]); out.push(id); });
+    while (b < basic.length) out.push(basic[b++]);
+    return out;
+  }
   // 每日計畫回合、再練答錯的、補做續接、今天剩幾張／完成了沒共用（#3010）：查得到、不是考不到的；沒做過的要還在出新（isActive）。做過的照常（到期複習）
+  // 考古挑戰題（bank.challenge＝範圍稽核 kind:"challenge"；不在 bank.active 裡）：沒做過的只能由每日計畫放進來（computePlan），
+  // 排進過計畫就做得了（之後那天基本題又答錯，已排的照樣做完，今天的完成不會倒退）；做過的照一般規則複習
   function servable(state, bank, id) {
     if (!cardById(state, bank, id) || isOut(bank, id)) return false;
-    return cardState(state, id).seen > 0 || isActive(bank, id);
+    return cardState(state, id).seen > 0 || isActive(bank, id) || (isChallenge(bank, id) && plannedEver(state, id));
   }
+  function plannedEver(state, id) { return Object.keys(state.days).some(function (k) { return state.days[k].planIds.indexOf(id) >= 0; }); }
   // 觀念進度、單元／觀念題數、直接闖關、小考複習的母體＝能出新卡的 ∪ 練過的 ∪ 最近一天計畫或回合裡還在用的。單純裁題不會讓「做過幾題」或植物階段倒退
   // day＝今天（Codex 審 4d71855：原取「最後一天」，昨天沒答的舊題會混進今天的母體，和階段不一致）
   function poolCards(state, bank, day) {
@@ -89,7 +121,8 @@
     // 回合只在它就是 day 那天的才算（Codex 審 8364a83 R2b：昨天沒答完的回合帶著停止出新的題，混進今天的母體）
     if (state.session && (!day || state.session.day === day)) state.session.queue.concat(state.session.answered).forEach(function (id) { ref[id] = 1; });
     // #3010（Codex 審 545ead0 F3）：計畫或回合引用、但已做不了（停出未做、考不到）的題不再佔分母，免得「做過 27／28」永遠過不了關
-    return enabledCards(state, bank).filter(function (c) { return isActive(bank, c.id) || cardState(state, c.id).seen > 0 || (ref[c.id] && servable(state, bank, c.id)); });
+    // 沒做過的考古挑戰題不算進母體（#3006）：基本題每題都做過的觀念（地圖「長葉了」）不會因為今天排進挑戰題而倒退；做過了才算一題
+    return enabledCards(state, bank).filter(function (c) { return isActive(bank, c.id) || cardState(state, c.id).seen > 0 || (ref[c.id] && servable(state, bank, c.id) && !isChallenge(bank, c.id)); });
   }
   function cardState(state, id) { return state.cards[id] || { seen: 0, goodDays: [], blockedDay: null, due: null }; }
   // 2026-10-18 律師問「以學習成效、孩子能夠負擔及吸收數量，題目數量合理嗎」：改「答對後隔 3 天再考，第 2 次答對就學會」。
@@ -107,14 +140,20 @@
   /* ---------- 每日計畫 ---------- */
   function newQuota(day) { return day < DIAG_END ? NEW_PER_DAY_DIAG : NEW_PER_DAY; }
   function computePlan(state, bank, day) {
-    var cards = enabledCards(state, bank), due = [], fresh = [];
+    var cards = enabledCards(state, bank), due = [], fresh = [], ch = [], open = {};
     cards.forEach(function (c) {
       var cs = cardState(state, c.id);
       if (cs.seen > 0) { if (!retired(cs) && cs.due && cs.due <= day && !isOut(bank, c.id)) due.push(c.id); }   // 考不到的題連到期複習也停（#3010）
       else if (isActive(bank, c.id)) fresh.push(c.id);   // 新卡只從 active 挑；練過的照到期日複習
+      else if (isChallenge(bank, c.id) && !isOut(bank, c.id)) {   // 考古挑戰（#3006）：該觀念開放了才排
+        if (!(c.concept in open)) open[c.concept] = challengeStatus(state, bank, c.concept).open;
+        if (open[c.concept]) ch.push(c.id);
+      }
     });
-    var pick = {}; due.concat(fresh.slice(0, newQuota(day))).forEach(function (id) { pick[id] = 1; });
-    return cards.filter(function (c) { return pick[c.id]; }).map(function (c) { return c.id; });   // 固定題庫順序
+    var base = due.concat(fresh.slice(0, newQuota(day))), pick = {};
+    base.forEach(function (id) { pick[id] = 1; });
+    reviewOrder(state, bank, ch).slice(0, base.length >= CH_LIGHT_BELOW ? CH_PER_DAY : CH_PER_DAY_LIGHT).forEach(function (id) { pick[id] = 1; });   // 題庫順序、觀念輪流
+    return cards.filter(function (c) { return pick[c.id]; }).map(function (c) { return c.id; });   // 固定題庫順序（回合裡的順序另由 planSession 排）
   }
 
   /* ---------- 補做（2026-10-14 律師：「有辦法補做之前沒做的天數嗎」）----------
@@ -280,7 +319,12 @@
     // 題庫改版後消失的卡不排進回合。R7（4agent N6）：reduce／view 都先跑 pruneVanished，這個過濾目前是防禦性冗餘
     // （拿掉它的突變 N6 是等價突變、測不出來，屬預期）；留著是為了 planSession 將來被別處直接呼叫時仍安全
     var ids = remainingOf(d).filter(function (id) { return servable(state, bank, id); });   // #3010：改版當天已排進計畫的停出未做題、考不到的題不出
-    return { day: day, kind: "plan", queue: stuckLast(state, bank, sessionOrder(state, bank, day, ids)), answered: [], wrong: [], kinds: {} };
+    return { day: day, kind: "plan", queue: spreadPlan(state, bank, stuckLast(state, bank, sessionOrder(state, bank, day, ids))), answered: [], wrong: [], kinds: {} };
+  }
+  // 每日練習回合的考古挑戰題排序（#3006）：待協助的觀念仍排最後（stuckLast），前後兩段各自把挑戰題平均插開
+  function spreadPlan(state, bank, ids) {
+    var stuck = function (id) { var c = cardById(state, bank, id), h = c && state.help[c.concept]; return !!(h && h.needsHelp); };
+    return spreadChallenge(bank, ids.filter(function (id) { return !stuck(id); })).concat(spreadChallenge(bank, ids.filter(stuck)));
   }
   function pruneVanished(state, bank, day) {
     var ok = function (id) { return !!cardById(state, bank, id); }, d = state.days[day];
@@ -352,6 +396,8 @@
             // 概念入口：她選的觀念先練，只換順序、不改到期規則與當日計畫
             var mine = function (id) { var c = cardById(s, bank, id); return c && c.concept === action.focus ? 0 : 1; };
             sess.queue = sess.queue.map(function (id, i) { return [mine(id), i, id]; }).sort(function (x, y) { return x[0] - y[0] || x[1] - y[1]; }).map(function (x) { return x[2]; });
+            // 她選的觀念那一段、其餘那一段各自重新插開考古挑戰題（#3006：挑戰題不因為換順序就排到第一、連在一起）
+            sess.queue = spreadChallenge(bank, sess.queue.filter(function (id) { return !mine(id); })).concat(spreadPlan(s, bank, sess.queue.filter(mine)));
             sess.focus = action.focus;
           }
           if (isNat(action.size) && action.size > 0) sess.queue = sess.queue.slice(0, action.size);
@@ -945,7 +991,7 @@
     dayKey: dayKey, isDay: isDay, addDays: addDays, diffDays: diffDays, weekday: weekday,
     validCard: validCard, blankState: blankState, reduce: reduce, view: view, endTitle: endTitle, exitList: exitList,
     makeupInProgress: makeupInProgress, makeupUnsettled: makeupUnsettled, checkState: checkState, decode: decode, migrateV1: migrateV1, createStore: createStore,
-    cardState: cardState, cardById: cardById, isActive: isActive, servable: servable, isOut: isOut, poolCards: poolCards, reviewCounts: reviewCounts, reviewPick: reviewPick, conceptOn: conceptOn, allCards: allCards, missedDays: missedDays,
+    cardState: cardState, cardById: cardById, isActive: isActive, servable: servable, isOut: isOut, isChallenge: isChallenge, challengeStatus: challengeStatus, poolCards: poolCards, reviewCounts: reviewCounts, reviewPick: reviewPick, conceptOn: conceptOn, allCards: allCards, missedDays: missedDays,
     dissolveNew: dissolveNew, dissolveAddSugar: dissolveAddSugar, dissolveAddSalt: dissolveAddSalt,
     dissolveStep: dissolveStep, dissolveRead: dissolveRead, shadowFromSun: shadowFromSun, dirName: dirName
   };

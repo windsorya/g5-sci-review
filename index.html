@@ -657,11 +657,12 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
 // 範圍稽核停出（2026-10-19 律師：「孩子反應問題太難，似乎超出範圍，請再確認一次是否在小五版本範圍內」
 // 「孩子說今天自然科後來出現的題目是在範圍外，太難」「我的目標是幫助她小考、期中考能考高分」）。
 // 判準＝學校表 3 第 1～10 週自然教學重點第 1～35 點（第一次定期評量範圍，curriculum.json）＋考卷會不會考。
-// 兩類，現在都不排成新卡（app.html 組 ACTIVE 時扣掉），她練過的照到期日複習，原文不刪：
+// 兩類都不在 ACTIVE（app.html 組 ACTIVE 時扣掉，不當一般新卡排），她練過的照到期日複習，原文不刪：
 //   out       ＝考試不會考：國中內容或舊版課本內容，練了只花時間。
 //   challenge ＝主題在範圍內、他校南一考卷或她的安親班卷出過的難題（背數字、季節＋非代表時刻＋方位多步推理、
 //               細到物種或產業）。考卷可能出，不丟；只是不能一開始、也不能整串連著出（10-19 晚複習回合
-//               連出這類題，95 次作答錯 22 題）。之後做成「考古挑戰」：她該觀念基本題答對後，每次混 2～3 題。
+//               連出這類題，95 次作答錯 22 題）。2026-10-23 起由「考古挑戰」放回（#3006，core.js challengeStatus）：
+//               該觀念基本題每題都做過、八成以上答對後，每天的練習混 2～3 題、標「考古挑戰」、答錯給這題的分步驟解法（src/solve.js）。
 // 和 merge.js 不同：這裡不是「重複題只留一題」，沒有代表題。要恢復某題就把那一行刪掉。
 (function (root) {
   "use strict";
@@ -702,7 +703,95 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   if (typeof module !== "undefined" && module.exports) module.exports = R; else root.G5_RETIRED = R;
 })(typeof window !== "undefined" ? window : this);
 
-</script>   <!-- 範圍稽核停出名單（2026-10-19）：ACTIVE 扣掉，練過的照常複習 -->
+</script>   <!-- 範圍稽核停出名單（2026-10-19）：ACTIVE 扣掉，練過的照常複習；kind:"challenge" 由考古挑戰放回（#3006） -->
+<script>
+// 考古挑戰題的「這題一步一步解」（2026-10-23 交辦 #3006）：答錯時先給這一題自己的解法（2～4 步、白話），
+// 再接原本的「你覺得錯在哪裡」與小題型逐格圖解（src/steps.js，那是整個觀念的說明，不是這一題的解法）。
+// 只給 src/retired.js 裡 kind:"challenge" 的題；tests/challenge.test.js 要求每一題都有、步數 2～4、每步不超過 70 字、沒有英文。
+// 數字與 src/steps.js 同一套：嘉義在北回歸線上（北緯約 23.5 度），中午太陽高度夏至約 90、春分秋分約 67、冬至約 43 度。
+(function (root) {
+  "use strict";
+  var S = {
+    // ── 季節與太陽 ──
+    s37: ["北回歸線＝夏至那天太陽直射的那一條線，在赤道（0 度）的北邊。",
+          "它大約在北緯 23.5 度，經過臺灣的嘉義和花蓮，兩地都有北回歸線標誌。",
+          "選項裡的 0 度是赤道、66.5 度是北極圈，都不是北回歸線。"],
+    s38: ["一年裡，太陽直射的地方在南回歸線和北回歸線之間來回移動。",
+          "夏至是北半球白天最長、中午太陽最高的一天，這天直射跑到最北邊：北回歸線。",
+          "一起記：夏至北回歸線、春分秋分赤道、冬至南回歸線。"],
+    s39: ["冬至是北半球白天最短、中午太陽最低的一天。",
+          "這天太陽直射跑到最南邊：南回歸線。",
+          "一起記：夏至北回歸線、春分秋分赤道、冬至南回歸線。"],
+    s40: ["太陽直射的地方，一年在南、北回歸線之間來回移動。",
+          "春分、秋分剛好走到正中間，直射地球中間那一圈：赤道。",
+          "所以這兩天各地白天和晚上差不多一樣長，太陽從正東升起、正西落下。"],
+    k3: ["立竿不見影＝太陽在頭頂正上方（直射），竿子的影子縮到看不見。",
+         "太陽直射最北只到北回歸線（夏至那天），北回歸線北邊的地方永遠等不到直射。",
+         "所以臺灣只有北回歸線上和它南邊的地方，在夏至前後的中午才可能看到。"],
+    k4: ["立竿不見影，要太陽在頭頂正上方（直射）。",
+         "夏至太陽直射北回歸線；臺北在北回歸線的北邊，太陽一年都到不了頭頂正上方。",
+         "臺北夏至中午影子最短，但還是有影子，所以這句話是錯的。"],
+    k32: ["是非題要每一段都檢查。前半句：秋分太陽直射赤道，對。",
+          "後半句：直射赤道時，各地白天和晚上都差不多 12 小時，臺灣也一樣，對。",
+          "兩段都對，整句才是「對」。"],
+    k43: ["先排大小：中午的太陽夏至最高、冬至最低，春分在中間，答案要由大到小。",
+          "嘉義在北回歸線上，夏至太陽直射，中午幾乎在頭頂，約 90 度。",
+          "春分比夏至低大約 23 度（約 67 度）。冬至再低約 23 度（約 43 度）。",
+          "只有「90 度、67 度、43 度」是由大到小，而且數字對。"],
+    k44: ["太陽直射的地方一年在南、北回歸線之間來回：夏至走到最北，冬至走到最南。",
+          "北回歸線就是最北的折返點，直射只有夏至那天走到這裡，然後就往南回去。",
+          "所以剛好在北回歸線上的地方，一年只有夏至前後 1 次太陽在頭頂。",
+          "春分、秋分各一次的是赤道上的地方，不是北回歸線。"],
+    q36: ["影子的長短看太陽高不高：太陽愈低，影子愈長。",
+          "同樣是上午 8 點：夏至太陽很早就升起，8 點已經爬得比較高。冬至太陽升得晚，8 點還很低。",
+          "冬至 8 點太陽比較低，影子就比較長，所以這句話是對的。"],
+    h1: ["朝南的窗戶，要太陽在南邊的天空，陽光才照得進屋裡；太陽愈低，照得愈深。",
+         "夏至下午 4 點太陽在西偏北，光從北邊斜過來，照不進朝南的窗。春分、秋分下午 4 點大約在正西方。",
+         "冬至太陽整天走在偏南的天空（東南升起、西南落下）。下午 4 點在西南方又很低，最容易照進朝南的窗。"],
+    h7: ["夏至過後，太陽直射的地方一天天往南移。9 月經過秋分，10 月、11 月都還在往冬至走。",
+         "從臺灣看，太陽在天空走的路線一天比一天低。同一個時間（下午 4 點）量到的高度角就一天比一天小。",
+         "所以 9 月到 11 月是「漸漸變小」，要到 12 月前後才降到最低。"],
+    k47: ["實驗的條件分三種。故意改變的叫操縱變因，跟著變、要觀察的叫應變變因，保持一樣的叫控制變因。",
+          "這個實驗故意改變光源角度（操縱變因），觀察影子長短（應變變因）。",
+          "竿子高度、竿子位置都要「保持一樣」，所以叫控制變因。"],
+    // ── 光的現象 ──
+    k23: ["光會偏折（折射），要同時有兩件事：從一種東西進入另一種東西，而且是斜斜的進去。",
+          "「垂直照進水面」雖然從空氣進入水，但是直直進去，不會偏折。",
+          "「在水中直直前進」「在空氣中直直前進」都沒有換東西，也不會偏折。",
+          "只有「斜斜的從水中進入空氣」兩件事都有，所以會偏折。"],
+    k34: ["放大鏡離東西很近的時候，看到的是放大、正立的像。",
+          "把放大鏡和東西的距離拉遠，像會上下顛倒（倒立）。先是放大倒立，再拉遠就變成縮小倒立。",
+          "所以正立的像一定是放大的，「縮小又正立」看不到。"],
+    // ── 植物 ──
+    p2: ["光合作用：葉子照到陽光，把水和二氧化碳做成養分。",
+         "做養分的同時，會放出氧氣。",
+         "所以產生的是「養分和氧氣」；水和二氧化碳是用掉的原料，陽光是要照到才能進行的條件。"],
+    h3: ["先把光合作用說成一句：水和二氧化碳，在陽光下做成養分和氧氣。",
+         "一句一句對：照到陽光會進行（對）、水是原料（對）、產生的氧氣給其他生物呼吸（對）。",
+         "「會產生二氧化碳」錯了：二氧化碳是被用掉的原料，產生的是氧氣。題目問哪一句錯，就選它。"],
+    k61: ["捕蠅草這類食蟲植物，常長在土壤很貧瘠的地方（例如溼地），土裡缺少某些養分。",
+          "它們有綠色的葉子，照到陽光一樣會做光合作用，所以不是「照不到陽光」。",
+          "抓小蟲是為了補充土裡缺少的養分，所以選「土壤裡缺少某些養分」。"],
+    p49: ["板根：樹幹底部長出像木板一樣、突出地面的根，可以幫大樹站穩。",
+          "銀葉樹是有名的板根植物；鳳凰木長大以後，樹幹底部也會長出板根。",
+          "題目說「都」，兩種都要有才對；兩種都有，所以這句話是對的。"],
+    h11: ["榕樹從樹枝垂下來、還懸在空中的根叫氣生根，可以吸收空氣中的水分。",
+          "氣生根往下長、伸進土裡，慢慢變粗像樹幹，就叫支柱根。",
+          "支柱根的工作是撐住樹、讓樹更穩，還能讓樹往四周擴展。吸收空氣中的水分是氣生根的工作。"],
+    p74: ["題目的關鍵字是「紅色的葉子」。",
+          "聖誕紅頂端那些紅紅的、像花瓣的部分其實是葉子；中間小小黃黃的才是花。",
+          "紅色的葉子很顯眼，可以吸引昆蟲來幫忙傳播花粉；另外三種不是靠紅色的葉子吸引昆蟲。"],
+    p51: ["臺灣的小麥大部分是從國外買進來的（進口），不是賣到國外。",
+          "臺灣外銷有名的農產品是蘭花、茶葉、芒果、鳳梨釋迦這些。",
+          "所以這句話是錯的。"],
+    p83: ["全選題要一個一個確認，不要只挑最熟的。",
+          "蘭花（例如蝴蝶蘭）是臺灣有名的外銷花卉；茶葉、芒果、鳳梨釋迦也都賣到國外。",
+          "四種都是，所以選「四種都是」。"]
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = S; else root.G5_SOLVE = S;
+})(typeof window !== "undefined" ? window : this);
+
+</script>   <!-- 考古挑戰題答錯時的「這題一步一步解」（#3006） -->
 <script>
 // 答錯後的「一步一步看」圖解（2026-10-11 律師：「答錯時的進一步解說，請 1. 說明白話易懂 2. 圖多一些，來幫助理解」）。
 // 每一題對到一個「小題型」（topic），答錯時畫這個小題型專屬的 2–4 格圖，每格一張圖配一句白話；
@@ -2082,11 +2171,43 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   function isActive(bank, id) { return !bank.active || !!bank.active[id] || !bank.cards.some(function (c) { return c.id === id; }); }
   // 考不到的題（bank.out＝範圍稽核 kind:"out"；2026-10-19 #2997 拍板、#3010）：不排新卡、不排到期複習、不進任何回合；目錄與作答紀錄照留（做過幾題不倒退）
   function isOut(bank, id) { return !!(bank.out && bank.out[id]); }
+  /* ---------- 考古挑戰（2026-10-23 交辦 #3006；律師 10-19 目標「小考、期中考考高分」）----------
+   * 範圍稽核（#2997）把 23 題「主題在範圍內、他校考卷或安親班卷出過的難題」停出新卡；10-19 晚複習回合連出這類題，95 次作答錯 22 次。
+   * 現制：某個觀念的基本題（不是挑戰題、還在出或練過的）每題都做過、而且八成以上現在是答對的（不在待加強）、沒有待協助 ⇒ 這個觀念的挑戰題開放；
+   * 每天的計畫放 3 題沒做過的挑戰題（其他卡少於 8 張的日子放 2 題），回合裡不排第一、不連著出。做過以後就是一般的卡（到期複習、待加強、考前再練）。
+   * 八成：基本題不必全對才開放（「季節與回歸線」有 22 題基本題，每天總有一兩題答錯就回到待加強，全對才開放考前可能一次都開不了）；也不能太低（10-19 是基本題沒把握時連出難題）。
+   * 只看作答事實（cards）與求助紀錄（help），不新增存檔欄位；小考複習、補做不出沒做過的挑戰題（那兩條的資格判準不動）。 */
+  var CH_OPEN_RATE = 0.8, CH_PER_DAY = 3, CH_PER_DAY_LIGHT = 2, CH_LIGHT_BELOW = 8;
+  function isChallenge(bank, id) { return !!(bank.challenge && bank.challenge[id]); }
+  function challengeStatus(state, bank, cid) {
+    var mine = enabledCards(state, bank).filter(function (c) { return c.concept === cid && !isOut(bank, c.id); });
+    var basics = mine.filter(function (c) { return !isChallenge(bank, c.id) && (isActive(bank, c.id) || cardState(state, c.id).seen > 0); });
+    var ch = mine.filter(function (c) { return isChallenge(bank, c.id); });
+    var seen = 0, ok = 0;
+    basics.forEach(function (c) { var cs = cardState(state, c.id); if (cs.seen) { seen++; if (!weakCard(cs)) ok++; } });
+    var need = Math.ceil(basics.length * CH_OPEN_RATE), stuck = !!(state.help[cid] && state.help[cid].needsHelp);
+    return { total: ch.length, done: ch.filter(function (c) { return cardState(state, c.id).seen > 0; }).length,
+             basics: basics.length, basicSeen: seen, basicOk: ok, need: need, stuck: stuck,
+             open: basics.length > 0 && seen === basics.length && ok >= need && !stuck };
+  }
+  // 回合裡的考古挑戰題（做過、沒做過都算）：基本題順序不動，挑戰題平均插在基本題之間——第 j 題放在第 ceil((j+1)·b/(k+1)) 張基本題後面。
+  // 基本題至少和挑戰題一樣多時，挑戰題不會排第一、也不會相鄰；不夠才會相鄰（例如當天只剩挑戰題）。純排序，不增減題目
+  function spreadChallenge(bank, ids) {
+    var basic = ids.filter(function (id) { return !isChallenge(bank, id); }), ch = ids.filter(function (id) { return isChallenge(bank, id); });
+    if (!ch.length) return ids.slice();
+    var out = [], b = 0;
+    ch.forEach(function (id, j) { var at = Math.ceil((j + 1) * basic.length / (ch.length + 1)); while (b < at) out.push(basic[b++]); out.push(id); });
+    while (b < basic.length) out.push(basic[b++]);
+    return out;
+  }
   // 每日計畫回合、再練答錯的、補做續接、今天剩幾張／完成了沒共用（#3010）：查得到、不是考不到的；沒做過的要還在出新（isActive）。做過的照常（到期複習）
+  // 考古挑戰題（bank.challenge＝範圍稽核 kind:"challenge"；不在 bank.active 裡）：沒做過的只能由每日計畫放進來（computePlan），
+  // 排進過計畫就做得了（之後那天基本題又答錯，已排的照樣做完，今天的完成不會倒退）；做過的照一般規則複習
   function servable(state, bank, id) {
     if (!cardById(state, bank, id) || isOut(bank, id)) return false;
-    return cardState(state, id).seen > 0 || isActive(bank, id);
+    return cardState(state, id).seen > 0 || isActive(bank, id) || (isChallenge(bank, id) && plannedEver(state, id));
   }
+  function plannedEver(state, id) { return Object.keys(state.days).some(function (k) { return state.days[k].planIds.indexOf(id) >= 0; }); }
   // 觀念進度、單元／觀念題數、直接闖關、小考複習的母體＝能出新卡的 ∪ 練過的 ∪ 最近一天計畫或回合裡還在用的。單純裁題不會讓「做過幾題」或植物階段倒退
   // day＝今天（Codex 審 4d71855：原取「最後一天」，昨天沒答的舊題會混進今天的母體，和階段不一致）
   function poolCards(state, bank, day) {
@@ -2095,7 +2216,8 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     // 回合只在它就是 day 那天的才算（Codex 審 8364a83 R2b：昨天沒答完的回合帶著停止出新的題，混進今天的母體）
     if (state.session && (!day || state.session.day === day)) state.session.queue.concat(state.session.answered).forEach(function (id) { ref[id] = 1; });
     // #3010（Codex 審 545ead0 F3）：計畫或回合引用、但已做不了（停出未做、考不到）的題不再佔分母，免得「做過 27／28」永遠過不了關
-    return enabledCards(state, bank).filter(function (c) { return isActive(bank, c.id) || cardState(state, c.id).seen > 0 || (ref[c.id] && servable(state, bank, c.id)); });
+    // 沒做過的考古挑戰題不算進母體（#3006）：基本題每題都做過的觀念（地圖「長葉了」）不會因為今天排進挑戰題而倒退；做過了才算一題
+    return enabledCards(state, bank).filter(function (c) { return isActive(bank, c.id) || cardState(state, c.id).seen > 0 || (ref[c.id] && servable(state, bank, c.id) && !isChallenge(bank, c.id)); });
   }
   function cardState(state, id) { return state.cards[id] || { seen: 0, goodDays: [], blockedDay: null, due: null }; }
   // 2026-10-18 律師問「以學習成效、孩子能夠負擔及吸收數量，題目數量合理嗎」：改「答對後隔 3 天再考，第 2 次答對就學會」。
@@ -2113,14 +2235,20 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
   /* ---------- 每日計畫 ---------- */
   function newQuota(day) { return day < DIAG_END ? NEW_PER_DAY_DIAG : NEW_PER_DAY; }
   function computePlan(state, bank, day) {
-    var cards = enabledCards(state, bank), due = [], fresh = [];
+    var cards = enabledCards(state, bank), due = [], fresh = [], ch = [], open = {};
     cards.forEach(function (c) {
       var cs = cardState(state, c.id);
       if (cs.seen > 0) { if (!retired(cs) && cs.due && cs.due <= day && !isOut(bank, c.id)) due.push(c.id); }   // 考不到的題連到期複習也停（#3010）
       else if (isActive(bank, c.id)) fresh.push(c.id);   // 新卡只從 active 挑；練過的照到期日複習
+      else if (isChallenge(bank, c.id) && !isOut(bank, c.id)) {   // 考古挑戰（#3006）：該觀念開放了才排
+        if (!(c.concept in open)) open[c.concept] = challengeStatus(state, bank, c.concept).open;
+        if (open[c.concept]) ch.push(c.id);
+      }
     });
-    var pick = {}; due.concat(fresh.slice(0, newQuota(day))).forEach(function (id) { pick[id] = 1; });
-    return cards.filter(function (c) { return pick[c.id]; }).map(function (c) { return c.id; });   // 固定題庫順序
+    var base = due.concat(fresh.slice(0, newQuota(day))), pick = {};
+    base.forEach(function (id) { pick[id] = 1; });
+    reviewOrder(state, bank, ch).slice(0, base.length >= CH_LIGHT_BELOW ? CH_PER_DAY : CH_PER_DAY_LIGHT).forEach(function (id) { pick[id] = 1; });   // 題庫順序、觀念輪流
+    return cards.filter(function (c) { return pick[c.id]; }).map(function (c) { return c.id; });   // 固定題庫順序（回合裡的順序另由 planSession 排）
   }
 
   /* ---------- 補做（2026-10-14 律師：「有辦法補做之前沒做的天數嗎」）----------
@@ -2286,7 +2414,12 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     // 題庫改版後消失的卡不排進回合。R7（4agent N6）：reduce／view 都先跑 pruneVanished，這個過濾目前是防禦性冗餘
     // （拿掉它的突變 N6 是等價突變、測不出來，屬預期）；留著是為了 planSession 將來被別處直接呼叫時仍安全
     var ids = remainingOf(d).filter(function (id) { return servable(state, bank, id); });   // #3010：改版當天已排進計畫的停出未做題、考不到的題不出
-    return { day: day, kind: "plan", queue: stuckLast(state, bank, sessionOrder(state, bank, day, ids)), answered: [], wrong: [], kinds: {} };
+    return { day: day, kind: "plan", queue: spreadPlan(state, bank, stuckLast(state, bank, sessionOrder(state, bank, day, ids))), answered: [], wrong: [], kinds: {} };
+  }
+  // 每日練習回合的考古挑戰題排序（#3006）：待協助的觀念仍排最後（stuckLast），前後兩段各自把挑戰題平均插開
+  function spreadPlan(state, bank, ids) {
+    var stuck = function (id) { var c = cardById(state, bank, id), h = c && state.help[c.concept]; return !!(h && h.needsHelp); };
+    return spreadChallenge(bank, ids.filter(function (id) { return !stuck(id); })).concat(spreadChallenge(bank, ids.filter(stuck)));
   }
   function pruneVanished(state, bank, day) {
     var ok = function (id) { return !!cardById(state, bank, id); }, d = state.days[day];
@@ -2358,6 +2491,8 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
             // 概念入口：她選的觀念先練，只換順序、不改到期規則與當日計畫
             var mine = function (id) { var c = cardById(s, bank, id); return c && c.concept === action.focus ? 0 : 1; };
             sess.queue = sess.queue.map(function (id, i) { return [mine(id), i, id]; }).sort(function (x, y) { return x[0] - y[0] || x[1] - y[1]; }).map(function (x) { return x[2]; });
+            // 她選的觀念那一段、其餘那一段各自重新插開考古挑戰題（#3006：挑戰題不因為換順序就排到第一、連在一起）
+            sess.queue = spreadChallenge(bank, sess.queue.filter(function (id) { return !mine(id); })).concat(spreadPlan(s, bank, sess.queue.filter(mine)));
             sess.focus = action.focus;
           }
           if (isNat(action.size) && action.size > 0) sess.queue = sess.queue.slice(0, action.size);
@@ -2951,7 +3086,7 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     dayKey: dayKey, isDay: isDay, addDays: addDays, diffDays: diffDays, weekday: weekday,
     validCard: validCard, blankState: blankState, reduce: reduce, view: view, endTitle: endTitle, exitList: exitList,
     makeupInProgress: makeupInProgress, makeupUnsettled: makeupUnsettled, checkState: checkState, decode: decode, migrateV1: migrateV1, createStore: createStore,
-    cardState: cardState, cardById: cardById, isActive: isActive, servable: servable, isOut: isOut, poolCards: poolCards, reviewCounts: reviewCounts, reviewPick: reviewPick, conceptOn: conceptOn, allCards: allCards, missedDays: missedDays,
+    cardState: cardState, cardById: cardById, isActive: isActive, servable: servable, isOut: isOut, isChallenge: isChallenge, challengeStatus: challengeStatus, poolCards: poolCards, reviewCounts: reviewCounts, reviewPick: reviewPick, conceptOn: conceptOn, allCards: allCards, missedDays: missedDays,
     dissolveNew: dissolveNew, dissolveAddSugar: dissolveAddSugar, dissolveAddSalt: dissolveAddSalt,
     dissolveStep: dissolveStep, dissolveRead: dissolveRead, shadowFromSun: shadowFromSun, dirName: dirName
   };
@@ -3146,7 +3281,9 @@ var RETIRED = window.G5_RETIRED||{};   // 2026-10-19 範圍稽核：超出學校
 var ACTIVE = {}; ALL_CARDS.forEach(function(c){if(!MERGED[c.id]&&!RETIRED[c.id])ACTIVE[c.id]=1;});   // 2026-10-18：被併題不刪，只是不再排成新卡（設計方案③）；10-19 停出題同理
 // 考不到的題（範圍稽核 kind:"out"；#2997 拍板、#3010）：不排新卡、也不排到期複習、不進任何回合；核心讀 BANK.out。挑戰題（challenge）不在此列
 var OUT = {}; (function(R){Object.keys(R).forEach(function(id){if(R[id]&&R[id].kind==="out")OUT[id]=1;});})((typeof MB!=="undefined"&&MB.RETIRED)||window.G5_RETIRED||{});
-var BANK = {cards:ALL_CARDS, active:ACTIVE, out:OUT, concepts:{}, figs:FIGS};
+// 考古挑戰（kind:"challenge"，#3006）：仍不在 ACTIVE（不當一般新卡排），核心讀 BANK.challenge——該觀念基本題做過且八成答對後，每天的練習混 2～3 題
+var CHALLENGE = {}; Object.keys(RETIRED).forEach(function(id){if(RETIRED[id]&&RETIRED[id].kind==="challenge"&&!MERGED[id])CHALLENGE[id]=1;});
+var BANK = {cards:ALL_CARDS, active:ACTIVE, out:OUT, challenge:CHALLENGE, concepts:{}, figs:FIGS};
 CIDS.forEach(function(k){BANK.concepts[k]={unit:CONCEPTS[k].unit};});
 
 var ERRS = {concept:"還不懂這個觀念", reading:"看錯題目", slip:"知道但選錯了"};
@@ -3689,6 +3826,7 @@ function renderConcept(cid){
     (stuck?'<div class="banner info"><strong>這個觀念先和爸媽一起看圖解</strong><span class="small">爸媽在「家長摘要」按「已經陪她看過」以後，再來練這個觀念的題目。</span></div>':'')+
     // 2026-10-14 律師（孩子要「直接闖關」）：標題下面就放闖關鈕＝練這個觀念的全部題目；做完全部＝地圖走過這一站
     (stuck?'':'<div class="row" id="cGoRow">'+(cst.fresh?'<button class="btn" type="button" id="cGo">直接闖關：'+(cst.seen?'還有 '+cst.fresh+' 題沒做':'做完這 '+cst.fresh+' 題')+'</button>':cst.seen>=cst.total?'<b>這一站每題都做過了</b>':'<b>這一站沒有新題了</b>')+'<span class="small muted">'+esc((MAPX&&MAPX.RULE)||"")+'</span></div>')+
+    chLine(cid,v)+
     explainBlock(ex)+
     '<div class="row"><button class="btn" type="button" id="cLab">去實驗室動手做</button>'+(mine&&!v.completed&&!stuck?'<button class="btn ghost" type="button" id="cFocus">先練這個觀念（今天 '+mine+' 張）</button>':'')+
     (stuck||!cst.weakNow?'':'<button class="btn ghost" type="button" id="cWeak">練待加強的 '+Math.min(SEG,cst.weakNow)+' 題</button>')+
@@ -3700,6 +3838,17 @@ function renderConcept(cid){
   on("#cMore",function(){var b=$("#main .remedy");if(b)b.outerHTML=explainBlock(EXPLAIN[cid][1]);$("#cMore").hidden=true;});
   on("#cBack",renderHome);
   el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+// 考古挑戰（#3006）開放了沒、還差什麼：只讀核心的 challengeStatus（和每日計畫放不放挑戰題同一個判準）
+function chLine(cid,v){
+  var t=C.challengeStatus(S(),BANK,cid); if(!t.total||!t.basics) return '';
+  var today=v.planIds.filter(function(id){var k=card(id);return CHALLENGE[id]&&k&&k.concept===cid&&v.doneIds.indexOf(id)<0;}).length;
+  var tail=t.done>=t.total?'都做過了，之後照一般的卡複習。':
+    t.stuck?'先和爸媽看完圖解，再開放。':
+    t.open?'已開放，每天的練習會輪流混 2～3 題'+(t.done?'（已做過 '+t.done+' 題）':'')+(today?'；今天的練習裡有 '+today+' 題':'')+'。':
+    t.basicSeen<t.basics?'這個觀念的基本題還有 '+(t.basics-t.basicSeen)+' 題沒做過；基本題都做過、而且八成以上答對以後才開放。':
+    '基本題答對 '+t.basicOk+'／'+t.basics+' 題，再把 '+(t.need-t.basicOk)+' 題待加強的練對就開放（八成以上答對）。';
+  return '<div class="hint" id="chStatus"><strong>考古挑戰 '+t.total+' 題</strong>（別校考卷、安親班卷出過的難題）：'+esc(tail)+'</div>';
 }
 function askLine(ex){return '<div class="hint"><strong>給爸媽：</strong>先讓她說，不直接報答案。可以追問：「'+esc(ex.ask)+'」</div>';}
 function explainBlock(ex){
@@ -3753,7 +3902,8 @@ function renderPractice(){
   if(!c) return renderEnd();
   ui={hint:false,cardId:id,variation:se.kinds[id]==="variation"};
   var con=CONCEPTS[c.concept], total=se.answered.length+se.queue.length, pos=se.answered.length+1;
-  var h='<div class="qhead"><span>'+(se.makeup?'<span class="tag" style="margin:0 6px 0 0">補做 '+md(se.makeup)+'</span>':se.kind==="review"?'<span class="tag" style="margin:0 6px 0 0">小考複習'+(se.pick==="again"?'・全部再練一遍':se.pick==="weak"?'・練待加強的':se.pick==="fresh"?'・還沒做過的題':'')+'</span>':'')+esc(UNITS[con.unit])+'・'+esc(con.title)+(ui.variation?'<span class="tag">同觀念換一題確認</span>':'')+'</span><span>'+pos+' / '+total+'</span></div><div class="bar"><i style="width:'+Math.round((pos-1)/total*100)+'%"></i></div>';
+  var h='<div class="qhead"><span>'+(se.makeup?'<span class="tag" style="margin:0 6px 0 0">補做 '+md(se.makeup)+'</span>':se.kind==="review"?'<span class="tag" style="margin:0 6px 0 0">小考複習'+(se.pick==="again"?'・全部再練一遍':se.pick==="weak"?'・練待加強的':se.pick==="fresh"?'・還沒做過的題':'')+'</span>':'')+esc(UNITS[con.unit])+'・'+esc(con.title)+(ui.variation?'<span class="tag">同觀念換一題確認</span>':'')+(CHALLENGE[id]?'<span class="tag" id="chTag">考古挑戰</span>':'')+'</span><span>'+pos+' / '+total+'</span></div><div class="bar"><i style="width:'+Math.round((pos-1)/total*100)+'%"></i></div>';
+  if(CHALLENGE[id]) h+='<p class="small muted" id="chNote" style="margin:0">考古挑戰：別校考卷或安親班卷出過的難題。答錯沒關係，會一步一步帶你看這題怎麼解。</p>';   // #3006
   h+=questionHtml(c,"practice");
   var tools='<div class="tools"><label><input type="checkbox" id="unsure"> 我不太確定</label>'+(c.hint?'<button class="btn ghost sm" type="button" id="hintBtn">給我一點提示</button>':'')+'</div><div class="hint" id="hintBox" hidden></div>';
   if(c.type==="map"){
@@ -3839,6 +3989,7 @@ function feedback(p,info){
   if(info.halted||(!p.ok&&p.a&&p.a.variation&&S().session&&S().session.halted)) return renderHalted(c,p.selfGraded);
   if(!p.selfGraded&&c.type!=="map") box.insertAdjacentHTML("beforeend",'<div class="fb no"><strong>正確答案是「'+esc(answerText(c))+'」</strong><span>'+esc(c.why||"")+'</span>'+(c.type==="figure"?figureSvg(c.fig,true):"")+srcLine(c)+'</div>');
   if(c.type==="map") box.insertAdjacentHTML("beforeend",'<div class="fb no"><span>'+esc(c.why||"")+'</span></div>');
+  box.insertAdjacentHTML("beforeend",solveBlock(c));   // 考古挑戰題答錯：先給這一題的分步驟解法，再問錯在哪（#3006）
   box.insertAdjacentHTML("beforeend",'<div class="fb" id="errq" style="background:var(--bg)"><strong>你覺得錯在哪裡？<span class="muted" style="font-weight:400">（自己選，沒有標準答案）</span></strong><div class="chips">'+
     Object.keys(ERRS).map(function(k){return '<button class="chip'+(k==="concept"?' pri':'')+'" type="button" data-k="'+k+'">'+ERRS[k]+'</button>';}).join("")+'<button class="chip" type="button" data-k="">先跳過</button></div></div>');
   $("#errq").querySelectorAll("button").forEach(function(b){b.onclick=function(){
@@ -3861,6 +4012,13 @@ function stepsBlock(tp){
   return '<strong style="font-size:19px">一步一步看：'+esc(T.title)+'</strong><ol class="steps">'+
     T.steps.map(function(s,i){return '<li class="step"><div class="sfig">'+s.fig()+'</div><div class="say"><b class="n">'+(i+1)+'</b><p>'+esc(s.say)+'</p></div></li>';}).join("")+
     '</ol><div class="remember"><strong>一句話記住：</strong>'+esc(T.remember)+'</div>';
+}
+// 考古挑戰題自己的解法（src/solve.js）：不是挑戰題、或沒有解法就不畫
+function solveBlock(c){
+  var s=CHALLENGE[c.id]&&window.G5_SOLVE&&G5_SOLVE[c.id];
+  if(!s||!s.length) return '';
+  return '<div class="fb solve" id="solveBox" style="background:var(--sun-soft)"><strong>考古挑戰：這題一步一步解</strong><ol style="margin:0;padding-left:22px;display:grid;gap:6px;line-height:1.6">'+
+    s.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ol></div>';
 }
 function backToQ(c){return '<div class="backq"><strong>回到這一題</strong><span class="muted">'+esc(c.q)+'</span><span>答案是「'+esc(answerText(c))+'」。'+esc(c.why||"")+'</span></div>';}
 function exBlock(ex,alt){
@@ -3909,6 +4067,7 @@ function renderHalted(c,selfGraded){
   var con=CONCEPTS[c.concept];
   $("#main").innerHTML='<div class="done"><b class="t">這一輪先停在這裡</b>'+
     (selfGraded?'':'<div class="fb no" style="text-align:left;justify-self:stretch"><strong>這題的正確答案是「'+esc(answerText(c))+'」</strong><span>'+esc(c.why||"")+'</span></div>')+
+    (solveBlock(c)?'<div style="text-align:left;justify-self:stretch">'+solveBlock(c)+'</div>':'')+
     '<p style="margin:0">「'+esc(con.short)+'」看了圖解、做了實驗，換一題還是卡住——這很正常，不用一直刷題。</p>'+
     '<p class="muted" style="margin:0">請爸媽陪你一起看一次圖解，或明天再試。這張卡明天會再出現。</p>'+
     '<div class="row" style="justify-content:center"><button class="btn" type="button" id="hView">現在和爸媽一起看圖解</button><button class="btn ghost" type="button" id="hHome">回首頁</button></div></div>';

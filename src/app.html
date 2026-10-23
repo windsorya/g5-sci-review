@@ -310,7 +310,8 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 <!--@INLINE src/tones.js-->
 <!--@INLINE src/figs.js-->
 <!--@INLINE src/merge.js-->   <!-- 要在 steps.js 之前：steps.js 載入當下就讀 G5_MERGED（Codex 審 a7aa191：順序反了，被併題的逐格圖解在網頁上全失效） -->
-<!--@INLINE src/retired.js-->   <!-- 範圍稽核停出名單（2026-10-19）：ACTIVE 扣掉，練過的照常複習 -->
+<!--@INLINE src/retired.js-->   <!-- 範圍稽核停出名單（2026-10-19）：ACTIVE 扣掉，練過的照常複習；kind:"challenge" 由考古挑戰放回（#3006） -->
+<!--@INLINE src/solve.js-->   <!-- 考古挑戰題答錯時的「這題一步一步解」（#3006） -->
 <!--@INLINE src/steps.js-->
 <!--@INLINE src/videos.js-->
 <!--@INLINE src/bank_extra.js-->
@@ -405,7 +406,9 @@ var RETIRED = window.G5_RETIRED||{};   // 2026-10-19 範圍稽核：超出學校
 var ACTIVE = {}; ALL_CARDS.forEach(function(c){if(!MERGED[c.id]&&!RETIRED[c.id])ACTIVE[c.id]=1;});   // 2026-10-18：被併題不刪，只是不再排成新卡（設計方案③）；10-19 停出題同理
 // 考不到的題（範圍稽核 kind:"out"；#2997 拍板、#3010）：不排新卡、也不排到期複習、不進任何回合；核心讀 BANK.out。挑戰題（challenge）不在此列
 var OUT = {}; (function(R){Object.keys(R).forEach(function(id){if(R[id]&&R[id].kind==="out")OUT[id]=1;});})((typeof MB!=="undefined"&&MB.RETIRED)||window.G5_RETIRED||{});
-var BANK = {cards:ALL_CARDS, active:ACTIVE, out:OUT, concepts:{}, figs:FIGS};
+// 考古挑戰（kind:"challenge"，#3006）：仍不在 ACTIVE（不當一般新卡排），核心讀 BANK.challenge——該觀念基本題做過且八成答對後，每天的練習混 2～3 題
+var CHALLENGE = {}; Object.keys(RETIRED).forEach(function(id){if(RETIRED[id]&&RETIRED[id].kind==="challenge"&&!MERGED[id])CHALLENGE[id]=1;});
+var BANK = {cards:ALL_CARDS, active:ACTIVE, out:OUT, challenge:CHALLENGE, concepts:{}, figs:FIGS};
 CIDS.forEach(function(k){BANK.concepts[k]={unit:CONCEPTS[k].unit};});
 
 var ERRS = {concept:"還不懂這個觀念", reading:"看錯題目", slip:"知道但選錯了"};
@@ -948,6 +951,7 @@ function renderConcept(cid){
     (stuck?'<div class="banner info"><strong>這個觀念先和爸媽一起看圖解</strong><span class="small">爸媽在「家長摘要」按「已經陪她看過」以後，再來練這個觀念的題目。</span></div>':'')+
     // 2026-10-14 律師（孩子要「直接闖關」）：標題下面就放闖關鈕＝練這個觀念的全部題目；做完全部＝地圖走過這一站
     (stuck?'':'<div class="row" id="cGoRow">'+(cst.fresh?'<button class="btn" type="button" id="cGo">直接闖關：'+(cst.seen?'還有 '+cst.fresh+' 題沒做':'做完這 '+cst.fresh+' 題')+'</button>':cst.seen>=cst.total?'<b>這一站每題都做過了</b>':'<b>這一站沒有新題了</b>')+'<span class="small muted">'+esc((MAPX&&MAPX.RULE)||"")+'</span></div>')+
+    chLine(cid,v)+
     explainBlock(ex)+
     '<div class="row"><button class="btn" type="button" id="cLab">去實驗室動手做</button>'+(mine&&!v.completed&&!stuck?'<button class="btn ghost" type="button" id="cFocus">先練這個觀念（今天 '+mine+' 張）</button>':'')+
     (stuck||!cst.weakNow?'':'<button class="btn ghost" type="button" id="cWeak">練待加強的 '+Math.min(SEG,cst.weakNow)+' 題</button>')+
@@ -959,6 +963,17 @@ function renderConcept(cid){
   on("#cMore",function(){var b=$("#main .remedy");if(b)b.outerHTML=explainBlock(EXPLAIN[cid][1]);$("#cMore").hidden=true;});
   on("#cBack",renderHome);
   el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+// 考古挑戰（#3006）開放了沒、還差什麼：只讀核心的 challengeStatus（和每日計畫放不放挑戰題同一個判準）
+function chLine(cid,v){
+  var t=C.challengeStatus(S(),BANK,cid); if(!t.total||!t.basics) return '';
+  var today=v.planIds.filter(function(id){var k=card(id);return CHALLENGE[id]&&k&&k.concept===cid&&v.doneIds.indexOf(id)<0;}).length;
+  var tail=t.done>=t.total?'都做過了，之後照一般的卡複習。':
+    t.stuck?'先和爸媽看完圖解，再開放。':
+    t.open?'已開放，每天的練習會輪流混 2～3 題'+(t.done?'（已做過 '+t.done+' 題）':'')+(today?'；今天的練習裡有 '+today+' 題':'')+'。':
+    t.basicSeen<t.basics?'這個觀念的基本題還有 '+(t.basics-t.basicSeen)+' 題沒做過；基本題都做過、而且八成以上答對以後才開放。':
+    '基本題答對 '+t.basicOk+'／'+t.basics+' 題，再把 '+(t.need-t.basicOk)+' 題待加強的練對就開放（八成以上答對）。';
+  return '<div class="hint" id="chStatus"><strong>考古挑戰 '+t.total+' 題</strong>（別校考卷、安親班卷出過的難題）：'+esc(tail)+'</div>';
 }
 function askLine(ex){return '<div class="hint"><strong>給爸媽：</strong>先讓她說，不直接報答案。可以追問：「'+esc(ex.ask)+'」</div>';}
 function explainBlock(ex){
@@ -1012,7 +1027,8 @@ function renderPractice(){
   if(!c) return renderEnd();
   ui={hint:false,cardId:id,variation:se.kinds[id]==="variation"};
   var con=CONCEPTS[c.concept], total=se.answered.length+se.queue.length, pos=se.answered.length+1;
-  var h='<div class="qhead"><span>'+(se.makeup?'<span class="tag" style="margin:0 6px 0 0">補做 '+md(se.makeup)+'</span>':se.kind==="review"?'<span class="tag" style="margin:0 6px 0 0">小考複習'+(se.pick==="again"?'・全部再練一遍':se.pick==="weak"?'・練待加強的':se.pick==="fresh"?'・還沒做過的題':'')+'</span>':'')+esc(UNITS[con.unit])+'・'+esc(con.title)+(ui.variation?'<span class="tag">同觀念換一題確認</span>':'')+'</span><span>'+pos+' / '+total+'</span></div><div class="bar"><i style="width:'+Math.round((pos-1)/total*100)+'%"></i></div>';
+  var h='<div class="qhead"><span>'+(se.makeup?'<span class="tag" style="margin:0 6px 0 0">補做 '+md(se.makeup)+'</span>':se.kind==="review"?'<span class="tag" style="margin:0 6px 0 0">小考複習'+(se.pick==="again"?'・全部再練一遍':se.pick==="weak"?'・練待加強的':se.pick==="fresh"?'・還沒做過的題':'')+'</span>':'')+esc(UNITS[con.unit])+'・'+esc(con.title)+(ui.variation?'<span class="tag">同觀念換一題確認</span>':'')+(CHALLENGE[id]?'<span class="tag" id="chTag">考古挑戰</span>':'')+'</span><span>'+pos+' / '+total+'</span></div><div class="bar"><i style="width:'+Math.round((pos-1)/total*100)+'%"></i></div>';
+  if(CHALLENGE[id]) h+='<p class="small muted" id="chNote" style="margin:0">考古挑戰：別校考卷或安親班卷出過的難題。答錯沒關係，會一步一步帶你看這題怎麼解。</p>';   // #3006
   h+=questionHtml(c,"practice");
   var tools='<div class="tools"><label><input type="checkbox" id="unsure"> 我不太確定</label>'+(c.hint?'<button class="btn ghost sm" type="button" id="hintBtn">給我一點提示</button>':'')+'</div><div class="hint" id="hintBox" hidden></div>';
   if(c.type==="map"){
@@ -1098,6 +1114,7 @@ function feedback(p,info){
   if(info.halted||(!p.ok&&p.a&&p.a.variation&&S().session&&S().session.halted)) return renderHalted(c,p.selfGraded);
   if(!p.selfGraded&&c.type!=="map") box.insertAdjacentHTML("beforeend",'<div class="fb no"><strong>正確答案是「'+esc(answerText(c))+'」</strong><span>'+esc(c.why||"")+'</span>'+(c.type==="figure"?figureSvg(c.fig,true):"")+srcLine(c)+'</div>');
   if(c.type==="map") box.insertAdjacentHTML("beforeend",'<div class="fb no"><span>'+esc(c.why||"")+'</span></div>');
+  box.insertAdjacentHTML("beforeend",solveBlock(c));   // 考古挑戰題答錯：先給這一題的分步驟解法，再問錯在哪（#3006）
   box.insertAdjacentHTML("beforeend",'<div class="fb" id="errq" style="background:var(--bg)"><strong>你覺得錯在哪裡？<span class="muted" style="font-weight:400">（自己選，沒有標準答案）</span></strong><div class="chips">'+
     Object.keys(ERRS).map(function(k){return '<button class="chip'+(k==="concept"?' pri':'')+'" type="button" data-k="'+k+'">'+ERRS[k]+'</button>';}).join("")+'<button class="chip" type="button" data-k="">先跳過</button></div></div>');
   $("#errq").querySelectorAll("button").forEach(function(b){b.onclick=function(){
@@ -1120,6 +1137,13 @@ function stepsBlock(tp){
   return '<strong style="font-size:19px">一步一步看：'+esc(T.title)+'</strong><ol class="steps">'+
     T.steps.map(function(s,i){return '<li class="step"><div class="sfig">'+s.fig()+'</div><div class="say"><b class="n">'+(i+1)+'</b><p>'+esc(s.say)+'</p></div></li>';}).join("")+
     '</ol><div class="remember"><strong>一句話記住：</strong>'+esc(T.remember)+'</div>';
+}
+// 考古挑戰題自己的解法（src/solve.js）：不是挑戰題、或沒有解法就不畫
+function solveBlock(c){
+  var s=CHALLENGE[c.id]&&window.G5_SOLVE&&G5_SOLVE[c.id];
+  if(!s||!s.length) return '';
+  return '<div class="fb solve" id="solveBox" style="background:var(--sun-soft)"><strong>考古挑戰：這題一步一步解</strong><ol style="margin:0;padding-left:22px;display:grid;gap:6px;line-height:1.6">'+
+    s.map(function(t){return '<li>'+esc(t)+'</li>';}).join("")+'</ol></div>';
 }
 function backToQ(c){return '<div class="backq"><strong>回到這一題</strong><span class="muted">'+esc(c.q)+'</span><span>答案是「'+esc(answerText(c))+'」。'+esc(c.why||"")+'</span></div>';}
 function exBlock(ex,alt){
@@ -1168,6 +1192,7 @@ function renderHalted(c,selfGraded){
   var con=CONCEPTS[c.concept];
   $("#main").innerHTML='<div class="done"><b class="t">這一輪先停在這裡</b>'+
     (selfGraded?'':'<div class="fb no" style="text-align:left;justify-self:stretch"><strong>這題的正確答案是「'+esc(answerText(c))+'」</strong><span>'+esc(c.why||"")+'</span></div>')+
+    (solveBlock(c)?'<div style="text-align:left;justify-self:stretch">'+solveBlock(c)+'</div>':'')+
     '<p style="margin:0">「'+esc(con.short)+'」看了圖解、做了實驗，換一題還是卡住——這很正常，不用一直刷題。</p>'+
     '<p class="muted" style="margin:0">請爸媽陪你一起看一次圖解，或明天再試。這張卡明天會再出現。</p>'+
     '<div class="row" style="justify-content:center"><button class="btn" type="button" id="hView">現在和爸媽一起看圖解</button><button class="btn ghost" type="button" id="hHome">回首頁</button></div></div>';
