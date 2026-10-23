@@ -106,13 +106,17 @@
     return out;
   }
   // 每日計畫回合、再練答錯的、補做續接、今天剩幾張／完成了沒共用（#3010）：查得到、不是考不到的；沒做過的要還在出新（isActive）。做過的照常（到期複習）
-  // 考古挑戰題（bank.challenge＝範圍稽核 kind:"challenge"；不在 bank.active 裡）：沒做過的只能由每日計畫放進來（computePlan），
-  // 排進過計畫就做得了（之後那天基本題又答錯，已排的照樣做完，今天的完成不會倒退）；做過的照一般規則複習
+  // 考古挑戰題（bank.challenge＝範圍稽核 kind:"challenge"；不在 bank.active 裡）：沒做過的只能由每日計畫放進來（computePlan）。
+  // 做得了＝這個觀念現在開放，或考古挑戰上線（CH_START）以後的計畫排進過它（之後那天基本題又答錯，已排的照樣做完，今天的完成不會前後跳）。
+  // CH_START 以前的計畫裡的挑戰題是 10-19 停出前當一般新卡排的，不算（Codex 審 7ca947e：舊計畫裡沒做的停出題被復活，已完成的那天變成沒完成）
+  var CH_START = "2026-10-23";
   function servable(state, bank, id) {
     if (!cardById(state, bank, id) || isOut(bank, id)) return false;
-    return cardState(state, id).seen > 0 || isActive(bank, id) || (isChallenge(bank, id) && plannedEver(state, id));
+    if (cardState(state, id).seen > 0 || isActive(bank, id)) return true;
+    if (!isChallenge(bank, id)) return false;
+    return challengeStatus(state, bank, cardById(state, bank, id).concept).open || plannedSince(state, id, CH_START);
   }
-  function plannedEver(state, id) { return Object.keys(state.days).some(function (k) { return state.days[k].planIds.indexOf(id) >= 0; }); }
+  function plannedSince(state, id, from) { return Object.keys(state.days).some(function (k) { return k >= from && state.days[k].planIds.indexOf(id) >= 0; }); }
   // 觀念進度、單元／觀念題數、直接闖關、小考複習的母體＝能出新卡的 ∪ 練過的 ∪ 最近一天計畫或回合裡還在用的。單純裁題不會讓「做過幾題」或植物階段倒退
   // day＝今天（Codex 審 4d71855：原取「最後一天」，昨天沒答的舊題會混進今天的母體，和階段不一致）
   function poolCards(state, bank, day) {
@@ -396,8 +400,9 @@
             // 概念入口：她選的觀念先練，只換順序、不改到期規則與當日計畫
             var mine = function (id) { var c = cardById(s, bank, id); return c && c.concept === action.focus ? 0 : 1; };
             sess.queue = sess.queue.map(function (id, i) { return [mine(id), i, id]; }).sort(function (x, y) { return x[0] - y[0] || x[1] - y[1]; }).map(function (x) { return x[2]; });
-            // 她選的觀念那一段、其餘那一段各自重新插開考古挑戰題（#3006：挑戰題不因為換順序就排到第一、連在一起）
-            sess.queue = spreadChallenge(bank, sess.queue.filter(function (id) { return !mine(id); })).concat(spreadPlan(s, bank, sess.queue.filter(mine)));
+            // 換完順序整份重新插開考古挑戰題（#3006）：基本題順序不動＝她選的觀念的基本題照樣在前；挑戰題平均插進整份，不因為換順序就排到第一、連在一起。
+            // 不分段插：選的觀念今天只剩挑戰題時，分段會讓它們整串排最前面（Codex 審 7ca947e：focus 1-3 得到 s37,s38,s39,s1…）
+            sess.queue = spreadPlan(s, bank, sess.queue);
             sess.focus = action.focus;
           }
           if (isNat(action.size) && action.size > 0) sess.queue = sess.queue.slice(0, action.size);

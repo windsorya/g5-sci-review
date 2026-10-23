@@ -2619,10 +2619,11 @@ test("CH06 每日練習回合：挑戰題不排第一、不相鄰；選觀念先
   // 一次只練 4 張：切段前已插開，前 4 張也不會從挑戰題開始
   s = run(s0, b, NOON(D), op("sessionStart", { size: 4 }));
   assert.ok(!isCh(b)(s.session.queue[0]) && noAdjacent(s.session.queue, b), s.session.queue.join());
-  // 計畫排好之後 1-2 才標待協助：1-2 的卡照樣排最後，前段的挑戰題照樣插開
-  const pre = chClone(C.reduce(s0, { type: "tick" }, env(b, NOON(D))).state);
-  pre.help["1-2"] = { count: 2, last: D, way: 1, needsHelp: true };
-  s = run(pre, b, NOON(D), op("sessionStart"));
+  // 計畫排好之後 1-2 才標待協助：1-2 的卡照樣排最後，前段的挑戰題照樣插開（已排的 y1 照樣做得了，要在考古挑戰上線 10-23 以後的日子）
+  const DC = "2026-10-24", s1 = C.blankState(); solid(s1, six, DC); solid(s1, ["c1", "c2"], DC);
+  const pre = chClone(C.reduce(s1, { type: "tick" }, env(b, NOON(DC))).state);
+  pre.help["1-2"] = { count: 2, last: DC, way: 1, needsHelp: true };
+  s = run(pre, b, NOON(DC), op("sessionStart"));
   q = s.session.queue;
   assert.deepEqual(q.slice(-3).map((id) => C.cardById(s, b, id).concept), ["1-2", "1-2", "1-2"], "待協助的觀念排最後：" + q.join());
   assert.ok(!isCh(b)(q[0]) && noAdjacent(q.slice(0, -3), b), q.join());
@@ -2639,22 +2640,23 @@ test("CH07 做過的挑戰題照自己的到期日複習（觀念沒開放也一
 });
 
 test("CH08 已排進今天計畫的挑戰題：之後基本題答錯（觀念關掉）照樣做得了，做完今天就完成", () => {
-  const b = chBank(); let s = C.blankState(); solid(s, ["b1", "b2", "b3", "b4", "b5", "c1", "c2"]);
-  s = run(s, b, NOON(D), op("tick"));
-  assert.deepEqual(s.days[D].planIds, ["x1", "y1"]);
-  s = run(s, b, NOON(D), op("answer", { cardId: "b1", ok: false }));
-  s = run(s, b, NOON(D), op("answer", { cardId: "b2", ok: false }));
+  const DC = "2026-10-24";   // 考古挑戰上線（CH_START 10-23）以後的計畫才算「排進過」
+  const b = chBank(); let s = C.blankState(); solid(s, ["b1", "b2", "b3", "b4", "b5", "c1", "c2"], "2026-10-27");
+  s = run(s, b, NOON(DC), op("tick"));
+  assert.deepEqual(s.days[DC].planIds, ["x1", "y1"]);
+  s = run(s, b, NOON(DC), op("answer", { cardId: "b1", ok: false }));
+  s = run(s, b, NOON(DC), op("answer", { cardId: "b2", ok: false }));
   assert.equal(C.challengeStatus(s, b, "1-1").open, false, "前置：1-1 已關");
-  let v = C.view(s, env(b, NOON(D)));
+  let v = C.view(s, env(b, NOON(DC)));
   assert.deepEqual([v.remainingIds, v.missingIds, v.completed], [["x1", "y1"], [], false], "已排的不變成『不用做』");
-  s = run(s, b, NOON(D), op("sessionStart"));
+  s = run(s, b, NOON(DC), op("sessionStart"));
   assert.deepEqual(s.session.queue.slice().sort(), ["x1", "y1"]);
-  s = run(s, b, NOON(D), op("answer", { cardId: "x1", ok: false }));
-  s = run(s, b, NOON(D), op("answer", { cardId: "y1", ok: true }));
-  v = C.view(s, env(b, NOON(D)));
+  s = run(s, b, NOON(DC), op("answer", { cardId: "x1", ok: false }));
+  s = run(s, b, NOON(DC), op("answer", { cardId: "y1", ok: true }));
+  v = C.view(s, env(b, NOON(DC)));
   assert.deepEqual([v.completed, v.planStatus], [true, "complete"]);
   // 隔天：1-1 關著 ⇒ 沒做過的 x2 不排；答錯的 x1 照到期日（明天）回來
-  const next = C.view(s, env(b, NOON("2026-10-21"))).planIds;
+  const next = C.view(s, env(b, NOON("2026-10-25"))).planIds;
   assert.ok(next.includes("x1") && !next.includes("x2"), next.join());
 });
 
@@ -2706,4 +2708,25 @@ test("CH12 插開挑戰題時，待協助觀念的卡仍整段排在最後（不
   assert.deepEqual(s.session.queue, ["a0", "x1", "a1", "x2", "c1", "c2", "c3", "c4"]);
   const ob = Object.assign({}, b, { out: { x1: 1 } });
   assert.deepEqual(C.view(s0, env(ob, NOON(D))).planIds.filter((id) => id[0] === "x"), ["x2"], "x1 考不到：不因為是挑戰題就排");
+});
+
+test("CH13 選觀念先練、那個觀念今天只剩挑戰題：挑戰題仍不排第一、不相鄰（Codex 審 7ca947e：分段插會把它們整串排最前面）", () => {
+  const b = chBank(); const s0 = C.blankState(); solid(s0, ["b1", "b2", "b3", "b4", "b5"]); solid(s0, ["c1", "c2"], D);
+  assert.deepEqual(C.view(s0, env(b, NOON(D))).planIds, ["x1", "c1", "c2", "y1"], "前置：1-1 今天只有挑戰題 x1");
+  const q = run(s0, b, NOON(D), op("sessionStart", { focus: "1-1" })).session.queue;
+  assert.ok(!isCh(b)(q[0]) && noAdjacent(q, b), q.join());
+  assert.deepEqual(q, ["c1", "x1", "c2", "y1"]);
+});
+
+test("CH14 考古挑戰上線（10-23）以前的計畫裡沒做的挑戰題（10-19 停出前當一般新卡排的）：觀念沒開放就不復活，那天的完成和原本一樣（Codex 審 7ca947e）", () => {
+  const b = chBank(), nob = Object.assign({}, b); delete nob.challenge;
+  const old = "2026-10-18", s = C.blankState(); solid(s, ["b1"]);
+  s.days[old] = { planIds: ["b1", "x1"], doneIds: ["b1"], touched: ["b1"], extraDone: false, labRuns: 0, teach: 0, mood: null };
+  const v1 = C.view(s, env(b, NOON(old))), v0 = C.view(s, env(nob, NOON(old)));
+  assert.deepEqual([v1.completed, v1.remainingIds, v1.missingIds], [true, [], ["x1"]]);
+  assert.deepEqual([v1.completed, v1.remainingIds, v1.missingIds], [v0.completed, v0.remainingIds, v0.missingIds]);
+  // 同樣的計畫排在上線以後的日子＝考古挑戰排的（排的時候開放），照樣做得了（同 CH08）
+  const s2 = C.blankState(); solid(s2, ["b1"]);
+  s2.days["2026-10-24"] = { planIds: ["b1", "x1"], doneIds: ["b1"], touched: ["b1"], extraDone: false, labRuns: 0, teach: 0, mood: null };
+  assert.deepEqual(C.view(s2, env(b, NOON("2026-10-24"))).remainingIds, ["x1"]);
 });

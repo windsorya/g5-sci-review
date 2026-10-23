@@ -90,6 +90,19 @@ test("真實題庫：1-3 基本題 22 題有 5 題待加強（答對 17 題，�
   assert.ok(planCh(s).length >= 2);
 });
 
+test("真實題庫：1-3 基本題都答對但今天沒到期、1-1 基本題到期，按「先練季節」（focus 1-3）：挑戰題不排第一、不相鄰（Codex 審 7ca947e 重現情境）", () => {
+  const s = stateWith((c) => c.concept === "1-3" ? { seen: 1, goodDays: ["2026-10-21"], blockedDay: null, due: "2026-10-27" }
+    : c.concept === "1-1" ? { seen: 1, goodDays: ["2026-10-21"], blockedDay: null, due: D } : null);
+  const plan = C.view(s, { bank: BANK, now: NOON }).planIds;
+  assert.deepEqual(plan.filter((id) => !BANK.challenge[id]).every((id) => C.cardById(s, BANK, id).concept !== "1-3"), true, "前置：1-3 今天只有挑戰題");
+  assert.equal(plan.filter((id) => BANK.challenge[id]).length, 3);
+  const r = C.reduce(s, { type: "sessionStart", id: "ch-op2", focus: "1-3" }, { bank: BANK, now: NOON });
+  assert.ok(!r.error, r.error);
+  const q = r.state.session.queue;
+  assert.ok(!BANK.challenge[q[0]], q.slice(0, 4).join());
+  for (let i = 1; i < q.length; i++) assert.ok(!(BANK.challenge[q[i]] && BANK.challenge[q[i - 1]]), "相鄰：" + q[i - 1] + "," + q[i]);
+});
+
 test("畫面接線：練習畫面看 CHALLENGE 標「考古挑戰」、答錯與停輪畫面都接 solveBlock、觀念頁接 chLine、build 會內嵌 solve.js", () => {
   assert.ok(/CHALLENGE\[id\]\?'<span class="tag" id="chTag">考古挑戰<\/span>'/.test(html));
   assert.ok(/box\.insertAdjacentHTML\("beforeend",solveBlock\(c\)\)/.test(html));
