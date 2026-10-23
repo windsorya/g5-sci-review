@@ -885,6 +885,31 @@ def flow_dissolve_fair_test(browser):
 
 
 # ---------- 4agent 必修（run 4B-20261011-g5app；交辦 #1182 自修 session 接手） ----------
+def flow_summary_missing_denominator(browser):
+    """Codex 審 9465ea8 P2（#3033）：計畫含停出（out）未做的 k49，家長摘要與首頁「完成 x / y 張」的分母只算能做的，停出的另列不用做。"""
+    def seed(done):
+        s = {"v": 3, "cards": {}, "exits": {}, "days": {}, "labRuns": {}, "session": None, "log": [], "ops": [], "help": {}, "extra": [],
+             "settings": {"unit3": False, "sound": False}}
+        for cid in done:
+            s["cards"][cid] = {"seen": 1, "goodDays": ["2026-10-11"], "blockedDay": None, "due": "2026-10-12"}
+        s["days"]["2026-10-11"] = {"planIds": ["s1", "k49", "s2"], "doneIds": done, "touched": list(done), "extraDone": False, "labRuns": 0, "teach": 0, "mood": None}
+        return "if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');localStorage.setItem('g5sci.v3', %s);}" % json.dumps(json.dumps(s))
+    ctx, page, errors = new_page(browser, "2026-10-11T20:00:00+08:00", init=seed(["s1", "s2"]))
+    page.locator("#parentBox summary").click()
+    summ = page.inner_text("#summary")
+    check("摘要分母只算能做的（2 / 2，停出 1 張另列）", "2 / 2 張（完成）" in summ and "2 / 3" not in summ and "另有 1 張" in summ, summ[:200])
+    check("摘要流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+    # 一輪結束畫面（今天還沒做完）：計畫 s1,k49,s2,s3，回合已答 s1、只剩 s2；做完後能做的 3 張完成 2 張
+    ctx, page, errors = new_page(browser, "2026-10-11T20:00:00+08:00", init=seed_state("2026-10-11", ["s1", "k49", "s2", "s3"], ["s1"], ["s2"], ["s1"]))
+    page.locator("#goOn").click()
+    answer_and_next(page)
+    main = page.inner_text("#main")
+    check("一輪結束畫面分母只算能做的（2 / 3，還有 1 張）", "完成 2 / 3 張，還有 1 張" in main and "2 / 4" not in main, main[:200])
+    check("結束畫面流程沒有 JS 錯誤", not errors, errors)
+    ctx.close()
+
+
 BLOCK = "window.__s=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new Error('QuotaExceededError')};0"
 
 
@@ -1290,6 +1315,7 @@ def main():
         flow_lab_retry_resume(ch)
         flow_lab_done_resume(ch)
         flow_review_after_plan_done(ch)
+        flow_summary_missing_denominator(ch)
         flow_makeup(ch)
         flow_makeup(wk, ipad, "webkit_ipad")
         flow_pending_blocks_new_answer(ch)
