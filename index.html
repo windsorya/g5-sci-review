@@ -2766,7 +2766,8 @@ if (typeof module !== "undefined") module.exports = { sunPosition: sunPosition, 
     if (!cards.length) return 0;
     var seen = cards.filter(function (c) { return cardState(s, c.id).seen > 0; }).length;
     var e = s.exits[cid], pass = !!e && e.status === "pass";
-    if (pass && cards.every(function (c) { return retired(cardState(s, c.id)); })) return 4;
+    // 考不到（kind:out）的題不會再出、永遠學不會，不擋「結果了」；仍在母體裡，做過幾題不倒退（同社會站 dc4c343，#3924）
+    if (pass && cards.every(function (c) { return isOut(bank, c.id) || retired(cardState(s, c.id)); })) return 4;
     if (pass) return 3;
     if (seen === cards.length) return 2;
     return seen ? 1 : 0;
@@ -4137,9 +4138,10 @@ function segMore(se){
 function renderTeach(){
   screen="teach"; leaveLab();
   var s=S(), today=V().today;
-  var okToday=s.log.filter(function(e){return e.d===today&&e.ok;}).map(function(e){return e.card;});
-  var pool=okToday.length?okToday:s.log.filter(function(e){return e.ok;}).map(function(e){return e.card;});
-  pool=pool.filter(function(id){return !!card(id)&&!OUT[id];});   // #3010 F1：考不到的題不拿來考爸媽（作答紀錄照留）
+  // #3010 F1：考不到的題不拿來考爸媽（作答紀錄照留）。F8：先排除再選今天／以前答對的——今天只答對考不到的題時，改拿以前答對、還能做的題
+  var usable=function(e){return e.ok&&!!card(e.card)&&!OUT[e.card];};
+  var okToday=s.log.filter(function(e){return e.d===today&&usable(e);}).map(function(e){return e.card;});
+  var pool=okToday.length?okToday:s.log.filter(usable).map(function(e){return e.card;});
   var el=$("#main");
   if(!pool.length){el.innerHTML='<p style="margin:0">先練幾張卡，答對的題目就可以拿來考爸媽。</p><div class="row"><button class="btn ghost" type="button" id="back">回首頁</button></div>';on("#back",renderHome);return;}
   var c=card(pool[Math.floor(Math.random()*pool.length)]);
