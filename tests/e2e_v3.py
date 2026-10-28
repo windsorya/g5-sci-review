@@ -741,6 +741,80 @@ def flow_concept_retry_stays(browser):
           and page.get_by_role("button", name="開始今天的練習").count() == 1 and page.locator("#retrySave").count() == 0 and not errors,
           {"先出現再存一次": had_retry, "unit3": st and st["settings"].get("unit3"), "errors": errors, "main": page.inner_text("#main")[:80]})
     ctx.close()
+    # 第 2 輪（Codex 審 944359b P2）：補存後不得整頁重畫——已換的第二種說法、捲動位置都要原地保留（本站觀念頁沒有影片區）
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00", {"viewport": {"width": 390, "height": 844}}, init="Math.random = () => 0.99;")
+    page.locator(".ccard[data-cid='1-1']").click(); page.locator("#cLab").click()
+    page.wait_for_selector("#labPredict button[data-g]"); page.locator("#labPredict button[data-g='0']").click(); page.wait_for_selector("#shT")
+    page.evaluate(LAB_BREAK); page.evaluate(SH_SET, "8"); page.locator("#labHome").click()
+    page.locator(".ccard[data-cid='1-1']").click(); page.wait_for_selector("#cLab")
+    page.locator("#cMore").click(); alt = page.evaluate(REMEDY_NAME)
+    page.wait_for_timeout(800)   # 開觀念頁時的平滑捲動先停
+    y0 = page.evaluate("() => { window.scrollTo(0, 400); return window.scrollY; }")
+    page.evaluate(LAB_FIX); page.locator("#retrySave").first.click(); page.wait_for_timeout(800)
+    kept = {"第二種說法": bool(alt) and page.evaluate(REMEDY_NAME) == alt, "換說法鈕仍收起": page.locator("#cMore").count() == 1 and page.locator("#cMore").is_hidden(),
+            "沒捲動": y0 > 100 and abs(page.evaluate("() => window.scrollY") - y0) < 2, "在觀念頁": page.locator("#cLab").count() == 1, "再存一次": page.locator("#retrySave").count()}
+    check("觀念頁補存成功後原地保留：已換的第二種說法、捲動位置都還在，沒有 JS 錯誤",
+          kept == {"第二種說法": True, "換說法鈕仍收起": True, "沒捲動": True, "在觀念頁": True, "再存一次": 0} and not errors,
+          {"結果": kept, "y0": y0, "errors": errors})
+    ctx.close()
+    # 第 2 輪：存檔衍生的資訊要跟著更新——練習作答沒存到 → 進那張卡的觀念頁 → 恢復 →「再存一次」：「直接闖關」少一題
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00", {"viewport": {"width": 390, "height": 844}}, init="Math.random = () => 0.99;")
+    btn(page, "只做 3 張").click(); page.wait_for_selector("#main .opt")
+    page.evaluate(LAB_BREAK); btn(page, "東邊升起、西邊落下").click()   # 第一張是 1-1 的卡（同 open_shadow_wrong）
+    failed = page.locator("#retrySave").count() >= 1
+    page.locator(".ccard[data-cid='1-1']").click(); page.wait_for_selector("#cLab")
+    n0 = page.evaluate(GO_LEFT)
+    page.evaluate(LAB_FIX); page.locator("#retrySave").first.click(); page.wait_for_timeout(300)
+    n1 = page.evaluate(GO_LEFT)
+    st = state(page)
+    check("練習作答沒存到→進觀念頁→「再存一次」：作答存到、留在觀念頁、「直接闖關」題數跟著少一題",
+          failed and n0 is not None and n1 == n0 - 1 and st and len(st.get("log", [])) == 1
+          and page.locator("#cLab").count() == 1 and page.locator("#retrySave").count() == 0 and not errors,
+          {"先失敗": failed, "補存前": n0, "補存後": n1, "作答紀錄": st and len(st.get("log", [])), "errors": errors})
+    ctx.close()
+    # 第 2 輪：區塊會出現／消失——觀念頁顯示「先和爸媽一起看圖解」時，家長在側欄按「已經陪她看過」沒存到 → 恢復 →「再存一次」：
+    # 陪看提示要拿掉、「直接闖關」列要長出來（refreshConcept 的插入新區塊／移除舊區塊兩條路）
+    ctx, page, errors = new_page(browser, "2026-10-12T19:00:00+08:00", {"viewport": {"width": 390, "height": 844}},
+                                 init="""if(!sessionStorage.getItem('seeded')){sessionStorage.setItem('seeded','1');
+      localStorage.setItem('g5sci.v3', JSON.stringify({v:3,cards:{s1:{seen:1,goodDays:['2026-10-11'],blockedDay:null,due:'2026-10-12'}},
+        exits:{'1-1':{status:'pending',due:'2026-10-12',opened:'2026-10-11',last:null}},days:{},labRuns:{},session:null,log:[],ops:[],
+        help:{'1-1':{count:2,last:'2026-10-11',way:1,needsHelp:true}},extra:[],settings:{unit3:false,sound:false}}));}""")
+    page.locator(".ccard[data-cid='1-1']").click(); page.wait_for_selector("#cLab")
+    stuck0 = {"陪看提示": page.locator("#main .banner.info").count(), "直接闖關列": page.locator("#cGoRow").count()}
+    page.evaluate(LAB_BREAK); page.evaluate("() => document.querySelector('#summary button[data-helped=\"1-1\"]').click()")
+    had_retry = page.locator("#retrySave").count() >= 1
+    page.evaluate(LAB_FIX); page.locator("#retrySave").first.click(); page.wait_for_timeout(300)
+    stuck1 = {"陪看提示": page.locator("#main .banner.info").count(), "直接闖關列": page.locator("#cGoRow").count()}
+    order = page.evaluate("() => { const b = document.querySelector('#main > div'); const i = x => [...b.children].indexOf(document.querySelector(x)); return i('#cGoRow') > i('#main h2') && i('#cGoRow') < i('#main .remedy'); }")
+    go = page.locator("#cGo").count() == 1
+    if go:   # 補存後才長出來的「直接闖關」要按得動（wireConcept 有綁到新區塊）
+        page.locator("#cGo").click(); page.wait_for_timeout(300)
+    started = page.locator("#main .opt").count() >= 1
+    check("觀念頁上「已經陪她看過」沒存到→恢復→「再存一次」：陪看提示拿掉、直接闖關列長在標題與說明之間、按得動",
+          stuck0 == {"陪看提示": 1, "直接闖關列": 0} and had_retry and stuck1 == {"陪看提示": 0, "直接闖關列": 1} and order and go and started
+          and page.locator("#retrySave").count() == 0 and not errors,
+          {"補存前": stuck0, "先出現再存一次": had_retry, "補存後": stuck1, "位置對": order, "闖關開始": started, "errors": errors})
+    ctx.close()
+    # 第 1 輪（#3612 openLab 開成才設 lab）帶出的行為：練習答錯補救→按「做觀察任務」時寫入失敗（開不成）→恢復→「再存一次」：
+    # 回到練習題繼續（更早的版本 screen 已被設成 lab、補存後 route() 送回首頁），作答不重複記
+    ctx, page, errors = new_page(browser, "2026-10-11T19:00:00+08:00", {"viewport": {"width": 390, "height": 844}}, init="Math.random = () => 0.99;")
+    btn(page, "只做 3 張").click()
+    btn(page, "東邊升起、西邊落下").click(); btn(page, "下一題").click()
+    btn(page, "清晨").click(); btn(page, "還不懂這個觀念").click()
+    n_log = len(state(page)["log"])
+    page.evaluate(LAB_BREAK); btn(page, "做觀察任務，再換一題確認").click()
+    stay = page.locator("#labNav").count() == 0 and page.locator("#labPredict").count() == 0
+    page.evaluate(LAB_FIX); page.locator("#retrySave").first.click(); page.wait_for_timeout(300)
+    n_after = len(state(page)["log"])
+    check("練習答錯補救→做觀察任務開不成→恢復→「再存一次」：回到練習題、作答沒有重複記、沒有 JS 錯誤",
+          stay and page.locator("#main .opt").count() >= 2 and page.get_by_role("button", name="開始今天的練習").count() == 0
+          and n_after == n_log and page.locator("#retrySave").count() == 0 and not errors,
+          {"開不成時沒進實驗": stay, "作答紀錄": (n_log, n_after), "errors": errors, "main": page.inner_text("#main")[:60]})
+    ctx.close()
+
+
+REMEDY_NAME = "() => { const r = document.querySelector('#main .remedy strong'); return r ? r.textContent : ''; }"
+GO_LEFT = "() => { const b = document.querySelector('#cGo'); const m = b && b.textContent.match(/(\\d+) 題/); return m ? +m[1] : null; }"
 
 
 def flow_lab_done_resume(browser):
