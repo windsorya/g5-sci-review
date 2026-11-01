@@ -728,6 +728,8 @@
   function isActive(bank, id) { return !bank.active || !!bank.active[id] || !bank.cards.some(function (c) { return c.id === id; }); }
   // 考不到的題（bank.out＝範圍稽核 kind:"out"；2026-10-19 #2997 拍板、#3010）：不排新卡、不排到期複習、不進任何回合；目錄與作答紀錄照留（做過幾題不倒退）
   function isOut(bank, id) { return !!(bank.out && bank.out[id]); }
+  // 選練題（bank.optional，2026-11-01 安親班期中考前卷）：不是 active＝沒做過的不算進度分母、不排每日新卡；只有小考複習按鈕把它放進 ids 時可以出（allowedIn）。做過的照常算、照常到期複習
+  function isOptional(bank, id) { return !!(bank.optional && bank.optional[id]); }
   /* ---------- 考古挑戰（2026-10-23 交辦 #3006；律師 10-19 目標「小考、期中考考高分」）----------
    * 範圍稽核（#2997）把 23 題「主題在範圍內、他校考卷或安親班卷出過的難題」停出新卡；10-19 晚複習回合連出這類題，95 次作答錯 22 次。
    * 現制：某個觀念的基本題（不是挑戰題、還在出或練過的）每題都做過、而且八成以上現在是答對的（不在待加強）、沒有待協助 ⇒ 這個觀念的挑戰題開放；
@@ -934,7 +936,7 @@
     var c = cardById(state, bank, id);
     if (!c || !conceptOn(state, bank, c.concept) || isOut(bank, id)) return false;
     var cs = cardState(state, id);
-    if (!cs.seen) return isActive(bank, id);
+    if (!cs.seen) return isActive(bank, id) || isOptional(bank, id);
     if (pick === "fresh" || touchedOn(state, day).indexOf(id) >= 0) return false;
     return pick === "again" || weakCard(cs);
   }
@@ -1735,12 +1737,12 @@ var ALL_CARDS = BASE_CARDS.concat(window.G5_EXTRA_CARDS||[]);   // 加題在 src
 var MERGED = window.G5_MERGED||{}, ANQIN_ALSO = {};
 ALL_CARDS.forEach(function(c){if(MERGED[c.id]&&c.set==="anqin")MERGED[c.id].keep.forEach(function(k){ANQIN_ALSO[k]=1;});});
 var RETIRED = window.G5_RETIRED||{};   // 2026-10-19 範圍稽核：超出學校教學重點的題停出（src/retired.js，每題附理由）
-var ACTIVE = {}; ALL_CARDS.forEach(function(c){if(!MERGED[c.id]&&!RETIRED[c.id])ACTIVE[c.id]=1;});   // 2026-10-18：被併題不刪，只是不再排成新卡（設計方案③）；10-19 停出題同理
+var ACTIVE = {}, MID = {}; ALL_CARDS.forEach(function(c){if(c.set==="mid"){MID[c.id]=1;return;}if(!MERGED[c.id]&&!RETIRED[c.id])ACTIVE[c.id]=1;});   // 2026-11-01 律師：「為何進度消失了 孩子都已經完成」⇒ 安親班期中考前卷不算 active：沒做過的不進觀念進度、地圖、單元題數、每日計畫、挑戰門檻；只從自己那顆按鈕出（core allowedIn 認 bank.optional）   // 2026-10-18：被併題不刪，只是不再排成新卡（設計方案③）；10-19 停出題同理
 // 考不到的題（範圍稽核 kind:"out"；#2997 拍板、#3010）：不排新卡、也不排到期複習、不進任何回合；核心讀 BANK.out。挑戰題（challenge）不在此列
 var OUT = {}; (function(R){Object.keys(R).forEach(function(id){if(R[id]&&R[id].kind==="out")OUT[id]=1;});})((typeof MB!=="undefined"&&MB.RETIRED)||window.G5_RETIRED||{});
 // 考古挑戰（kind:"challenge"，#3006）：仍不在 ACTIVE（不當一般新卡排），核心讀 BANK.challenge——該觀念基本題做過且八成答對後，每天的練習混 2～3 題
 var CHALLENGE = {}; Object.keys(RETIRED).forEach(function(id){if(RETIRED[id]&&RETIRED[id].kind==="challenge"&&!MERGED[id])CHALLENGE[id]=1;});
-var BANK = {cards:ALL_CARDS, active:ACTIVE, out:OUT, challenge:CHALLENGE, concepts:{}, figs:FIGS};
+var BANK = {cards:ALL_CARDS, active:ACTIVE, optional:MID, out:OUT, challenge:CHALLENGE, concepts:{}, figs:FIGS};
 CIDS.forEach(function(k){BANK.concepts[k]={unit:CONCEPTS[k].unit};});
     return { C: window.G5Core, BANK: BANK, UNITS: UNITS, CONCEPTS: CONCEPTS };
   })();

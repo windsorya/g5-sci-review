@@ -49,7 +49,8 @@ test("加題檔有接進 app（ALL_CARDS＝BASE_CARDS.concat(G5_EXTRA_CARDS)，B
   // 2026-10-18 設計方案③：被併題不刪，BANK 放完整目錄、ACTIVE 標出能排成新卡的（扣掉 MERGED）
   // 2026-10-19 範圍稽核：再扣掉 src/retired.js 的停出題
   assert.ok(/var RETIRED = window\.G5_RETIRED\|\|\{\};/.test(html));
-  assert.ok(/var ACTIVE = \{\}; ALL_CARDS\.forEach\(function\(c\)\{if\(!MERGED\[c\.id\]&&!RETIRED\[c\.id\]\)ACTIVE\[c\.id\]=1;\}\);/.test(html));
+  // 2026-11-01：安親班期中考前卷（set:mid）放 MID（選練題）、不進 ACTIVE
+  assert.ok(/var ACTIVE = \{\}, MID = \{\}; ALL_CARDS\.forEach\(function\(c\)\{if\(c\.set==="mid"\)\{MID\[c\.id\]=1;return;\}if\(!MERGED\[c\.id\]&&!RETIRED\[c\.id\]\)ACTIVE\[c\.id\]=1;\}\);/.test(html));
   assert.ok(html.includes("<!--@INLINE src/retired.js-->"));
   assert.ok(/var BANK = \{cards:ALL_CARDS, active:ACTIVE,/.test(html));
   assert.ok(html.includes("<!--@INLINE src/merge.js-->"));
@@ -132,4 +133,19 @@ test("合併後題數：第一單元 86、第二單元 85、第三單元 5（10-
   const anqinSet = kept.filter((c) => c.set === "anqin" || also.has(c.id));
   assert.ok(anqinSet.length < anqinAll.length, "合併後安親班卷應該變少");
   assert.equal(new Set(anqinSet.map((c) => c.id)).size, anqinSet.length);
+});
+
+// 2026-11-01 律師：「為何進度消失了 孩子都已經完成 這樣她會崩潰吧」
+// 安親班期中考前卷（set:mid）是選練題：沒做過的不算進觀念進度、單元題數、每日新卡；只從自己的按鈕出。原本題目全做過的孩子，加了這批題以後進度不倒退
+test("選練題（安親班期中考前卷）不進 active、BANK 帶 optional；core allowedIn 認 optional", () => {
+  assert.ok(html.includes('if(c.set==="mid"){MID[c.id]=1;return;}'), "mid 題被算進 ACTIVE（進度會倒退）");
+  assert.ok(/var BANK = \{cards:ALL_CARDS, active:ACTIVE, optional:MID,/.test(html));
+  const st = { cards: {}, log: [], days: {}, settings: {}, help: {}, exits: {}, extra: [] };
+  const b = { cards: [{ id: "x1", concept: "1-1" }, { id: "m1", concept: "1-1" }], active: { x1: 1 }, optional: { m1: 1 }, concepts: { "1-1": { unit: "1" } } };
+  st.cards.x1 = { seen: 1, goodDays: ["2026-10-30"], blockedDay: null, due: "2026-11-09" };
+  const pool = C.poolCards(st, b, "2026-11-01").map((c) => c.id);
+  assert.deepEqual(pool, ["x1"], "沒做過的選練題不能算進進度分母");
+  assert.deepEqual(C.reviewPick(st, b, ["m1"], "fresh", "2026-11-01"), ["m1"], "選練題要能從自己的按鈕出");
+  st.cards.m1 = { seen: 1, goodDays: [], blockedDay: "2026-11-01", due: "2026-11-02" };
+  assert.deepEqual(C.poolCards(st, b, "2026-11-01").map((c) => c.id).sort(), ["m1", "x1"], "做過的選練題照常算");
 });

@@ -35,7 +35,7 @@ def seed_state():
         js = ("const fs=require('fs'),vm=require('vm'),C=require('./src/core.js');const h=fs.readFileSync('src/app.html','utf8');"
               "const grab=(a,b)=>{const i=h.indexOf(a),j=h.indexOf(b,i);if(i<0||j<i)throw new Error('找不到 '+a);return h.slice(i+a.length,j);};"
               "const base=Array.from(vm.runInNewContext('('+grab('var BASE_CARDS = ',';\\nvar ALL_CARDS')+')'));"
-              "const M=require('./src/merge.js'),R=require('./src/retired.js');const cards=base.concat(require('./src/bank_extra.js')).filter(c=>!M[c.id]&&!R[c.id]);"
+              "const M=require('./src/merge.js'),R=require('./src/retired.js');const cards=base.concat(require('./src/bank_extra.js')).filter(c=>!M[c.id]&&!R[c.id]&&c.set!=='mid');"   # 2026-11-01 選練題（安親班期中考前卷）不算進度
               "const ids=Object.keys(vm.runInNewContext('('+grab('var CONCEPTS = ',';\\nvar CIDS')+')'));"
               "console.log(JSON.stringify(" + SEED_JS + "(C,cards,ids)));")
     return json.loads(subprocess.check_output(["node", "-e", js], cwd=ROOT))

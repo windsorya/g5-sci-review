@@ -1,11 +1,11 @@
 """考古挑戰（2026-10-23 交辦 #3006）真瀏覽器驗收：建置後的 index.html、真實題庫、Playwright 假時鐘。
 
-情境 A（開放）：「季節與回歸線」(1-3) 的 42 題基本題都做過（2026-11-01 加安親班期中考前卷 20 題，原 22）、都答對、今天到期 ⇒ 今天的計畫放 3 題考古挑戰。
+情境 A（開放）：「季節與回歸線」(1-3) 的 22 題基本題都做過、都答對、今天到期 ⇒ 今天的計畫放 3 題考古挑戰。
   ① 按「開始今天的練習」：存檔裡的回合佇列有 3 題挑戰題，第一題不是挑戰題、挑戰題不相鄰
   ② 逐題做完：挑戰題標「考古挑戰」＋說明句；基本題沒有標
   ③ 挑戰題答錯：出現「這題一步一步解」，步數與內容＝src/solve.js 那一題；基本題答對不出現
   ④ 觀念頁 1-3：顯示「考古挑戰 12 題」「已開放」
-情境 B（沒開放）：一題都沒做過 ⇒ 計畫沒有挑戰題；觀念頁 1-3 說「基本題還有 42 題沒做過」
+情境 B（沒開放）：一題都沒做過 ⇒ 計畫沒有挑戰題；觀念頁 1-3 說「基本題還有 22 題沒做過」
   ⑤ 頁面沒有 JS 錯誤
 執行：python3.12 tests/e2e_challenge.py [--page index.html]
 """
@@ -142,8 +142,8 @@ def main():
             t = pg.inner_text("#chStatus")
             st = saved(pg)
             pids = st["days"].get(D, {}).get("planIds", [])
-            check(f"{tag} ⑥ 沒做過基本題：計畫沒有挑戰題、觀念頁說基本題還有 42 題沒做過",
-                  not [x for x in pids if x in DATA["ch"]] and "還有 42 題沒做過" in t and "已開放" not in t, (pids, t))
+            check(f"{tag} ⑥ 沒做過基本題：計畫沒有挑戰題、觀念頁說基本題還有 22 題沒做過",
+                  not [x for x in pids if x in DATA["ch"]] and "還有 22 題沒做過" in t and "已開放" not in t, (pids, t))
             check(f"{tag} ⑤ 沒有 JS 錯誤（B）", not errs, errs)
             ctx.close()
             br.close()
