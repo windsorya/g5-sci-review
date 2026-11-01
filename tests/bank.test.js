@@ -57,6 +57,12 @@ test("加題檔有接進 app（ALL_CARDS＝BASE_CARDS.concat(G5_EXTRA_CARDS)，B
   assert.ok(extra.length >= 150, "加題只有 " + extra.length);
 });
 
+test("安親班期中考前複習卷（set:mid）161 題都標出處、id 為 m 開頭、不被算進舊安親班卷", () => {
+  const mid = extra.filter((c) => c.set === "mid");
+  assert.equal(mid.length, 161);
+  mid.forEach((c) => { assert.ok(/^m\d+$/.test(c.id), c.id); assert.equal(c.page, "改寫自安親班期中考前複習卷（10/31）", c.id); assert.ok(c.why && c.why.length >= 6, c.id + " 缺解說"); });
+});
+
 test("安親班卷改寫的題都標出處；不收範圍外的蕨類／孢子題", () => {
   const anqin = extra.filter((c) => c.set === "anqin");
   assert.ok(anqin.length >= 140);
@@ -116,7 +122,7 @@ test("看圖題一律保留（看圖是另一種考法）", () => {
 
 test("合併後題數：第一單元 86、第二單元 85、第三單元 5（10-11 第一輪 108／97／5；10-18 律師新判準第二輪再併 40 題、依和順 114 卷加 h 系列 6 題）；安親班卷每一題都還練得到（本身留下或由留下的題代表）", () => {
   const unit = (c) => c.concept[0];
-  assert.deepEqual(["1", "2", "3"].map((u) => kept.filter((c) => unit(c) === u).length), [86, 85, 5]);
+  assert.deepEqual(["1", "2", "3"].map((u) => kept.filter((c) => unit(c) === u).length), [155, 177, 5]);   // 2026-11-01 加安親班期中考前複習卷 161 題（m1–m161：第一單元 69、第二單元 92），原 86／85／5
   const anqinAll = cards.filter((c) => c.set === "anqin");
   anqinAll.forEach((c) => {
     if (!merged[c.id]) return;

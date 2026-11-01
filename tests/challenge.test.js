@@ -78,11 +78,11 @@ test("真實題庫：基本題都沒做過 ⇒ 計畫 0 題挑戰題；1-3 基�
   for (let i = 1; i < q.length; i++) assert.ok(!(BANK.challenge[q[i]] && BANK.challenge[q[i - 1]]), "相鄰：" + q[i - 1] + "," + q[i]);
 });
 
-test("真實題庫：1-3 基本題 22 題有 5 題待加強（答對 17 題，不到八成）⇒ 不開放；練對 1 題（18 題）⇒ 開放", () => {
+test("真實題庫：1-3 基本題 42 題有 9 題待加強（答對 33 題，不到八成）⇒ 不開放；練對 1 題（34 題）⇒ 開放（2026-11-01 加安親班期中考前卷 20 題 1-3，原 22／5／17／18）", () => {
   let k = 0;
-  const s = stateWith((c) => c.concept !== "1-3" ? null : (k++ < 5 ? { seen: 1, goodDays: [], blockedDay: "2026-10-22", due: "2026-10-23" } : { seen: 1, goodDays: ["2026-10-21"], blockedDay: null, due: "2026-10-26" }));
+  const s = stateWith((c) => c.concept !== "1-3" ? null : (k++ < 9 ? { seen: 1, goodDays: [], blockedDay: "2026-10-22", due: "2026-10-23" } : { seen: 1, goodDays: ["2026-10-21"], blockedDay: null, due: "2026-10-26" }));
   const st = C.challengeStatus(s, BANK, "1-3");
-  assert.deepEqual([st.basics, st.basicOk, st.need, st.open], [22, 17, 18, false]);
+  assert.deepEqual([st.basics, st.basicOk, st.need, st.open], [42, 33, 34, false]);
   assert.deepEqual(planCh(s), []);
   const weak = Object.keys(s.cards).find((id) => !s.cards[id].goodDays.length);
   s.cards[weak] = { seen: 2, goodDays: ["2026-10-23"], blockedDay: "2026-10-22", due: "2026-10-26" };
