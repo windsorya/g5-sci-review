@@ -91,6 +91,8 @@ def main():
             check(f"{tag} ④ 同一列的站名、進度不互相重疊", not over, over[:3])
             # ⑥ 2026-10-14 律師（孩子要「直接闖關」）：點地圖的站 → 觀念頁標題下面、說明之前就有「直接闖關」，按下去開始這一站全部題目
             pg.locator(f'#mapBox .stn[data-cid="{d["ids"][1]}"]').click()
+            if pg.locator("#islandGo").count():
+                pg.locator("#islandGo").click()
             pg.wait_for_selector("#cGo")
             # 同一影格一次量兩個座標：觀念頁開啟時會平滑捲動，分兩次 bounding_box() 量，中間頁面還在動就會量反（負載高時偶發紅）
             gy, ey = pg.evaluate("""() => { const g = document.querySelector('#cGo'), e = document.querySelector('#main .remedy');

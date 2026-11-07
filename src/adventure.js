@@ -1,0 +1,16 @@
+/* Original SVG artwork and dialogue. Presentation only: never writes learning state. */
+(function(root){
+'use strict';
+var stories=[
+ ['日光瞭望島','小芽的影子突然跑到另一邊了！一起找出太陽和影子的祕密。','先觀察方向，再用實驗驗證。'],
+ ['四季星球島','同一根竿子，冬天和夏天的影子不一樣。小芽想知道為什麼。','比較季節，不用急著背答案。'],
+ ['虹光稜鏡島','小蝶看見水裡彎彎的鉛筆：它真的折斷了嗎？','分清楚反射和折射。'],
+ ['綠葉運輸島','根吸進去的水，要怎麼送到高高的葉子呢？','跟著水滴走過根、莖、葉。'],
+ ['種子育苗島','沒有種子，也能長出新的植物嗎？小芽準備了一片葉子。','找出不同植物繁殖的方法。'],
+ ['森林生活島','早餐、衣服和桌子，都藏著植物的線索！','找出生活裡的植物部位。'],
+ ['水晶溶解島','糖不見了？小蝶要用證據找出它去了哪裡。','老師教完後，再一起出發。']
+];
+function buddy(kind){return '<svg viewBox="0 0 120 120" aria-hidden="true" class="buddy"><ellipse cx="60" cy="108" rx="37" ry="6" fill="#20483e" opacity=".12"/>'+ (kind==='butterfly'?'<path d="M57 59C5 4 0 81 48 77C13 115 67 116 60 76C80 118 114 91 77 73C128 46 93 3 65 57" fill="#f7bc83" stroke="#975b45" stroke-width="3"/><path d="M57 48Q43 24 38 35M65 48Q80 24 85 35" fill="none" stroke="#44574d" stroke-width="3"/><ellipse cx="61" cy="71" rx="12" ry="30" fill="#5b867b"/>':'<path d="M60 42Q18 44 23 13Q57 9 60 42M60 42Q56 5 93 13Q94 43 60 42" fill="#72ad66" stroke="#2a6b53" stroke-width="3"/><path d="M60 40V56" stroke="#2a6b53" stroke-width="5"/><path d="M27 60Q60 34 93 60L87 96Q60 118 33 96Z" fill="#f5d6a5" stroke="#846949" stroke-width="3"/>')+'<circle cx="49" cy="71" r="3" fill="#253e36"/><circle cx="72" cy="71" r="3" fill="#253e36"/><path d="M54 82Q61 89 68 82" fill="none" stroke="#253e36" stroke-width="3" stroke-linecap="round"/></svg>';}
+function island(i){var colors=['#e8c775','#b5cbe2','#c3b2d8','#9cc791','#b8d58d','#d1c097','#9fd7dc'];return '<svg class="island-art" viewBox="0 0 200 120" aria-hidden="true"><ellipse cx="100" cy="105" rx="84" ry="9" fill="#439baf" opacity=".22"/><path d="M17 77L53 112L145 112L184 77Z" fill="#b99b76"/><ellipse cx="100" cy="75" rx="84" ry="30" fill="'+colors[i]+'"/><ellipse cx="100" cy="73" rx="70" ry="23" fill="#eef3ce" opacity=".55"/>'+['<circle cx="100" cy="32" r="22" fill="#ffdc65"/><path d="M53 78L78 57L103 78" fill="#709e79"/><path d="M112 79V51L137 79" fill="#456c70"/>','<circle cx="100" cy="48" r="34" fill="#689bb7"/><path d="M77 24L112 20L121 44L102 55L100 79L79 64L85 46Z" fill="#91bf88"/>','<path d="M100 20L137 78H63Z" fill="#ecf6fb" stroke="#829ec0" stroke-width="3"/><path d="M24 48H86M114 48L173 30M118 54L176 51M123 61L175 74" stroke="#ffb780" stroke-width="5"/>','<path d="M102 83V26M102 54Q54 56 64 28Q99 21 102 54M102 68Q143 63 143 39Q109 33 102 68" fill="#4e9269" stroke="#417350" stroke-width="5"/>','<path d="M62 79V55M100 79V41M138 79V55" stroke="#537c52" stroke-width="5"/><g fill="#6caa6c"><ellipse cx="53" cy="48" rx="16" ry="9"/><ellipse cx="111" cy="34" rx="18" ry="11"/><ellipse cx="147" cy="48" rx="16" ry="9"/></g>','<path d="M55 78V38H144V78Z" fill="#f6dfb0"/><path d="M43 40L99 10L155 40Z" fill="#6a9c7c"/><path d="M88 78V52H110V78" fill="#987357"/>','<path d="M75 22V42L52 81Q100 99 148 81L125 42V22Z" fill="#e8faff" stroke="#4f92a5" stroke-width="3"/><path d="M66 64H134L144 80Q100 93 56 80Z" fill="#8ccbd4"/><circle cx="96" cy="70" r="5" fill="white"/>'][i]+'</svg>';}
+var api={stories:stories,buddy:buddy,island:island}; if(typeof module!=='undefined')module.exports=api;else root.G5Adventure=api;
+})(typeof window!=='undefined'?window:this);

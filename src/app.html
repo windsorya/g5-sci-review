@@ -255,6 +255,24 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 @media (max-width:380px){#siteNav{grid-template-columns:repeat(2,1fr)}}   /* 320px 小手機放不下三欄六字（Codex 審 86f6b91） */
 /* 探險地圖「現在在這裡／還沒開放」不斷字（2026-10-18） */
 .stn .tag{max-width:none!important;white-space:nowrap;padding:2px 4px!important}   /* 字級不動：自然站 e2e 規定地圖字 ≥15px */
+
+/* Original island adventure: the existing learning engine and storage are unchanged. */
+#mapBox{--ink:#24493f;--muted:#49695d;--card:#fffdf5;--line:#adc8c0;background:#eaf5f4;color:#24493f;border-color:#b9d8d5;padding:20px;overflow:hidden}
+#mapBox .maphead{align-items:center} #mapBox h2{font-size:25px}
+.adventure-talk{display:flex;align-items:center;gap:12px;background:#fffdf5;border:2px solid #dae6d9;border-radius:22px;padding:12px 16px;color:#294c40}
+.buddy{width:88px;height:88px;flex:none}.adventure-talk p{margin:4px 0;line-height:1.6}.adventure-talk b{font-size:19px}
+#mapBox .mapbody{display:block}#mapBox .trail{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 12px;padding:12px 0;background:radial-gradient(ellipse at center,#d7eeee 0%,transparent 70%)}
+#mapBox .trail::before{display:none}#mapBox .trail li:nth-child(3n+2){padding-top:22px}
+#mapBox .stn{position:relative;display:flex;flex-direction:column;align-items:center;padding:8px 6px 12px;gap:2px;background:#ffffffbd;border:2px solid transparent;border-radius:24px;text-align:center;min-height:190px}
+#mapBox button.stn:hover{background:#fff}#mapBox button.stn:focus-visible{outline:4px solid #1f5f8b;outline-offset:3px}
+#mapBox .stn.now{border-color:#d5a446;background:#fff9e7}#mapBox .stn.done{border-color:#80aa88}
+#mapBox .stn .dot{position:absolute;top:8px;left:8px;width:28px;height:28px;font-size:14px;border-width:2px;z-index:1}
+#mapBox .island-art{width:100%;height:103px}#mapBox .stn .meta{justify-items:center;gap:4px}#mapBox .stn .nm{font-size:16px;max-width:none}#mapBox .stn .u{display:none}#mapBox .stn .pgl{display:block;font-size:15px;white-space:normal}#mapBox .stn .pgs{display:none}#mapBox .stn .tag{max-width:none;font-size:14px}
+#mapBox .stn.off .island-art{filter:grayscale(.8);opacity:.6}#mapBox .trail li:last-child{display:none}
+#mapBox .plant{margin-top:12px;border-top:1px solid #b9d8d5;padding-top:12px;display:grid;grid-template-columns:74px 1fr;text-align:left;justify-items:start;gap:6px 14px}#mapBox .plant svg.pl{width:74px;height:92px;grid-column:1;grid-row:1 / span 3}#mapBox .plant>:not(svg){grid-column:2}#mapBox .plant .next{display:none}
+.adventure-note{font-size:13px;color:#49695d;margin:8px 0 0}.quest-dialog{border:0;border-radius:24px;padding:22px;max-width:460px;width:calc(100% - 36px);background:var(--card);color:var(--ink);box-shadow:0 12px 70px #153e4b55}.quest-dialog::backdrop{background:#123c4c88}.quest-dialog .buddy{display:block;margin:auto;width:112px;height:112px}.quest-dialog h2{text-align:center;margin:10px 0}.quest-dialog p{line-height:1.7}.quest-dialog .row{justify-content:center}
+@media(max-width:520px){#mapBox{padding:12px}#mapBox .trail{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#mapBox .trail li:nth-child(3n+2){padding-top:0}#mapBox .trail li:nth-child(even){padding-top:18px}.adventure-talk{padding:10px;gap:7px}.adventure-talk .buddy{width:64px;height:72px}.adventure-talk b{font-size:17px}.adventure-talk p{font-size:14px}#mapBox .stn{min-height:188px}#mapBox .stn .nm{font-size:15px}}
+
 </style>
 
 <div class="wrap">
@@ -317,6 +335,7 @@ textarea{width:100%;min-height:120px;font-size:16px;border:1px solid var(--line)
 <!--@INLINE src/bank_extra.js-->
 <!--@INLINE src/core.js-->
 <!--@INLINE src/map.js-->
+<!--@INLINE src/adventure.js-->
 <script>
 (function(){
 "use strict";
@@ -740,12 +759,22 @@ function showMap(on){var b=$("#mapBox");if(!b)return;
   if(!on)mapAnim=null;
   b.hidden=!on;}
 function mapStill(box){box.querySelectorAll("svg.pl.grow").forEach(function(e){e.classList.remove("grow");});box.querySelectorAll(".stars").forEach(function(e){e.remove();});}
+var ADV=window.G5Adventure;
+function openIsland(cid){
+  var i=CIDS.indexOf(cid), story=ADV.stories[i], old=document.getElementById("questDialog");if(old)old.remove();
+  var d=document.createElement("dialog");d.id="questDialog";d.className="quest-dialog";d.setAttribute("aria-labelledby","questTitle");
+  d.innerHTML=ADV.buddy(i%2?"butterfly":"sprout")+'<h2 id="questTitle">'+story[0]+'</h2><p>'+story[1]+'</p><p class="muted">'+story[2]+' 先看觀念，再挑戰這一站；今日短任務會依原本的複習進度安排。</p><div class="row"><button type="button" class="btn" id="islandGo">跟夥伴出發</button><button type="button" class="btn ghost" id="islandBack">留在地圖</button></div>';
+  document.body.appendChild(d);d.showModal();
+  d.querySelector("#islandGo").onclick=function(){d.close();d.remove();renderConcept(cid);};
+  d.querySelector("#islandBack").onclick=function(){d.close();d.remove();};
+  d.addEventListener("cancel",function(){setTimeout(function(){d.remove();},0);});
+}
 function renderMap(){
   var box=$("#mapBox"); if(!box||!MAPX) return;
   var v=V(), t=MAPX.trail({cids:CIDS, stages:v.stages, on:conceptOn});
   // 每站做過幾題：和 stageOf 同一個母體（開放中的觀念的全部卡片，含補題區加的），seen>0＝做過
   var prog={}; C.poolCards(S(),BANK,V().today).forEach(function(c){if(!conceptOn(c.concept))return;var p=prog[c.concept]||(prog[c.concept]={n:0,seen:0});p.n++;if(C.cardState(S(),c.id).seen>0)p.seen++;});
-  var key=JSON.stringify([t,prog]);
+  var key=JSON.stringify([t,prog,v.completed]);
   // 內容沒變：不重畫；從別的畫面回來（地圖原本收著）時先拿掉動畫 class——display:none 再出現會讓 CSS 動畫重播
   if(key===mapKey&&box.firstChild){if(box.hidden)mapStill(box);showMap(true);return;}
   var seen=mapSeenMem!==null?mapSeenMem:MAPX.readSeen(seenStorage());
@@ -756,11 +785,11 @@ function renderMap(){
     var c=CONCEPTS[s.cid], cls=s.done?' done':s.now?' now':!s.on?' off':'';
     var mark=s.done?MAP_CHECK:!s.on?MAP_LOCK:String(s.n);
     var state=s.done?'走過了':s.now?'現在在這裡':!s.on?'還沒開放':'還沒走到';
-    var tag=s.now?'<span class="tag">現在在這裡</span>':!s.on?'<span class="tag">還沒開放</span>':'';
+    var tag=s.now?'<span class="tag">推薦探索</span>':!s.on?'<span class="tag">還沒開放</span>':'';
     // pt：手機版（一站一行）的完整說法；ps：寬版的短寫，走過的站靠打勾表示、不另寫
     var p=prog[s.cid], pt=s.on&&p?(s.done?esc(MAPX.DONE):'做過 '+p.seen+'／'+p.n+' 題'):'', ps=s.on&&p&&!s.done?p.seen+'／'+p.n+' 題':'';
     return '<li><button type="button" class="stn'+cls+'" data-cid="'+s.cid+'"'+(s.now?' aria-current="step"':'')+(s.on?'':' aria-disabled="true"')+
-      ' aria-label="第 '+s.n+' 站 '+esc(c.short)+'（'+esc(UNITS[c.unit])+'）：'+state+(pt?'，'+pt:'')+'"><span class="dot">'+mark+'</span><span class="meta"><span class="nm">'+(c.short.length>5?esc(c.short.slice(0,Math.ceil(c.short.length/2)))+'<wbr>'+esc(c.short.slice(Math.ceil(c.short.length/2))):esc(c.short))+'</span><span class="u">'+esc(UNITS[c.unit])+'</span>'+(pt?'<span class="pg pgl">'+pt+'</span>':'')+(ps?'<span class="pg pgs">'+ps+'</span>':'')+tag+'</span></button></li>';
+      ' aria-label="第 '+s.n+' 站 '+esc(c.short)+'（'+esc(UNITS[c.unit])+'）：'+state+(pt?'，'+pt:'')+'"><span class="dot">'+mark+'</span>'+ADV.island(s.n-1)+'<span class="meta"><span class="nm">'+(c.short.length>5?esc(c.short.slice(0,Math.ceil(c.short.length/2)))+'<wbr>'+esc(c.short.slice(Math.ceil(c.short.length/2))):esc(c.short))+'</span><span class="u">'+esc(UNITS[c.unit])+'</span>'+(pt?'<span class="pg pgl">'+pt+'</span>':'')+(ps?'<span class="pg pgs">'+ps+'</span>':'')+tag+'</span></button></li>';
   }).join("")+
     '<li><div class="stn goal'+(t.allDone?' won':'')+'"><span class="dot">'+(t.allDone?MAP_CUP:'考試')+'</span><span class="meta"><span class="nm">終點<wbr> '+md(EXAM)+'</span><span class="u">第一次定期評量</span></span></div></li>';
   var nm=MAPX.PLANT[t.level];
@@ -768,13 +797,14 @@ function renderMap(){
     '<div class="stage">'+(t.level?'第 '+t.level+' 階：'+nm:'一盆土，做完一站的題目就種下種子')+'</div>'+
     (t.allDone?'<div class="mapwin" role="status">探險地圖全部走完了！去跟爸媽說</div>'+(fx.celebrate&&!reduce?MAP_STARS.replace('class="stars"','class="stars go"'):''):
      t.level<MAPX.PLANT.length-1?'<div class="next"><span class="ghostbox">'+MAPX.plantSvg(t.level+1,{ghost:true})+'<b aria-hidden="true">？</b></span><span>再做完一站的題目，看看它會變成什麼</span></div>':'')+'</div>';
-  box.innerHTML='<div class="maphead"><h2 id="mapT">探險地圖</h2><span id="mapCount">'+head+'</span></div><p class="small muted" id="mapRule" style="margin:4px 0 10px">'+esc(MAPX.RULE)+'</p><div class="mapbody"><ol class="trail" aria-label="'+["","一","二","三","四","五","六","七","八","九","十"][CIDS.length]+'個觀念的路線">'+lis+'</ol>'+plant+'</div>';
+  box.innerHTML='<div class="adventure-talk">'+ADV.buddy("sprout")+'<div><b>小芽與小蝶的科學航行</b><p>'+ (v.completed?'今天的任務完成了！休息一下，明天再來看看記住了多少。':'先完成今天的短任務，或選一座島，和夥伴一起找答案。')+'</p><button type="button" class="btn" id="questToday">'+(v.completed?'看看今日成果':'前往今日短任務')+'</button></div></div><div class="maphead"><h2 id="mapT">自然探險群島</h2><span id="mapCount">'+head+'</span></div><p class="small muted" id="mapRule" style="margin:4px 0 10px">'+esc(MAPX.RULE)+'</p><div class="mapbody"><ol class="trail" aria-label="'+["","一","二","三","四","五","六","七","八","九","十"][CIDS.length]+'個觀念的路線">'+lis+'</ol>'+plant+'</div><p class="adventure-note">探索紀念：每題做過就讓植物長大。學會了沒有，仍看無提示作答與隔日複習，不靠重刷拿獎。</p>';
+  on("#questToday",function(){$("#main").scrollIntoView({behavior:"smooth",block:"start"});var b=$("#goAll")||$("#goOn")||$("#goTeach");if(b)b.focus({preventScroll:true});});
   mapAnim=anim?{at:Date.now(),prev:seen}:null;
   mapKey=key; mapSeenMem=t.level; MAPX.writeSeen(seenStorage(),t.level);
   box.querySelectorAll("button.stn").forEach(function(b){b.onclick=function(){
     var cid=b.dataset.cid;
     if(!conceptOn(cid)){toast("老師教完溶解以後，到「設定與題庫」打勾，隔天就會開放。");return;}
-    renderConcept(cid);
+    openIsland(cid);
   };});
   showMap(true);
 }
